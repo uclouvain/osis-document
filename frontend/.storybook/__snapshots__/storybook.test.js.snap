@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Storyshots Uploader Basic 1`] = `
+<div>
+  <div
+    class="dropzone"
+  >
+    <input
+      accept=""
+      multiple="multiple"
+      type="file"
+    />
+    
+    Glisser-déposer un ou plusieurs fichiers ici ou
+    
+    <button
+      class="btn btn-primary"
+      type="button"
+    >
+      <span
+        class="glyphicon glyphicon-plus"
+      />
+      
+      cliquer pour ajouter un fichier
+    
+    </button>
+     
+    <!---->
+  </div>
+   
+  <ul
+    class="media-list"
+  />
+   
+</div>
+`;

@@ -27,6 +27,7 @@ from django.urls import path
 
 from . import views
 
+app_name = 'osis_document'
 urlpatterns = [
     path('request-upload/', views.RequestUploadView.as_view(),
          name='request-upload'),

@@ -23,39 +23,30 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-import json
+from django.urls import path, reverse_lazy, include
+from django.views.generic import CreateView, UpdateView
 
-from django import forms
-from django.conf import settings
-from django.contrib.postgres.forms import SplitArrayWidget
-from django.urls import reverse
+from osis_document.tests.document_test.models import TestDocument
 
-
-class FileUploadWidget(SplitArrayWidget):
-    # TODO set data-attributes on rendering for VueJS
-    template_name = 'osis_document/uploader_widget.html'
-
-    class Media:
-        css = {
-            'all': ('osis_document/osis-document.css',)
-        }
-        js = ('osis_document/osis-document.umd.min.js',)
-
-    def __init__(self, max_size=None, mimetypes=None, upload_text='', **kwargs):
-        self.upload_text = upload_text
-        self.mimetypes = mimetypes
-        self.max_size = max_size
-        super().__init__(widget=forms.TextInput, **kwargs)
-
-    def build_attrs(self, base_attrs, extra_attrs=None):
-        attrs = super().build_attrs(base_attrs, extra_attrs)
-        upload_url = getattr(settings, 'OSIS_DOCUMENT_UPLOAD_URL', None)
-        attrs['data-upload-url'] = upload_url or reverse('osis_document:request-upload')
-        if self.mimetypes is not None:
-            attrs['data-mimetypes'] = json.dumps(self.mimetypes)
-        if self.max_size is not None:
-            attrs['data-max-size'] = self.max_size
-        return attrs
-
-    def format_value(self, value):
-        return value
+app_name = 'document_test'
+urlpatterns = [
+    path(
+        '',
+        CreateView.as_view(
+            model=TestDocument,
+            fields='__all__',
+            success_url=reverse_lazy('document_test:test-upload'),
+        ),
+        name='test-upload',
+    ),
+    path(
+        'update/<int:pk>',
+        UpdateView.as_view(
+            model=TestDocument,
+            fields='__all__',
+            success_url=reverse_lazy('document_test:test-upload'),
+        ),
+        name='test-upload',
+    ),
+    path('document/', include('osis_document.contrib.urls')),
+]
