@@ -60,7 +60,7 @@ class Upload(models.Model):
         verbose_name=_("Status"),
         max_length=255,
         choices=FileStatus.choices(),
-        default=FileStatus.REQUESTED,
+        default=FileStatus.REQUESTED.name,
     )
     metadata = JSONField(
         verbose_name=_("Metadata"),
@@ -90,4 +90,5 @@ class Token(models.Model):
         verbose_name=_("Access type"),
         max_length=255,
         choices=TokenAccess.choices(),
+        default=TokenAccess.WRITE.name,
     )

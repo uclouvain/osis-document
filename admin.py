@@ -23,14 +23,56 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.apps import AppConfig
-from django.conf import settings
+from django.contrib import admin
+from django.template.defaultfilters import filesizeformat
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
+from osis_document.models import Token, Upload
 
-class OsisDocumentConfig(AppConfig):
-    name = 'osis_document'
-    verbose_name = _("Documents")
 
-    def ready(self):
-        settings.OSIS_DOCUMENT_TOKEN_MAX_AGE = getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
+class UploadAdmin(admin.ModelAdmin):
+    list_display = [
+        'uuid',
+        'file_button',
+        'uploaded_at',
+        'status',
+        'display_size',
+        'mimetype',
+    ]
+    date_hierarchy = 'uploaded_at'
+    list_filter = [
+        'status',
+        'mimetype',
+    ]
+
+    def file_button(self, obj):
+        return format_html(
+            '<a href="{}" target="_blank" class="button">&nbsp;&gt;&nbsp;</a>',
+            obj.file.url
+        )
+
+    file_button.short_description = _('File')
+
+    def display_size(self, obj):
+        return filesizeformat(obj.size)
+
+    display_size.short_description = _('Size')
+
+
+class TokenAdmin(admin.ModelAdmin):
+    list_display = [
+        'id',
+        'access',
+        'created_at',
+        'upload',
+    ]
+    date_hierarchy = 'created_at'
+    list_filter = [
+        'access',
+        'upload__status',
+    ]
+
+
+admin.site.register(Upload, UploadAdmin)
+admin.site.register(Token, TokenAdmin)

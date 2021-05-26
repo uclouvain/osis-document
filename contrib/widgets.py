@@ -23,14 +23,17 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.apps import AppConfig
-from django.conf import settings
-from django.utils.translation import gettext_lazy as _
+from django import forms
+from django.contrib.postgres.forms import SplitArrayWidget
 
 
-class OsisDocumentConfig(AppConfig):
-    name = 'osis_document'
-    verbose_name = _("Documents")
+class FileUploadWidget(SplitArrayWidget):
+    # TODO create a token on rendering ?
+    # TODO associate medias (css and js) for the VueJS widget
+    # TODO set data-attributes on rendering for VueJS
 
-    def ready(self):
-        settings.OSIS_DOCUMENT_TOKEN_MAX_AGE = getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
+    def __init__(self, max_size=None, mimetypes=None, upload_text='', **kwargs):
+        self.upload_text = upload_text
+        self.mimetypes = mimetypes
+        self.max_size = max_size
+        super().__init__(widget=forms.TextInput, **kwargs)

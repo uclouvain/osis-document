@@ -23,14 +23,33 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.apps import AppConfig
-from django.conf import settings
-from django.utils.translation import gettext_lazy as _
+
+from django.test import TestCase
+
+from osis_document.tests.factories import TokenFactory, UploadFactory
+from osis_document.utils import is_uuid, get_metadata
 
 
-class OsisDocumentConfig(AppConfig):
-    name = 'osis_document'
-    verbose_name = _("Documents")
+class IsUuidTestCase(TestCase):
+    def test_is_uuid(self):
+        self.assertFalse(is_uuid('foobar'))
+        self.assertFalse(is_uuid(''))
+        self.assertFalse(is_uuid(152))
+        self.assertFalse(is_uuid(None))
+        self.assertTrue(is_uuid('12345678-1234-5678-1234-567812345678'))
 
-    def ready(self):
-        settings.OSIS_DOCUMENT_TOKEN_MAX_AGE = getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
+
+class MetadataTestCase(TestCase):
+    def test_with_token(self):
+        token = TokenFactory()
+        self.assertEqual(
+            get_metadata(token.token),
+            {'mimetype': 'application/pdf', 'size': 1024},
+        )
+
+    def test_with_uuid(self):
+        upload = UploadFactory()
+        self.assertEqual(
+            get_metadata(upload.uuid),
+            {'mimetype': 'application/pdf', 'size': 1024},
+        )
