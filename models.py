@@ -24,9 +24,12 @@
 #
 # ##############################################################################
 import uuid
+from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
 from .enums import FileStatus, TokenAccess
@@ -60,7 +63,7 @@ class Upload(models.Model):
         verbose_name=_("Status"),
         max_length=255,
         choices=FileStatus.choices(),
-        default=FileStatus.REQUESTED,
+        default=FileStatus.REQUESTED.name,
     )
     metadata = JSONField(
         verbose_name=_("Metadata"),
@@ -69,6 +72,11 @@ class Upload(models.Model):
 
     class Meta:
         verbose_name = _("Upload")
+
+
+def default_expiration_time():
+    max_age = getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
+    return now() + timedelta(seconds=max_age)
 
 
 class Token(models.Model):
@@ -86,8 +94,13 @@ class Token(models.Model):
         verbose_name=_("Created at"),
         auto_now_add=True,
     )
+    expires_at = models.DateTimeField(
+        verbose_name=_("Expires at"),
+        default=default_expiration_time,
+    )
     access = models.CharField(
         verbose_name=_("Access type"),
         max_length=255,
         choices=TokenAccess.choices(),
+        default=TokenAccess.WRITE.name,
     )

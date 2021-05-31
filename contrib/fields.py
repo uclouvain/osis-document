@@ -23,14 +23,32 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.apps import AppConfig
-from django.conf import settings
-from django.utils.translation import gettext_lazy as _
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
+
+from osis_document.contrib.forms import FileUploadField
+from osis_document.utils import confirm_upload
 
 
-class OsisDocumentConfig(AppConfig):
-    name = 'osis_document'
-    verbose_name = _("Documents")
+class FileField(ArrayField):
+    def __init__(self, max_size=None, limit=None, mimetypes=None, upload_text='', **kwargs):
+        self.max_size = max_size
+        self.upload_text = upload_text
+        self.mimetypes = mimetypes
+        kwargs.setdefault('default', list)
+        kwargs.setdefault('base_field', models.UUIDField())
+        kwargs.setdefault('size', limit)
+        super().__init__(**kwargs)
 
-    def ready(self):
-        settings.OSIS_DOCUMENT_TOKEN_MAX_AGE = getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
+    def formfield(self, **kwargs):
+        return super(ArrayField, self).formfield(**{
+            'form_class': FileUploadField,
+            'max_size': self.max_size,
+            'limit': self.size,
+            'mimetypes': self.mimetypes,
+            'upload_text': self.upload_text,
+            **kwargs,
+        })
+
+    def pre_save(self, model_instance, add):
+        return [confirm_upload(token) for token in super().pre_save(model_instance, add)]

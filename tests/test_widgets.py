@@ -23,14 +23,21 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.apps import AppConfig
-from django.conf import settings
-from django.utils.translation import gettext_lazy as _
+import uuid
+
+from django.test import TestCase
+
+from osis_document.contrib.widgets import FileUploadWidget
 
 
-class OsisDocumentConfig(AppConfig):
-    name = 'osis_document'
-    verbose_name = _("Documents")
+class WidgetTestCase(TestCase):
+    def test_widget_is_uuid(self):
+        widget = FileUploadWidget(size=2)
+        stub_uuid = uuid.uuid4()
+        render = widget.render('foo', [stub_uuid])
+        self.assertIn(str(stub_uuid), render)
 
-    def ready(self):
-        settings.OSIS_DOCUMENT_TOKEN_MAX_AGE = getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
+        stub_uuid2 = uuid.uuid4()
+        render = widget.render('foo', [stub_uuid, stub_uuid2])
+        self.assertIn(str(stub_uuid), render)
+        self.assertIn(str(stub_uuid2), render)
