@@ -30,7 +30,7 @@ from django.utils.translation import gettext as _
 from osis_document.enums import FileStatus
 from osis_document.models import Token
 from osis_document.tests.document_test.models import TestDocument
-from osis_document.tests.factories import TokenFactory
+from osis_document.tests.factories import WriteTokenFactory
 
 
 class FieldTestCase(TestCase):
@@ -51,7 +51,7 @@ class FieldTestCase(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn(_("File upload is either non-existent or has expired"), form.errors['documents'][0])
 
-        token = TokenFactory()
+        token = WriteTokenFactory()
         form = ModelForm({
             'documents_0': token.token,
         })
@@ -60,7 +60,7 @@ class FieldTestCase(TestCase):
     def test_model_form_submit(self):
         ModelForm = modelform_factory(TestDocument, fields='__all__')
 
-        token = TokenFactory()
+        token = WriteTokenFactory()
         form = ModelForm({
             'documents_0': token.token,
         })

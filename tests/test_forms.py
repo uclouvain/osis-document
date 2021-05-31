@@ -30,7 +30,7 @@ from django import forms
 from django.test import TestCase
 
 from osis_document.contrib.forms import FileUploadField, TokenOrUuidField
-from osis_document.tests.factories import TokenFactory
+from osis_document.tests.factories import WriteTokenFactory
 
 
 class FormTestCase(TestCase):
@@ -39,7 +39,7 @@ class FormTestCase(TestCase):
             media = FileUploadField()
 
         form = TestForm({
-            'media_0': TokenFactory().token,
+            'media_0': WriteTokenFactory().token,
         })
         self.assertTrue(form.is_valid(), msg=form.errors)
 
@@ -59,7 +59,7 @@ class FormTestCase(TestCase):
             media = FileUploadField(limit=1)
 
         form = TestForm({
-            'media_0': TokenFactory().token,
+            'media_0': WriteTokenFactory().token,
             'media_1': uuid.uuid4(),
         })
         self.assertTrue(form.is_valid(), msg=form.errors)
@@ -70,7 +70,7 @@ class FormTestCase(TestCase):
             media = FileUploadField(max_size=2)
 
         form = TestForm({
-            'media_0': TokenFactory().token,
+            'media_0': WriteTokenFactory().token,
         })
         self.assertFalse(form.is_valid(), form.errors)
         error = TokenOrUuidField.default_error_messages['size']
@@ -81,7 +81,7 @@ class FormTestCase(TestCase):
             media = FileUploadField(mimetypes=('image/jpeg',))
 
         form = TestForm({
-            'media_0': TokenFactory().token,
+            'media_0': WriteTokenFactory().token,
         })
         self.assertFalse(form.is_valid(), form.errors)
         error = TokenOrUuidField.default_error_messages['mimetype']

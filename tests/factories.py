@@ -24,15 +24,18 @@
 #
 # ##############################################################################
 import string
+from datetime import timedelta
 
 import factory
+from django.conf import settings
+from django.utils.timezone import now
 from factory.fuzzy import FuzzyText
 
 from osis_document.enums import TokenAccess
 from osis_document.models import Upload, Token
 
 
-class UploadFactory(factory.django.DjangoModelFactory):
+class PdfUploadFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Upload
 
@@ -41,10 +44,18 @@ class UploadFactory(factory.django.DjangoModelFactory):
     mimetype = 'application/pdf'
 
 
-class TokenFactory(factory.django.DjangoModelFactory):
+class WriteTokenFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Token
 
     token = FuzzyText(length=154, chars=string.ascii_letters + string.digits + ':-')
-    upload = factory.SubFactory(UploadFactory)
-    access = TokenAccess.WRITE
+    created_at = factory.LazyFunction(now)
+    expires_at = factory.LazyAttribute(
+        lambda o: o.created_at + timedelta(seconds=getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15))
+    )
+    upload = factory.SubFactory(PdfUploadFactory)
+    access = TokenAccess.WRITE.name
+
+
+class ReadTokenFactory(WriteTokenFactory):
+    access = TokenAccess.READ.name

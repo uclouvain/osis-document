@@ -31,7 +31,7 @@ from django.test import TestCase, override_settings
 
 from osis_document.enums import FileStatus, TokenAccess
 from osis_document.models import Upload, Token
-from osis_document.tests.factories import TokenFactory
+from osis_document.tests.factories import WriteTokenFactory, ReadTokenFactory
 
 
 @override_settings(ROOT_URLCONF='osis_document.contrib.urls')
@@ -55,7 +55,7 @@ class RequestUploadTestCase(TestCase):
         self.assertTrue(Token.objects.first().access, TokenAccess.WRITE.name)
 
     def test_confirm(self):
-        token = TokenFactory()
+        token = WriteTokenFactory()
         response = self.client.post(resolve_url('confirm-upload', token=token.token))
         json = response.json()
         self.assertIn('uuid', json)
@@ -64,8 +64,12 @@ class RequestUploadTestCase(TestCase):
         response = self.client.post(resolve_url('confirm-upload', token='foobar'))
         self.assertEqual(400, response.status_code)
 
+    def test_confirm_read_token(self):
+        token = ReadTokenFactory()
+        response = self.client.post(resolve_url('confirm-upload', token=token.token))
+        self.assertEqual(400, response.status_code)
+
     def test_confirm_upload_too_old(self):
-        token = TokenFactory()
-        Token.objects.update(created_at=datetime(1990, 1, 1))
+        token = WriteTokenFactory(created_at=datetime(1990, 1, 1))
         response = self.client.post(resolve_url('confirm-upload', token=token.token))
         self.assertEqual(400, response.status_code)

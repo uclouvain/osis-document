@@ -31,7 +31,7 @@ from django.core.exceptions import FieldError
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
-from osis_document.enums import FileStatus
+from osis_document.enums import FileStatus, TokenAccess
 from osis_document.models import Upload, Token
 
 
@@ -47,11 +47,13 @@ def is_uuid(value):
 
 def confirm_upload(token):
     # Verify token existence and expiration
-    token = Token.objects.filter(token=token).select_related('upload').first()
+    token = Token.objects.filter(
+        token=token,
+        access=TokenAccess.WRITE.name,
+    ).select_related('upload').first()
     if not token:
         raise FieldError(_("Token non-existent or expired"))
-    expired_at = token.created_at + timedelta(seconds=settings.OSIS_DOCUMENT_TOKEN_MAX_AGE)
-    if now() > expired_at:
+    if now() > token.expires_at:
         raise FieldError(_("Token non-existent or expired"))
 
     # Delete token

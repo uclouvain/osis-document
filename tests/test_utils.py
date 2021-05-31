@@ -26,7 +26,7 @@
 
 from django.test import TestCase
 
-from osis_document.tests.factories import TokenFactory, UploadFactory
+from osis_document.tests.factories import WriteTokenFactory, PdfUploadFactory
 from osis_document.utils import is_uuid, get_metadata
 
 
@@ -41,14 +41,14 @@ class IsUuidTestCase(TestCase):
 
 class MetadataTestCase(TestCase):
     def test_with_token(self):
-        token = TokenFactory()
+        token = WriteTokenFactory()
         self.assertEqual(
             get_metadata(token.token),
             {'mimetype': 'application/pdf', 'size': 1024},
         )
 
     def test_with_uuid(self):
-        upload = UploadFactory()
+        upload = PdfUploadFactory()
         self.assertEqual(
             get_metadata(upload.uuid),
             {'mimetype': 'application/pdf', 'size': 1024},
