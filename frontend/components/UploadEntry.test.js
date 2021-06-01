@@ -29,6 +29,8 @@ import { mount } from '@vue/test-utils';
 import UploadEntry from './UploadEntry.vue';
 import { newServer } from 'mock-xmlhttprequest';
 
+jest.mock('../utils.js');
+
 it('should mount', () => {
   window.URL.createObjectURL = jest.fn();
   const wrapper = mount(UploadEntry, {
@@ -37,6 +39,9 @@ it('should mount', () => {
         type: 'image/png',
       }),
       uploadUrl: '',
+    },
+    mocks: {
+      $t: k => k,
     },
   });
   expect(wrapper.text()).toContain('image/png');
@@ -52,9 +57,12 @@ it('should display error', async () => {
       uploadUrl: '',
       maxSize: 150,
     },
+    mocks: {
+      $t: k => k,
+    },
   });
   await Vue.nextTick();
-  expect(wrapper.text()).toContain('File is too large');
+  expect(wrapper.text()).toContain('upload_entry.too_large');
 });
 
 it('should display error', async () => {
@@ -66,9 +74,12 @@ it('should display error', async () => {
       uploadUrl: '',
       mimetypes: ['image/png', 'image/jpeg'],
     },
+    mocks: {
+      $t: k => k,
+    },
   });
   await Vue.nextTick();
-  expect(wrapper.text()).toContain('File is wrong type');
+  expect(wrapper.text()).toContain('upload_entry.wrong_type');
 });
 
 jest.useFakeTimers();
@@ -95,6 +106,9 @@ it('should upload', async () => {
       }),
       uploadUrl: 'http://dummyhost/upload',
     },
+    mocks: {
+      $t: k => k,
+    },
     destroyed () {
       server.remove();
     },
@@ -106,6 +120,6 @@ it('should upload', async () => {
 
   const image = wrapper.find('img');
   expect(image.element.src).toEqual('http://localhost/dummyurl');
-  image.trigger('load')
+  image.trigger('load');
   expect(window.URL.revokeObjectURL).toHaveBeenCalled();
 });

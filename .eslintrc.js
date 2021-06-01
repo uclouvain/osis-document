@@ -35,14 +35,14 @@ module.exports = {
     'plugin:vue/recommended',
   ],
   overrides: [{
-    files: '*.vue',
+    files: '*.{vue,.test.js}',
   }],
   globals: {
     jQuery: 'readonly',
   },
   parserOptions: {
-    'ecmaVersion': 2021,
-    'sourceType': 'module',
+    ecmaVersion: 2021,
+    sourceType: 'module',
   },
   plugins: [
     'vue',
@@ -50,8 +50,14 @@ module.exports = {
   ],
   rules: {
     'vue/html-indent': ['error', 2, {
-      'attribute': 2,
+      attribute: 2,
     }],
     'comma-dangle': ['error', 'always-multiline'],
+    semi: ['error', 'always'],
+    eqeqeq: ['error', 'always'],
+    'prefer-const': ['error', {
+      destructuring: 'any',
+      ignoreReadBeforeAssign: false,
+    }],
   },
 };

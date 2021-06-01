@@ -26,24 +26,27 @@
 
 import Uploader from './Uploader';
 import { newServer } from 'mock-xmlhttprequest';
+import { i18n } from './i18n';
+
+// XMLHttpRequest mock
+const server = newServer({
+  post: ['/upload', function (xhr) {
+    xhr.uploadProgress(4096);
+    setTimeout(() => {
+      xhr.uploadProgress(4096 * 5);
+    }, 1000);
+    setTimeout(() => {
+      xhr.respond(
+        200,
+        { 'Content-Type': 'application/json' },
+        '{"token": "0123456789"}',
+      );
+    }, 2000);
+  }],
+});
 
 export const basic = () => {
-  // XMLHttpRequest mock
-  const server = newServer({
-    post: ['/upload', function (xhr) {
-      xhr.uploadProgress(4096);
-      setTimeout(() => {
-        xhr.uploadProgress(4096 * 5);
-      }, 1000);
-      setTimeout(() => {
-        xhr.respond(
-          200,
-          { 'Content-Type': 'application/json' },
-          '{"token": "0123456789"}',
-        );
-      }, 2000);
-    }],
-  }).install();
+  server.install();
 
   return {
     components: { Uploader },
@@ -51,6 +54,27 @@ export const basic = () => {
     destroyed () {
       server.remove();
     },
+    i18n,
+  };
+};
+
+export const limited = () => {
+  server.install();
+
+  return {
+    components: { Uploader },
+    template: `
+      <Uploader
+          upload-url="/upload"
+          name="media"
+          :max-size="5242880"
+          :mimetypes="['image/png','image/jpeg']"
+      />
+    `,
+    destroyed () {
+      server.remove();
+    },
+    i18n,
   };
 };
 

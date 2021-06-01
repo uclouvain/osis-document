@@ -55,7 +55,7 @@
             aria-valuemax="100"
             :style="{width: `${progress}%`}"
         >
-          <span class="sr-only">{{ progress }}% Complete</span>
+          <span class="sr-only">{{ $t('upload_entry.completion', { progress }) }}</span>
         </div>
       </div>
       <span
@@ -118,9 +118,9 @@ export default {
   },
   mounted () {
     if (this.maxSize && this.file.size > this.maxSize) {
-      this.error = 'File is too large';
+      this.error = this.$t('upload_entry.too_large');
     } else if (this.mimetypes.length && !this.mimetypes.includes(this.file.type)) {
-      this.error = 'File is wrong type';
+      this.error = this.$t('upload_entry.wrong_type');
     } else {
       this.sendFile();
     }
@@ -132,14 +132,14 @@ export default {
     sendFile: function () {
       const xhr = new XMLHttpRequest();
       const self = this;
-      xhr.upload.addEventListener('progress', function (e) {
+      xhr.upload.addEventListener('progress', (e) => {
         /* istanbul ignore else */
         if (e.lengthComputable) {
           self.progress = Math.round((e.loaded * 100) / e.total);
         }
       }, false);
 
-      xhr.upload.addEventListener('load', function () {
+      xhr.upload.addEventListener('load', () => {
         self.progress = 100;
       }, false);
       xhr.open('POST', this.uploadUrl, true);

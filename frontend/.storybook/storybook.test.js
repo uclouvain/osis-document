@@ -26,6 +26,10 @@
 
 import initStoryshots from '@storybook/addon-storyshots';
 
+jest.mock('../utils.js', () => ({
+  humanizedSize: () => '0o',
+}));
+
 initStoryshots({
-  configPath: 'frontend/.storybook'
+  configPath: 'frontend/.storybook',
 });

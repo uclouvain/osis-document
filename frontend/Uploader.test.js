@@ -29,14 +29,22 @@ import Uploader from './Uploader.vue';
 import UploadEntry from './components/UploadEntry';
 import Vue from 'vue';
 
+jest.mock('./utils.js');
+
 it('should mount', () => {
   const wrapper = mount(Uploader, {
     propsData: {
       name: 'media',
       uploadUrl: '/upload',
+      maxSize: 1024,
+    },
+    mocks: {
+      $t: (k) => k,
     },
   });
-  expect(wrapper.text()).toContain('Glisser-déposer un ou plusieurs fichiers ici');
+  expect(wrapper.text()).toContain('uploader.drag_n_drop_label');
+  expect(wrapper.text()).toContain('uploader.add_file_label');
+  expect(wrapper.text()).toContain('uploader.max_size_label');
 });
 
 it('should add upload entry', async () => {
@@ -44,6 +52,9 @@ it('should add upload entry', async () => {
     propsData: {
       name: 'media',
       uploadUrl: '/upload',
+    },
+    mocks: {
+      $t: (k) => k,
     },
   });
   expect(wrapper.findComponent(UploadEntry).exists()).toBe(false);

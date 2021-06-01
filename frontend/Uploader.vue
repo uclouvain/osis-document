@@ -38,16 +38,18 @@
           @dragleave="isHovering = false"
           @change="onFilePicked"
       >
-      Glisser-déposer un ou plusieurs fichiers ici ou
+      {{ $t('uploader.drag_n_drop_label') }}
       <button
           class="btn btn-primary"
           type="button"
           @click="$refs.fileInput.click()"
       >
         <span class="glyphicon glyphicon-plus" />
-        cliquer pour ajouter un fichier
+        {{ $t('uploader.add_file_label') }}
       </button>
-      <span v-if="maxSize">(taille maximum {{ humanizedSize(maxSize) }})</span>
+      <span v-if="maxSize">
+        {{ $t('uploader.max_size_label', { size: humanizedSize(maxSize) }) }}
+      </span>
     </div>
     <ul class="media-list">
       <UploadEntry
@@ -165,17 +167,6 @@ export default {
     input {
       display: block;
     }
-  }
-
-  span {
-    position: absolute;
-    font-weight: bold;
-    right: 5px;
-    top: -10px;
-    font-size: 30px;
-    cursor: pointer;
-    z-index: 10;
-    display: none;
   }
 }
 </style>

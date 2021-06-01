@@ -31,16 +31,30 @@ Vue.use(VueI18n);
 
 const messages = {
   en: {
-    date: 'Date',
-    message: 'Message',
-    author: 'Author',
-    no_entry: 'No history entry yet.',
+    uploader: {
+      drag_n_drop_label: 'Drag and drop one or more files here or',
+      add_file_label: 'click to add a file',
+      max_size_label: '(max size {size})',
+    },
+    upload_entry: {
+      completion: '{progress}% uploaded',
+      too_large: 'File is too large',
+      wrong_type: 'File is wrong type',
+    },
+    units: ['B', 'KB', 'MB', 'GB', 'TB'],
   },
   'fr-be': {
-    date: 'Date',
-    message: 'Message',
-    author: 'Auteur',
-    no_entry: "Aucun entrée d'historique pour le moment.",
+    uploader: {
+      drag_n_drop_label: 'Glisser-déposer un ou plusieurs fichiers ici ou',
+      add_file_label: 'cliquer pour ajouter un fichier',
+      max_size_label: '(taille maximum {size})',
+    },
+    upload_entry: {
+      completion: '{progress}% transférés',
+      too_large: 'Le fichier est trop lourd',
+      wrong_type: 'Le fichier est du mauvais type',
+    },
+    units: ['o', 'Ko', 'Mo', 'Go', 'To'],
   },
 };
 export const i18n = new VueI18n({

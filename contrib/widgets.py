@@ -23,8 +23,6 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-import json
-
 from django import forms
 from django.conf import settings
 from django.contrib.postgres.forms import SplitArrayWidget
@@ -33,7 +31,6 @@ from django.utils.translation import gettext_lazy as _
 
 
 class FileUploadWidget(SplitArrayWidget):
-    # TODO set data-attributes on rendering for VueJS
     template_name = 'osis_document/uploader_widget.html'
 
     class Media:
@@ -53,8 +50,8 @@ class FileUploadWidget(SplitArrayWidget):
         if not getattr(settings, 'OSIS_DOCUMENT_UPLOAD_URL', None):
             raise ImproperlyConfigured(_("Missing OSIS_DOCUMENT_UPLOAD_URL setting"))
         attrs['data-upload-url'] = settings.OSIS_DOCUMENT_UPLOAD_URL
-        if self.mimetypes is not None:
-            attrs['data-mimetypes'] = json.dumps(self.mimetypes)
+        if self.mimetypes:
+            attrs['data-mimetypes'] = ','.join(self.mimetypes)
         if self.max_size is not None:
             attrs['data-max-size'] = self.max_size
         return attrs

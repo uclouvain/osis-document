@@ -34,7 +34,7 @@ document.querySelectorAll('.document-uploader').forEach((elem) => {
     props.maxSize = Number.parseInt(props.maxSize);
   }
   if (typeof props.mimetypes !== 'undefined') {
-    props.mimetypes = JSON.parse(props.mimetypes);
+    props.mimetypes = props.mimetypes.split(',');
   }
   if (typeof props.values !== 'undefined') {
     props.values = props.values.split(',');
