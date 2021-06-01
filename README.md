@@ -16,7 +16,7 @@
 
 ## Configuring Django
 
-Add `osis_document` to `INSTALLED_APPS`:
+Add `osis_document` to `INSTALLED_APPS` and configure the upload url:
 
 ```python
 INSTALLED_APPS = (
@@ -24,7 +24,10 @@ INSTALLED_APPS = (
     'osis_document',
     ...
 )
+
+OSIS_DOCUMENT_UPLOAD_URL = getenv('OSIS_DOCUMENT_UPLOAD_URL', reverse_lazy('osis_document:request-upload'))
 ```
+
 
 # Using OSIS Document
 
@@ -107,3 +110,21 @@ Available metadata info:
 - `size`: The size of the file in bytes
 - `mimetype`: The MIME type as per detected by python-magic
 - `uploaded_at`: The datetime the file was uploaded at
+
+
+# Contributing to OSIS-History
+
+To contribute to the frontend part of this module, install `npm` > 6 (included in [https://nodejs.org/en/download/](nodejs)), and run:
+```console
+cd osis_document
+npm clean-install
+npm run build
+```
+
+Commands available:
+ - `npm run build` builds the frontend component to `osis_document/static/osis_document`
+ - `npm run watch` builds the frontend component to `osis_document/static/osis_document` and watch for file changes (warning: this not a hot-reload, you have to refresh your page)
+ - `npm run storybook` serve user stories page for development
+ - `npm run lint` checks Javascript syntax
+ - `npm run test` launch tests
+ - `npm run coverage` launch tests with coverage

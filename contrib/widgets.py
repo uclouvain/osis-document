@@ -28,7 +28,8 @@ import json
 from django import forms
 from django.conf import settings
 from django.contrib.postgres.forms import SplitArrayWidget
-from django.urls import reverse
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.translation import gettext_lazy as _
 
 
 class FileUploadWidget(SplitArrayWidget):
@@ -49,8 +50,9 @@ class FileUploadWidget(SplitArrayWidget):
 
     def build_attrs(self, base_attrs, extra_attrs=None):
         attrs = super().build_attrs(base_attrs, extra_attrs)
-        upload_url = getattr(settings, 'OSIS_DOCUMENT_UPLOAD_URL', None)
-        attrs['data-upload-url'] = upload_url or reverse('osis_document:request-upload')
+        if not getattr(settings, 'OSIS_DOCUMENT_UPLOAD_URL', None):
+            raise ImproperlyConfigured(_("Missing OSIS_DOCUMENT_UPLOAD_URL setting"))
+        attrs['data-upload-url'] = settings.OSIS_DOCUMENT_UPLOAD_URL
         if self.mimetypes is not None:
             attrs['data-mimetypes'] = json.dumps(self.mimetypes)
         if self.max_size is not None:
@@ -58,4 +60,5 @@ class FileUploadWidget(SplitArrayWidget):
         return attrs
 
     def format_value(self, value):
+        # Return the raw value (which is a list of uuids) for the template
         return value
