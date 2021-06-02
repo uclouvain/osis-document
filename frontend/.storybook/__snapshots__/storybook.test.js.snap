@@ -1,0 +1,75 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Storyshots Uploader Basic 1`] = `
+<div>
+  <div
+    class="dropzone"
+  >
+    <input
+      accept=""
+      multiple="multiple"
+      type="file"
+    />
+    
+    Drag and drop one or more files here or
+    
+    <button
+      class="btn btn-primary"
+      type="button"
+    >
+      <span
+        class="glyphicon glyphicon-plus"
+      />
+      
+      click to add a file
+    
+    </button>
+     
+    <!---->
+  </div>
+   
+  <ul
+    class="media-list"
+  />
+   
+</div>
+`;
+
+exports[`Storyshots Uploader Limited 1`] = `
+<div>
+  <div
+    class="dropzone"
+  >
+    <input
+      accept="image/png,image/jpeg"
+      multiple="multiple"
+      type="file"
+    />
+    
+    Drag and drop one or more files here or
+    
+    <button
+      class="btn btn-primary"
+      type="button"
+    >
+      <span
+        class="glyphicon glyphicon-plus"
+      />
+      
+      click to add a file
+    
+    </button>
+     
+    <span>
+      
+      (max size 0o)
+    
+    </span>
+  </div>
+   
+  <ul
+    class="media-list"
+  />
+   
+</div>
+`;

@@ -23,14 +23,30 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.urls import path
+from django.urls import path, reverse_lazy, include
+from django.views.generic import CreateView, UpdateView
 
-from . import views
+from osis_document.tests.document_test.models import TestDocument
 
-app_name = 'osis_document'
+app_name = 'document_test'
 urlpatterns = [
-    path('request-upload/', views.RequestUploadView.as_view(),
-         name='request-upload'),
-    path('confirm-upload/<path:token>/', views.ConfirmUploadView.as_view(),
-         name='confirm-upload'),
+    path(
+        '',
+        CreateView.as_view(
+            model=TestDocument,
+            fields='__all__',
+            success_url=reverse_lazy('document_test:test-upload'),
+        ),
+        name='test-upload',
+    ),
+    path(
+        'update/<int:pk>',
+        UpdateView.as_view(
+            model=TestDocument,
+            fields='__all__',
+            success_url=reverse_lazy('document_test:test-upload'),
+        ),
+        name='test-upload',
+    ),
+    path('document/', include('osis_document.contrib.urls')),
 ]

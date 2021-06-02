@@ -25,11 +25,17 @@
 # ##############################################################################
 import uuid
 
-from django.test import TestCase
+from django.core.exceptions import ImproperlyConfigured
+from django.test import TestCase, override_settings
+from django.urls import reverse_lazy
 
 from osis_document.contrib.widgets import FileUploadWidget
 
 
+@override_settings(
+    ROOT_URLCONF='osis_document.tests.document_test.urls',
+    OSIS_DOCUMENT_UPLOAD_URL=reverse_lazy('osis_document:request-upload'),
+)
 class WidgetTestCase(TestCase):
     def test_widget_is_uuid(self):
         widget = FileUploadWidget(size=2)
@@ -41,3 +47,18 @@ class WidgetTestCase(TestCase):
         render = widget.render('foo', [stub_uuid, stub_uuid2])
         self.assertIn(str(stub_uuid), render)
         self.assertIn(str(stub_uuid2), render)
+
+    def test_widget_renders_attributes(self):
+        widget = FileUploadWidget(size=1, mimetypes=['application/pdf'])
+        render = widget.render('foo', [])
+        self.assertIn('application/pdf', render)
+
+        widget = FileUploadWidget(size=1, max_size=1024)
+        render = widget.render('foo', [])
+        self.assertIn('1024', render)
+
+    @override_settings(OSIS_DOCUMENT_UPLOAD_URL=None)
+    def test_widget_raise_exception_missing_upload_url(self):
+        widget = FileUploadWidget(size=1)
+        with self.assertRaises(ImproperlyConfigured):
+            widget.render('foo', [])

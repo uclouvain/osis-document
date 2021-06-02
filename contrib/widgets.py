@@ -24,16 +24,38 @@
 #
 # ##############################################################################
 from django import forms
+from django.conf import settings
 from django.contrib.postgres.forms import SplitArrayWidget
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.translation import gettext_lazy as _
 
 
 class FileUploadWidget(SplitArrayWidget):
-    # TODO create a token on rendering ?
-    # TODO associate medias (css and js) for the VueJS widget
-    # TODO set data-attributes on rendering for VueJS
+    template_name = 'osis_document/uploader_widget.html'
+
+    class Media:
+        css = {
+            'all': ('osis_document/osis-document.css',)
+        }
+        js = ('osis_document/osis-document.umd.min.js',)
 
     def __init__(self, max_size=None, mimetypes=None, upload_text='', **kwargs):
         self.upload_text = upload_text
         self.mimetypes = mimetypes
         self.max_size = max_size
         super().__init__(widget=forms.TextInput, **kwargs)
+
+    def build_attrs(self, base_attrs, extra_attrs=None):
+        attrs = super().build_attrs(base_attrs, extra_attrs)
+        if not getattr(settings, 'OSIS_DOCUMENT_UPLOAD_URL', None):
+            raise ImproperlyConfigured(_("Missing OSIS_DOCUMENT_UPLOAD_URL setting"))
+        attrs['data-upload-url'] = settings.OSIS_DOCUMENT_UPLOAD_URL
+        if self.mimetypes:
+            attrs['data-mimetypes'] = ','.join(self.mimetypes)
+        if self.max_size is not None:
+            attrs['data-max-size'] = self.max_size
+        return attrs
+
+    def format_value(self, value):
+        # Return the raw value (which is a list of uuids) for the template
+        return value

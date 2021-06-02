@@ -45,19 +45,19 @@ jobs:
        - pip install python-coveralls
        - coveralls --base_dir /home/travis/build/uclouvain/osis-document/
 
-#    - language: node_js
-#      install:
-#        - npm install
-#      script:
-#        - npm run lint
-#        - npm run coverage
-#
-#      after_success:
-#       - npm install coveralls
-#       - coveralls < coverage/lcov.info
-#
-#env:
-#  - COVERALLS_PARALLEL=true
+    - language: node_js
+      install:
+        - npm install
+      script:
+        - npm run lint
+        - npm run coverage
 
-#notifications:
-#  webhooks: https://coveralls.io/webhook
+      after_success:
+       - npm install coveralls
+       - coveralls < coverage/lcov.info
+
+env:
+  - COVERALLS_PARALLEL=true
+
+notifications:
+  webhooks: https://coveralls.io/webhook
