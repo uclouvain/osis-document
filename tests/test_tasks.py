@@ -23,15 +23,36 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.apps import AppConfig
-from django.conf import settings
-from django.utils.translation import gettext_lazy as _
+from unittest import mock
+
+from django.test import TestCase
+from django.utils.datetime_safe import datetime
+
+from osis_document.enums import FileStatus
+from osis_document.models import Token, Upload
+from osis_document.tasks import cleanup_old_uploads
+from osis_document.tests.factories import WriteTokenFactory, PdfUploadFactory
 
 
-class OsisDocumentConfig(AppConfig):
-    name = 'osis_document'
-    verbose_name = _("Documents")
+class CleanupTaskTestCase(TestCase):
+    def test_cleanup_task(self):
+        with mock.patch('django.utils.timezone.now', return_value=datetime(1990, 1, 1)):
+            # Should be kept
+            PdfUploadFactory(status=FileStatus.UPLOADED.name)
+            # Token should be deleted but file kept
+            WriteTokenFactory(upload__status=FileStatus.UPLOADED.name)
+            # Should be deleted
+            upload = PdfUploadFactory()
 
-    def ready(self):
-        settings.OSIS_DOCUMENT_TOKEN_MAX_AGE = getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
-        settings.OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE = getattr(settings, 'OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE', 60 * 15)
+        PdfUploadFactory(status=FileStatus.UPLOADED.name)
+        WriteTokenFactory()
+        WriteTokenFactory(upload=upload)
+
+        self.assertEqual(Upload.objects.count(), 5)
+        self.assertEqual(Token.objects.count(), 3)
+
+        cleanup_old_uploads()
+
+        # Should have delete 2 tokens and a file
+        self.assertEqual(Upload.objects.count(), 4)
+        self.assertEqual(Token.objects.count(), 1)
