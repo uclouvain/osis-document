@@ -24,6 +24,7 @@
 #
 # ##############################################################################
 from datetime import datetime
+from unittest import mock
 
 from django.core.files.base import ContentFile
 from django.shortcuts import resolve_url
@@ -70,6 +71,7 @@ class RequestUploadTestCase(TestCase):
         self.assertEqual(400, response.status_code)
 
     def test_confirm_upload_too_old(self):
-        token = WriteTokenFactory(created_at=datetime(1990, 1, 1))
+        with mock.patch('django.utils.timezone.now', return_value=datetime(1990, 1, 1)):
+            token = WriteTokenFactory()
         response = self.client.post(resolve_url('confirm-upload', token=token.token))
         self.assertEqual(400, response.status_code)

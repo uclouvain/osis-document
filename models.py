@@ -29,7 +29,6 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
-from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
 from .enums import FileStatus, TokenAccess
@@ -75,6 +74,7 @@ class Upload(models.Model):
 
 
 def default_expiration_time():
+    from django.utils.timezone import now
     max_age = getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
     return now() + timedelta(seconds=max_age)
 

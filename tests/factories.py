@@ -24,11 +24,8 @@
 #
 # ##############################################################################
 import string
-from datetime import timedelta
 
 import factory
-from django.conf import settings
-from django.utils.timezone import now
 from factory.fuzzy import FuzzyText
 
 from osis_document.enums import TokenAccess
@@ -49,10 +46,6 @@ class WriteTokenFactory(factory.django.DjangoModelFactory):
         model = Token
 
     token = FuzzyText(length=154, chars=string.ascii_letters + string.digits + ':-')
-    created_at = factory.LazyFunction(now)
-    expires_at = factory.LazyAttribute(
-        lambda o: o.created_at + timedelta(seconds=getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15))
-    )
     upload = factory.SubFactory(PdfUploadFactory)
     access = TokenAccess.WRITE.name
 
