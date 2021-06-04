@@ -131,3 +131,18 @@ it('triggers upload when manual', async () => {
   await Vue.nextTick();
   expect(EventBus.$on).toHaveBeenCalled();
 });
+
+it('should handle existing value', async () => {
+  const wrapper = mount(Uploader, {
+    propsData: {
+      name: 'media',
+      baseUrl: '/',
+      values: ['0123456789'],
+    },
+    mocks: {
+      $t: (k) => k,
+    },
+  });
+
+  expect(wrapper.vm.tokens).toEqual({ 1: '0123456789' });
+});

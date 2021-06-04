@@ -39,6 +39,9 @@ class PdfUploadFactory(factory.django.DjangoModelFactory):
     file = factory.django.FileField(data=b'hello world', filename='the_file.pdf')
     size = 1024
     mimetype = 'application/pdf'
+    metadata = {
+        'md5': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+    }
 
 
 class WriteTokenFactory(factory.django.DjangoModelFactory):

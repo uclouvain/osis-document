@@ -42,6 +42,11 @@ const messages = {
       too_large: 'File is too large',
       wrong_type: 'File is wrong type',
     },
+    view_entry: {
+      rotate_left: 'Rotate image left',
+      rotate_right: 'Rotate image right',
+      loading: "Loading...",
+    },
     error: 'Error: {error}',
     request_error: 'Request error: {error}',
     units: ['B', 'KB', 'MB', 'GB', 'TB'],
@@ -57,6 +62,11 @@ const messages = {
       completion: '{progress}% transférés',
       too_large: 'Le fichier est trop lourd',
       wrong_type: 'Le fichier est du mauvais type',
+    },
+    view_entry: {
+      rotate_left: "Faire pivoter l'image à gauche",
+      rotate_right: "Faire pivoter l'image à droite",
+      loading: "Chargement...",
     },
     error: 'Erreur : {error}',
     request_error: 'Erreur lors de la requête : {error}',

@@ -23,12 +23,12 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-import uuid
 
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
 
 from osis_document.contrib.widgets import FileUploadWidget
+from osis_document.tests.factories import PdfUploadFactory
 
 
 @override_settings(
@@ -36,16 +36,11 @@ from osis_document.contrib.widgets import FileUploadWidget
     OSIS_DOCUMENT_BASE_URL='/document/',
 )
 class WidgetTestCase(TestCase):
-    def test_widget_is_uuid(self):
+    def test_widget_should_not_expose_uuid(self):
         widget = FileUploadWidget(size=2)
-        stub_uuid = uuid.uuid4()
+        stub_uuid = PdfUploadFactory().uuid
         render = widget.render('foo', [stub_uuid])
-        self.assertIn(str(stub_uuid), render)
-
-        stub_uuid2 = uuid.uuid4()
-        render = widget.render('foo', [stub_uuid, stub_uuid2])
-        self.assertIn(str(stub_uuid), render)
-        self.assertIn(str(stub_uuid2), render)
+        self.assertNotIn(str(stub_uuid), render)
 
     def test_widget_renders_attributes(self):
         widget = FileUploadWidget(size=1, mimetypes=['application/pdf'])

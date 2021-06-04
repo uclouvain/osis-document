@@ -21,10 +21,13 @@
 * at the root of the source code of this program.  If not,
 * see http://www.gnu.org/licenses/.
 {% endcomment %}
+
 {% if widget.wrap_label %}<label{% if widget.attrs.id %} for="{{ widget.attrs.id }}"{% endif %}>{% endif %}
 <div class="document-uploader"
      data-name="{{ widget.name }}"
+     {% if widget.value %}
      data-values="{{ widget.value|join:',' }}"
+     {% endif %}
     {% include "django/forms/widgets/attrs.html" %}
 ></div>
 {% if widget.wrap_label %} {{ widget.label }}</label>{% endif %}

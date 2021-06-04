@@ -24,7 +24,7 @@
 #
 # ##############################################################################
 from django.forms import modelform_factory
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils.translation import gettext as _
 
 from osis_document.enums import FileStatus
@@ -33,6 +33,7 @@ from osis_document.tests.document_test.models import TestDocument
 from osis_document.tests.factories import WriteTokenFactory
 
 
+@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls')
 class FieldTestCase(TestCase):
     def test_model_form_validation(self):
         ModelForm = modelform_factory(TestDocument, fields='__all__')

@@ -23,26 +23,16 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-import uuid
-from datetime import timedelta
+import hashlib
 
-from django.conf import settings
 from django.core.exceptions import FieldError
+from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
 from osis_document.enums import FileStatus, TokenAccess
+from osis_document.exceptions import Md5Mismatch
 from osis_document.models import Upload, Token
-
-
-def is_uuid(value):
-    if not isinstance(value, (str, uuid.UUID)):
-        return False
-    try:
-        uuid.UUID(str(value))
-        return True
-    except ValueError:
-        return False
 
 
 def confirm_upload(token):
@@ -66,15 +56,18 @@ def confirm_upload(token):
     return upload.uuid
 
 
-def get_metadata(token_or_uuid: str):
-    if is_uuid(token_or_uuid):
-        upload = Upload.objects.filter(uuid=token_or_uuid).first()
-    else:
-        upload = Upload.objects.filter(tokens__token=token_or_uuid).first()
+def get_metadata(token: str):
+    upload = Upload.objects.filter(tokens__token=token).first()
     if not upload:
         return None
+    with upload.file.open() as file:
+        md5 = hashlib.md5(file.read()).hexdigest()
+    if upload.metadata.get('md5') != md5:
+        raise Md5Mismatch()
     return {
         'size': upload.size,
         'mimetype': upload.mimetype,
+        'name': upload.file.name,
+        'url': reverse('osis_document:get-file', kwargs={'token': token}),
         **upload.metadata,
     }

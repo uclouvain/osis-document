@@ -28,12 +28,13 @@ from unittest.mock import patch
 
 from django import forms
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
-from osis_document.contrib.forms import FileUploadField, TokenOrUuidField
+from osis_document.contrib.forms import FileUploadField, TokenField
 from osis_document.tests.factories import WriteTokenFactory
 
 
+@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls')
 class FormTestCase(TestCase):
     def test_normal_behavior(self):
         class TestForm(forms.Form):
@@ -52,7 +53,7 @@ class FormTestCase(TestCase):
             'media_0': 'foobar',
         })
         self.assertFalse(form.is_valid(), form.errors)
-        error = TokenOrUuidField.default_error_messages['nonexistent']
+        error = TokenField.default_error_messages['nonexistent']
         self.assertIn(str(error), form.errors['media'][0])
 
     def test_check_limit(self):
@@ -74,7 +75,7 @@ class FormTestCase(TestCase):
             'media_0': WriteTokenFactory().token,
         })
         self.assertFalse(form.is_valid(), form.errors)
-        error = TokenOrUuidField.default_error_messages['size']
+        error = TokenField.default_error_messages['size']
         self.assertIn(str(error), form.errors['media'][0])
 
     def test_check_mimetype(self):
@@ -85,7 +86,7 @@ class FormTestCase(TestCase):
             'media_0': WriteTokenFactory().token,
         })
         self.assertFalse(form.is_valid(), form.errors)
-        error = TokenOrUuidField.default_error_messages['mimetype']
+        error = TokenField.default_error_messages['mimetype']
         self.assertIn(str(error), form.errors['media'][0])
 
     def test_persist_confirms_token(self):

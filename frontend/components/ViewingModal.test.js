@@ -23,37 +23,29 @@
  *   see http://www.gnu.org/licenses/.
  *
  */
-import Vue from 'vue';
-import { i18n } from './i18n';
-import Uploader from './Uploader';
-import Visualizer from './Visualizer';
 
-document.querySelectorAll('.document-uploader').forEach((elem) => {
-  const props = { ...elem.dataset };
-  if (typeof props.limit !== 'undefined') {
-    props.limit = Number.parseInt(props.limit);
-  }
-  if (typeof props.maxSize !== 'undefined') {
-    props.maxSize = Number.parseInt(props.maxSize);
-  }
-  if (typeof props.mimetypes !== 'undefined') {
-    props.mimetypes = props.mimetypes.split(',');
-  }
-  if (typeof props.values !== 'undefined') {
-    props.values = props.values.split(',');
-  }
-  if (typeof props.automaticUpload !== 'undefined') {
-    props.automaticUpload = props.automaticUpload === "true";
-  }
-  new Vue({
-    render: (h) => h(Uploader, { props }),
-    i18n,
-  }).$mount(elem);
-});
+import { mount } from '@vue/test-utils';
+import ViewingModal from './ViewingModal.vue';
 
-document.querySelectorAll('.document-visualizer').forEach((elem) => {
-  new Vue({
-    render: (h) => h(Visualizer, { props: elem.dataset }),
-    i18n,
-  }).$mount(elem);
+it('should mount', () => {
+  window.jQuery = jest.fn(() => ({
+    modal: () => {},
+  }));
+  const wrapper = mount(ViewingModal, {
+    propsData: {
+      file: {
+        mimetype: 'image/jpeg',
+        size: 38329,
+        url: './placeholder.jpeg',
+        name: 'test image',
+      },
+      id: '0',
+    },
+    mocks: {
+      jQuery,
+    },
+  });
+  expect(wrapper.text()).toContain('test image');
+  wrapper.destroy();
+  expect(window.jQuery).toHaveBeenCalled();
 });

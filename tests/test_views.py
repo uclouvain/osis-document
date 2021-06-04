@@ -75,3 +75,37 @@ class RequestUploadTestCase(TestCase):
             token = WriteTokenFactory()
         response = self.client.post(resolve_url('confirm-upload', token=token.token))
         self.assertEqual(400, response.status_code)
+
+
+@override_settings(ROOT_URLCONF='osis_document.contrib.urls')
+class FileViewTestCase(TestCase):
+    def test_get_file(self):
+        token = ReadTokenFactory()
+        response = self.client.get(resolve_url('get-file', token=token.token))
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_file_bad_md5(self):
+        token = ReadTokenFactory(upload__metadata={'md5': 'badvalue'})
+        response = self.client.get(resolve_url('get-file', token=token.token))
+        self.assertEqual(response.status_code, 409)
+
+    def test_get_file_bad_token(self):
+        response = self.client.get(resolve_url('get-file', token='token'))
+        self.assertEqual(response.status_code, 404)
+
+
+@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls')
+class MetadataViewTestCase(TestCase):
+    def test_get_metadata(self):
+        token = ReadTokenFactory()
+        response = self.client.get(resolve_url('osis_document:metadata', token=token.token))
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_file_bad_token(self):
+        response = self.client.get(resolve_url('osis_document:metadata', token='token'))
+        self.assertEqual(response.status_code, 404)
+
+    def test_bad_md5(self):
+        token = ReadTokenFactory(upload__metadata={'md5': 'badvalue'})
+        response = self.client.get(resolve_url('osis_document:metadata', token=token.token))
+        self.assertEqual(response.status_code, 409)

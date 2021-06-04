@@ -6,7 +6,7 @@
     "build": "vue-cli-service build --target lib --name osis-document --entry frontend/main.js --mode production",
     "coverage": "jest --coverage",
     "lint": "vue-cli-service lint frontend",
-    "storybook": "vue-cli-service storybook:serve -p 6006 -c frontend/.storybook",
+    "storybook": "vue-cli-service storybook:serve -p 6006 -c frontend/.storybook -s frontend/.storybook/assets ",
     "test": "jest",
     "watch": "vue-cli-service build --target lib --name osis-document --entry frontend/main.js --mode production --watch"
   },

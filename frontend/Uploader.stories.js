@@ -27,6 +27,7 @@
 import Uploader from './Uploader';
 import { newServer } from 'mock-xmlhttprequest';
 import { i18n } from './i18n';
+import fetchMock from 'fetch-mock';
 
 // XMLHttpRequest mock
 const goodServer = newServer({
@@ -107,6 +108,14 @@ export const manualTrigger = () => {
 
 export const withExistingValue = () => {
   goodServer.install();
+  const documentMetadata = {
+    mimetype: 'application/vnd.oasis.opendocument.text',
+    size: 82381,
+    url: './placeholder.odt',
+    name: 'test document',
+  };
+  fetchMock.restore()
+    .get('/metadata/12e68184-5cba-4b27-9988-609a6cc3be63', documentMetadata);
   return {
     components: { Uploader },
     template: `
