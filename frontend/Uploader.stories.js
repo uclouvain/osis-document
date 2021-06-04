@@ -29,8 +29,8 @@ import { newServer } from 'mock-xmlhttprequest';
 import { i18n } from './i18n';
 
 // XMLHttpRequest mock
-const server = newServer({
-  post: ['/upload', function (xhr) {
+const goodServer = newServer({
+  post: ['/request-upload', function (xhr) {
     xhr.uploadProgress(4096);
     setTimeout(() => {
       xhr.uploadProgress(4096 * 5);
@@ -45,34 +45,80 @@ const server = newServer({
   }],
 });
 
+const offlineServer = newServer({
+  post: ['/request-upload', function (xhr) {
+    xhr.respond(404);
+  }],
+});
+
 export const basic = () => {
-  server.install();
+  offlineServer.install();
 
   return {
     components: { Uploader },
-    template: '<Uploader upload-url="/upload" name="media"/>',
+    template: '<Uploader base-url="/" name="media"/>',
     destroyed () {
-      server.remove();
+      offlineServer.remove();
     },
     i18n,
   };
 };
 
 export const limited = () => {
-  server.install();
+  offlineServer.install();
 
   return {
     components: { Uploader },
     template: `
       <Uploader
-          upload-url="/upload"
+          base-url="/"
           name="media"
-          :max-size="5242880"
+          :max-size="100 * 1024"
           :mimetypes="['image/png','image/jpeg']"
+          :limit="1"
       />
     `,
     destroyed () {
-      server.remove();
+      offlineServer.remove();
+    },
+    i18n,
+  };
+};
+
+export const manualTrigger = () => {
+  offlineServer.install();
+
+  return {
+    components: { Uploader },
+    template: `
+      <Uploader
+          base-url="/"
+          name="media"
+          :limit="3"
+          :automatic-upload="false"
+      />
+    `,
+    destroyed () {
+      offlineServer.remove();
+    },
+    i18n,
+  };
+};
+
+export const withExistingValue = () => {
+  goodServer.install();
+  return {
+    components: { Uploader },
+    template: `
+      <Uploader
+          base-url="/"
+          name="media"
+          :limit="5"
+          :values="['12e68184-5cba-4b27-9988-609a6cc3be63']"
+      />
+    `,
+    destroyed () {
+      goodServer.remove();
     },
     i18n,
   };

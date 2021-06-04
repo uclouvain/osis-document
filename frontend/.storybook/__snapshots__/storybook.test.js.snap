@@ -32,6 +32,8 @@ exports[`Storyshots Uploader Basic 1`] = `
     class="media-list"
   />
    
+  <!---->
+   
 </div>
 `;
 
@@ -71,5 +73,86 @@ exports[`Storyshots Uploader Limited 1`] = `
     class="media-list"
   />
    
+  <!---->
+   
+</div>
+`;
+
+exports[`Storyshots Uploader Manual Trigger 1`] = `
+<div>
+  <div
+    class="dropzone"
+  >
+    <input
+      accept=""
+      multiple="multiple"
+      type="file"
+    />
+    
+    Drag and drop one or more files here or
+    
+    <button
+      class="btn btn-primary"
+      type="button"
+    >
+      <span
+        class="glyphicon glyphicon-plus"
+      />
+      
+      click to add a file
+    
+    </button>
+     
+    <!---->
+  </div>
+   
+  <ul
+    class="media-list"
+  />
+   
+  <!---->
+   
+</div>
+`;
+
+exports[`Storyshots Uploader With Existing Value 1`] = `
+<div>
+  <div
+    class="dropzone"
+  >
+    <input
+      accept=""
+      multiple="multiple"
+      type="file"
+    />
+    
+    Drag and drop one or more files here or
+    
+    <button
+      class="btn btn-primary"
+      type="button"
+    >
+      <span
+        class="glyphicon glyphicon-plus"
+      />
+      
+      click to add a file
+    
+    </button>
+     
+    <!---->
+  </div>
+   
+  <ul
+    class="media-list"
+  />
+   
+  <!---->
+   
+  <input
+    name="media_0"
+    type="hidden"
+    value="12e68184-5cba-4b27-9988-609a6cc3be63"
+  />
 </div>
 `;

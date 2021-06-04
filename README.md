@@ -16,7 +16,7 @@
 
 ## Configuring Django
 
-Add `osis_document` to `INSTALLED_APPS` and configure the upload url:
+Add `osis_document` to `INSTALLED_APPS` and configure the base url:
 
 ```python
 INSTALLED_APPS = (
@@ -25,7 +25,7 @@ INSTALLED_APPS = (
     ...
 )
 
-OSIS_DOCUMENT_UPLOAD_URL = getenv('OSIS_DOCUMENT_UPLOAD_URL', reverse_lazy('osis_document:request-upload'))
+OSIS_DOCUMENT_BASE_URL = getenv('OSIS_DOCUMENT_BASE_URL', '/osis-document/')
 ```
 
 

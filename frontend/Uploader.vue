@@ -26,16 +26,17 @@
 <template>
   <div>
     <div
+        v-if="Object.values(filteredTokens).length < limit"
         class="dropzone"
-        :class="{hovering: isHovering}"
-        @dragenter="isHovering = true"
+        :class="{hovering: isDragging}"
+        @dragenter="isDragging = true"
     >
       <input
           ref="fileInput"
           type="file"
           multiple
           :accept="mimetypes ? mimetypes.join(',') : null"
-          @dragleave="isHovering = false"
+          @dragleave="isDragging = false"
           @change="onFilePicked"
       >
       {{ $t('uploader.drag_n_drop_label') }}
@@ -51,20 +52,31 @@
         {{ $t('uploader.max_size_label', { size: humanizedSize(maxSize) }) }}
       </span>
     </div>
+
     <ul class="media-list">
       <UploadEntry
           v-for="(file, index) in fileList"
           :key="index"
           :file="file"
-          :upload-url="uploadUrl"
+          :base-url="baseUrl"
           :max-size="maxSize"
           :mimetypes="mimetypes"
-          @delete="$delete(fileList, index)"
-          @set-token="$set(tokens, index, $event)"
+          :automatic="automaticUpload"
+          @delete="$delete(fileList, index); $delete(tokens, index);"
+          @set-token="$set(tokens, index, $event); $delete(fileList, index);"
       />
     </ul>
+    <button
+        v-if="!automaticUpload && Object.values(fileList).length"
+        class="btn btn-default pull-right"
+        type="button"
+        @click="triggerUpload"
+    >
+      {{ $t('uploader.trigger_upload') }}
+    </button>
+
     <input
-        v-for="(token, index) in filteredTokens"
+        v-for="(token, index) in Object.values(filteredTokens)"
         :key="`${name}_${index}`"
         type="hidden"
         :name="`${name}_${index}`"
@@ -76,6 +88,7 @@
 <script>
 import { humanizedSize } from './utils';
 import UploadEntry from './components/UploadEntry';
+import EventBus from './event-bus';
 
 export default {
   name: 'Uploader',
@@ -85,7 +98,7 @@ export default {
       type: String,
       required: true,
     },
-    uploadUrl: {
+    baseUrl: {
       type: String,
       required: true,
     },
@@ -97,6 +110,14 @@ export default {
       type: Number,
       default: 0,
     },
+    limit: {
+      type: Number,
+      default: 1,
+    },
+    automaticUpload: {
+      type: Boolean,
+      default: true,
+    },
     values: {
       type: Array,
       default: () => [],
@@ -107,24 +128,35 @@ export default {
     },
   },
   data () {
+    let indexGenerated = 0;
     return {
-      isHovering: false,
-      fileList: [],
-      tokens: [],
+      isDragging: false,
+      fileList: {},
+      tokens: Object.fromEntries(this.values.map(f => {
+        indexGenerated++;
+        return [indexGenerated, f];
+      })),
+      indexGenerated,
     };
   },
   computed: {
     filteredTokens: function () {
-      return this.tokens.filter(t => !!t);
+      return Object.fromEntries(Object.entries(this.tokens).filter(e => !!e[1]));
     },
   },
   methods: {
     humanizedSize,
+    triggerUpload() {
+      EventBus.$emit('upload');
+    },
     onFilePicked (e) {
       const files = e.target.files;
-      this.fileList.push(...files);
-      this.tokens.push(...Array(files.length).fill(null));
-      this.isHovering = false;
+      Array.from(files).forEach(file => {
+        this.indexGenerated++;
+        this.$set(this.fileList, this.indexGenerated, file);
+        this.$set(this.tokens, this.indexGenerated, null);
+      });
+      this.isDragging = false;
     },
   },
 };

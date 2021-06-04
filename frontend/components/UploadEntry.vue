@@ -75,8 +75,13 @@
     </div>
   </li>
 </template>
+
 <script>
+/**
+ * This component goal is to upload a local file and emit a token
+ */
 import { humanizedSize } from '../utils';
+import EventBus from '../event-bus';
 
 export default {
   name: 'UploadEntry',
@@ -85,7 +90,7 @@ export default {
       type: File,
       required: true,
     },
-    uploadUrl: {
+    baseUrl: {
       type: String,
       required: true,
     },
@@ -96,6 +101,10 @@ export default {
     mimetypes: {
       type: Array,
       default: () => [],
+    },
+    automatic: {
+      type: Boolean,
+      default: true,
     },
   },
   data () {
@@ -121,8 +130,10 @@ export default {
       this.error = this.$t('upload_entry.too_large');
     } else if (this.mimetypes.length && !this.mimetypes.includes(this.file.type)) {
       this.error = this.$t('upload_entry.wrong_type');
-    } else {
+    } else if (this.automatic) {
       this.sendFile();
+    } else {
+      EventBus.$on('upload', this.sendFile);
     }
   },
   methods: {
@@ -142,12 +153,13 @@ export default {
       xhr.upload.addEventListener('load', () => {
         self.progress = 100;
       }, false);
-      xhr.open('POST', this.uploadUrl, true);
+      xhr.open('POST', `${this.baseUrl}request-upload`, true);
       xhr.onreadystatechange = function () {
-        // TODO handle errors
         if (xhr.readyState === 4 && xhr.status >= 200 && xhr.status <= 300) {
           const response = JSON.parse(xhr.responseText);
           self.$emit('set-token', response.token);
+        } else {
+          self.error = self.$t('request_error', { error: xhr.statusText });
         }
       };
 

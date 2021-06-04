@@ -47,9 +47,10 @@ class FileUploadWidget(SplitArrayWidget):
 
     def build_attrs(self, base_attrs, extra_attrs=None):
         attrs = super().build_attrs(base_attrs, extra_attrs)
-        if not getattr(settings, 'OSIS_DOCUMENT_UPLOAD_URL', None):
-            raise ImproperlyConfigured(_("Missing OSIS_DOCUMENT_UPLOAD_URL setting"))
-        attrs['data-upload-url'] = settings.OSIS_DOCUMENT_UPLOAD_URL
+        if not getattr(settings, 'OSIS_DOCUMENT_BASE_URL', None):
+            raise ImproperlyConfigured(_("Missing OSIS_DOCUMENT_BASE_URL setting"))
+        attrs['data-limit'] = self.size
+        attrs['data-base-url'] = settings.OSIS_DOCUMENT_BASE_URL
         if self.mimetypes:
             attrs['data-mimetypes'] = ','.join(self.mimetypes)
         if self.max_size is not None:
