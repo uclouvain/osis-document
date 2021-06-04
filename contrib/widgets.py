@@ -39,7 +39,8 @@ class FileUploadWidget(SplitArrayWidget):
         }
         js = ('osis_document/osis-document.umd.min.js',)
 
-    def __init__(self, max_size=None, mimetypes=None, upload_text='', **kwargs):
+    def __init__(self, max_size=None, mimetypes=None, upload_text='', automatic_upload=True, **kwargs):
+        self.automatic_upload = automatic_upload
         self.upload_text = upload_text
         self.mimetypes = mimetypes
         self.max_size = max_size
@@ -53,6 +54,8 @@ class FileUploadWidget(SplitArrayWidget):
         attrs['data-base-url'] = settings.OSIS_DOCUMENT_BASE_URL
         if self.mimetypes:
             attrs['data-mimetypes'] = ','.join(self.mimetypes)
+        if not self.automatic_upload:
+            attrs['data-automatic-upload'] = "false"
         if self.max_size is not None:
             attrs['data-max-size'] = self.max_size
         return attrs

@@ -24,6 +24,7 @@
 #
 # ##############################################################################
 import uuid
+from unittest.mock import patch
 
 from django import forms
 
@@ -86,3 +87,14 @@ class FormTestCase(TestCase):
         self.assertFalse(form.is_valid(), form.errors)
         error = TokenOrUuidField.default_error_messages['mimetype']
         self.assertIn(str(error), form.errors['media'][0])
+
+    def test_persist_confirms_token(self):
+        class TestForm(forms.Form):
+            media = FileUploadField()
+
+        token = WriteTokenFactory().token
+        form = TestForm({'media_0': token})
+        self.assertTrue(form.is_valid(), msg=form.errors)
+        with patch('osis_document.utils.confirm_upload') as confirm:
+            form.fields['media'].persist(form.cleaned_data['media'])
+            confirm.assert_called_with(token)

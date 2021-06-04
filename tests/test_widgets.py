@@ -55,6 +55,11 @@ class WidgetTestCase(TestCase):
         widget = FileUploadWidget(size=1, max_size=1024)
         render = widget.render('foo', [])
         self.assertIn('1024', render)
+        self.assertNotIn('automatic', render)
+
+        widget = FileUploadWidget(size=1, automatic_upload=False)
+        render = widget.render('foo', [])
+        self.assertIn('automatic', render)
 
     @override_settings(OSIS_DOCUMENT_BASE_URL=None)
     def test_widget_raise_exception_missing_upload_url(self):

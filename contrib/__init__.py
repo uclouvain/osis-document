@@ -23,3 +23,13 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+
+from osis_document.contrib.fields import FileField
+from osis_document.contrib.forms import FileUploadField
+from osis_document.contrib.widgets import FileUploadWidget
+
+__all__ = [
+    'FileField',
+    'FileUploadField',
+    'FileUploadWidget',
+]

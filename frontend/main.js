@@ -39,6 +39,9 @@ document.querySelectorAll('.document-uploader').forEach((elem) => {
   if (typeof props.values !== 'undefined') {
     props.values = props.values.split(',');
   }
+  if (typeof props.automaticUpload !== 'undefined') {
+    props.automaticUpload = props.automaticUpload === "true";
+  }
   new Vue({
     render: (h) => h(Uploader, { props }),
     i18n,
