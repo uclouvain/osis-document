@@ -26,12 +26,11 @@
 from django import forms
 from django.conf import settings
 from django.contrib.postgres.forms import SplitArrayWidget
-from django.core import signing
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 
 from osis_document.enums import TokenAccess
-from osis_document.models import Token
+from osis_document.utils import get_token
 
 
 class FileUploadWidget(SplitArrayWidget):
@@ -67,10 +66,6 @@ class FileUploadWidget(SplitArrayWidget):
     def format_value(self, value):
         # Convert the raw value (which is a list of uuids) to a list of write tokens
         return [
-            Token.objects.create(
-                token=signing.dumps(str(uuid)),
-                upload_id=uuid,
-                access=TokenAccess.WRITE.name,
-            ).token
+            get_token(uuid, access=TokenAccess.WRITE.name)
             for uuid in value
         ]

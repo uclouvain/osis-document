@@ -25,6 +25,7 @@
 # ##############################################################################
 import hashlib
 
+from django.core import signing
 from django.core.exceptions import FieldError
 from django.urls import reverse
 from django.utils.timezone import now
@@ -71,3 +72,11 @@ def get_metadata(token: str):
         'url': reverse('osis_document:get-file', kwargs={'token': token}),
         **upload.metadata,
     }
+
+
+def get_token(uuid, **kwargs):
+    return Token.objects.create(
+        upload_id=uuid,
+        token=signing.dumps(str(uuid)),
+        **kwargs
+    ).token
