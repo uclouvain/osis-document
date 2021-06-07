@@ -38,7 +38,7 @@ it('should mount', () => {
       file: new File([], 'foobar.png', {
         type: 'image/png',
       }),
-      uploadUrl: '',
+      baseUrl: '/',
     },
     mocks: {
       $t: k => k,
@@ -54,7 +54,7 @@ it('should display error', async () => {
       file: new File(Array(1024).fill('foobar'), 'foobar.png', {
         type: 'image/png',
       }),
-      uploadUrl: '',
+      baseUrl: '/',
       maxSize: 150,
     },
     mocks: {
@@ -63,6 +63,7 @@ it('should display error', async () => {
   });
   await Vue.nextTick();
   expect(wrapper.text()).toContain('upload_entry.too_large');
+  expect(wrapper.emitted()).toEqual({});
 });
 
 it('should display error', async () => {
@@ -71,7 +72,7 @@ it('should display error', async () => {
       file: new File([], 'foobar.pdf', {
         type: 'application/pdf',
       }),
-      uploadUrl: '',
+      baseUrl: '/',
       mimetypes: ['image/png', 'image/jpeg'],
     },
     mocks: {
@@ -80,6 +81,7 @@ it('should display error', async () => {
   });
   await Vue.nextTick();
   expect(wrapper.text()).toContain('upload_entry.wrong_type');
+  expect(wrapper.emitted()).toEqual({});
 });
 
 jest.useFakeTimers();
@@ -87,7 +89,7 @@ jest.useFakeTimers();
 it('should upload', async () => {
   // Mocks
   const server = newServer({
-    post: ['http://dummyhost/upload', function (xhr) {
+    post: ['http://dummyhost/request-upload', function (xhr) {
       xhr.uploadProgress(4096);
       xhr.respond(
         200,
@@ -104,7 +106,7 @@ it('should upload', async () => {
       file: new File([new ArrayBuffer(1)], 'foobar.png', {
         type: 'image/png',
       }),
-      uploadUrl: 'http://dummyhost/upload',
+      baseUrl: 'http://dummyhost/',
     },
     mocks: {
       $t: k => k,
@@ -115,7 +117,7 @@ it('should upload', async () => {
   });
   await Vue.nextTick();
   jest.runAllTimers();
-  expect(wrapper.emitted()['set-token'][0]).toEqual(['0123456789']);
+  expect(wrapper.emitted('set-token')[0]).toEqual(['0123456789']);
   expect(window.URL.createObjectURL).toHaveBeenCalled();
 
   const image = wrapper.find('img');

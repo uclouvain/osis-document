@@ -27,14 +27,13 @@ import uuid
 
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
-from django.urls import reverse_lazy
 
 from osis_document.contrib.widgets import FileUploadWidget
 
 
 @override_settings(
     ROOT_URLCONF='osis_document.tests.document_test.urls',
-    OSIS_DOCUMENT_UPLOAD_URL=reverse_lazy('osis_document:request-upload'),
+    OSIS_DOCUMENT_BASE_URL='/document/',
 )
 class WidgetTestCase(TestCase):
     def test_widget_is_uuid(self):
@@ -56,8 +55,13 @@ class WidgetTestCase(TestCase):
         widget = FileUploadWidget(size=1, max_size=1024)
         render = widget.render('foo', [])
         self.assertIn('1024', render)
+        self.assertNotIn('automatic', render)
 
-    @override_settings(OSIS_DOCUMENT_UPLOAD_URL=None)
+        widget = FileUploadWidget(size=1, automatic_upload=False)
+        render = widget.render('foo', [])
+        self.assertIn('automatic', render)
+
+    @override_settings(OSIS_DOCUMENT_BASE_URL=None)
     def test_widget_raise_exception_missing_upload_url(self):
         widget = FileUploadWidget(size=1)
         with self.assertRaises(ImproperlyConfigured):

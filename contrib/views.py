@@ -35,6 +35,7 @@ from rest_framework.views import APIView
 
 from osis_document.enums import TokenAccess
 from osis_document.models import Upload, Token
+from osis_document.utils import confirm_upload
 
 __all__ = [
     'RequestUploadView',
@@ -45,8 +46,6 @@ __all__ = [
     'get_file',
     'get_metadata',
 ]
-
-from osis_document.utils import confirm_upload
 
 
 class UploadUserThrottle(UserRateThrottle):
@@ -90,7 +89,7 @@ class RequestUploadView(APIView):
             })
             Token.objects.create(
                 upload=instance,
-                access=TokenAccess.WRITE,
+                access=TokenAccess.WRITE.name,
                 token=token,
             )
             return Response({'token': token}, status.HTTP_201_CREATED)

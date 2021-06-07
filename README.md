@@ -16,16 +16,18 @@
 
 ## Configuring Django
 
-Add `osis_document` to `INSTALLED_APPS` and configure the upload url:
+Add `osis_document` to `INSTALLED_APPS` and configure the base url:
 
 ```python
+import os
+
 INSTALLED_APPS = (
     ...
     'osis_document',
     ...
 )
 
-OSIS_DOCUMENT_UPLOAD_URL = getenv('OSIS_DOCUMENT_UPLOAD_URL', reverse_lazy('osis_document:request-upload'))
+OSIS_DOCUMENT_BASE_URL = os.environ.get('OSIS_DOCUMENT_BASE_URL', '/osis-document/')
 ```
 
 
@@ -38,9 +40,9 @@ OSIS_DOCUMENT_UPLOAD_URL = getenv('OSIS_DOCUMENT_UPLOAD_URL', reverse_lazy('osis
 To declare a file field within a Django model :
 
 ```python
-
 from django.db import models
-from osis_document import FileField
+from django.utils.translation import gettext_lazy as _
+from osis_document.contrib import FileField
 
 class MyModel(models.Model):
     files = FileField(
@@ -55,20 +57,22 @@ This `FileField` model field is associated with the form field `FileUploadField`
 
 ```python
 from django.forms import forms
-from osis_document import FileUploadField
+from django.utils.translation import gettext_lazy as _
+from osis_document.contrib import FileUploadField
 
 class MyModelForm(forms.Form):
     files = FileUploadField(
         verbose_name=_("ID card"),
         max_files=2,
         mimetypes=['application/pdf', 'image/png', 'image/jpeg'],
+        automatic_upload=False,  # May be set to force displaying upload button
     )
 
     def save(self):
         uuids = self.files.persist(self.cleaned_data['files'])
 ```
 
-Note 1: it is very important to call the persists method on the field upon saving, it return the uuid of the files (it is your job to store these uuids).
+Note 1: it is very important to call the persists method on the field upon saving, it returns the uuid of the files (it is your job to store these uuids).
 
 Note 2: you can pick examples of MIME types from [this list](<https://developer.mozilla.org/fr/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types>).
 
@@ -98,10 +102,9 @@ See next section on what information is available in the metadata.
 To get raw info or download url given a file uuid:
 
 ```python
-from osis_document import get_metadata, get_download_url
+from osis_document.utils import get_metadata
  
-metadata = get_metadata(uuid)
-download_url = get_download_url(uuid)
+metadata = get_metadata(token)
 ```
 
 Available metadata info:
@@ -110,6 +113,8 @@ Available metadata info:
 - `size`: The size of the file in bytes
 - `mimetype`: The MIME type as per detected by python-magic
 - `uploaded_at`: The datetime the file was uploaded at
+- `md5`: The md5 checksum of the file
+- `url`: The file url to get the file
 
 
 # Contributing to OSIS-History

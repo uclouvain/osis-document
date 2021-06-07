@@ -35,12 +35,15 @@ const messages = {
       drag_n_drop_label: 'Drag and drop one or more files here or',
       add_file_label: 'click to add a file',
       max_size_label: '(max size {size})',
+      trigger_upload: 'Upload',
     },
     upload_entry: {
       completion: '{progress}% uploaded',
       too_large: 'File is too large',
       wrong_type: 'File is wrong type',
     },
+    error: 'Error: {error}',
+    request_error: 'Request error: {error}',
     units: ['B', 'KB', 'MB', 'GB', 'TB'],
   },
   'fr-be': {
@@ -48,12 +51,15 @@ const messages = {
       drag_n_drop_label: 'Glisser-déposer un ou plusieurs fichiers ici ou',
       add_file_label: 'cliquer pour ajouter un fichier',
       max_size_label: '(taille maximum {size})',
+      trigger_upload: 'Transférer',
     },
     upload_entry: {
       completion: '{progress}% transférés',
       too_large: 'Le fichier est trop lourd',
       wrong_type: 'Le fichier est du mauvais type',
     },
+    error: 'Erreur : {error}',
+    request_error: 'Erreur lors de la requête : {error}',
     units: ['o', 'Ko', 'Mo', 'Go', 'To'],
   },
 };

@@ -58,13 +58,14 @@ class TokenOrUuidField(forms.CharField):
 
 
 class FileUploadField(SplitArrayField):
-    def __init__(self, limit=None, max_size=None, mimetypes=None, upload_text='', **kwargs):
+    def __init__(self, limit=None, max_size=None, mimetypes=None, upload_text='', automatic_upload=True, **kwargs):
         self.upload_text = upload_text
         self.mimetypes = mimetypes
         self.max_size = max_size
         kwargs.setdefault('widget', FileUploadWidget(
             max_size=max_size,
             mimetypes=mimetypes,
+            automatic_upload=automatic_upload,
             size=limit or 1,
         ))
         base_field = TokenOrUuidField(
@@ -75,3 +76,8 @@ class FileUploadField(SplitArrayField):
         kwargs.setdefault('base_field', base_field)
         kwargs.setdefault('size', limit or 1)
         super().__init__(**kwargs)
+
+    @staticmethod
+    def persist(values):
+        from osis_document.utils import confirm_upload
+        return [confirm_upload(token) for token in values]

@@ -23,34 +23,10 @@
  *   see http://www.gnu.org/licenses/.
  *
  */
+
 import Vue from 'vue';
-import { i18n } from './i18n';
-import Uploader from './Uploader';
-import Visualizer from './Visualizer';
 
-document.querySelectorAll('.document-uploader').forEach((elem) => {
-  const props = { ...elem.dataset };
-  if (typeof props.maxSize !== 'undefined') {
-    props.maxSize = Number.parseInt(props.maxSize);
-  }
-  if (typeof props.mimetypes !== 'undefined') {
-    props.mimetypes = props.mimetypes.split(',');
-  }
-  if (typeof props.values !== 'undefined') {
-    props.values = props.values.split(',');
-  }
-  if (typeof props.automaticUpload !== 'undefined') {
-    props.automaticUpload = props.automaticUpload === "true";
-  }
-  new Vue({
-    render: (h) => h(Uploader, { props }),
-    i18n,
-  }).$mount(elem);
-});
+const EventBus = new Vue();
 
-document.querySelectorAll('.document-visualizer').forEach((elem) => {
-  new Vue({
-    render: (h) => h(Visualizer, { props: elem.dataset }),
-    i18n,
-  }).$mount(elem);
-});
+export default EventBus;
+
