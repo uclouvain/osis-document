@@ -28,23 +28,23 @@ import hashlib
 from django.core import signing
 from django.core.exceptions import FieldError
 from django.forms import modelform_factory
+from django.http import FileResponse
+from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from osis_document.enums import TokenAccess
+from osis_document.exceptions import Md5Mismatch
 from osis_document.models import Upload, Token
-from osis_document.utils import confirm_upload
+from osis_document.utils import confirm_upload, get_metadata
 
 __all__ = [
     'RequestUploadView',
     'ConfirmUploadView',
     'change_metadata',
     'rotate_upload',
-    'get_file_url',
-    'get_file',
-    'get_metadata',
 ]
 
 
@@ -125,14 +125,41 @@ def rotate_upload(request):
     raise NotImplementedError
 
 
-def get_file_url(request):
-    raise NotImplementedError
+class FileView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, token: str):
+        """Endpoint to get real file"""
+        upload = Upload.objects.filter(tokens__token=token).first()
+        if not upload:
+            return Response({
+                'error': _("Resource not found")
+            }, status.HTTP_404_NOT_FOUND)
+        with upload.file.open() as file:
+            md5 = hashlib.md5(file.read()).hexdigest()
+        if upload.metadata.get('md5') != md5:
+            return Response({
+                'error': _("MD5 checksum mismatch")
+            }, status.HTTP_409_CONFLICT)
+        # TODO handle internal nginx redirect based on a setting
+        return FileResponse(upload.file.open('rb'))
 
 
-def get_file(request):
-    # TODO check md5 integrity between metadata and file
-    raise NotImplementedError
+class MetadataView(APIView):
+    authentication_classes = []
+    permission_classes = []
 
-
-def get_metadata(request, token_or_uuid: str):
-    raise NotImplementedError
+    def get(self, request, token: str):
+        """Endpoint to get metadata about an upload"""
+        try:
+            metadata = get_metadata(token)
+        except Md5Mismatch:
+            return Response({
+                'error': _("MD5 checksum mismatch")
+            }, status.HTTP_409_CONFLICT)
+        if not metadata:
+            return Response({
+                'error': _("Resource not found")
+            }, status.HTTP_404_NOT_FOUND)
+        return Response(metadata)

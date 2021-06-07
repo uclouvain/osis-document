@@ -23,18 +23,10 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.urls import path
 
-from . import views
+from django.utils.translation import gettext_lazy as _
 
-app_name = 'osis_document'
-urlpatterns = [
-    path('request-upload', views.RequestUploadView.as_view(),
-         name='request-upload'),
-    path('confirm-upload/<path:token>', views.ConfirmUploadView.as_view(),
-         name='confirm-upload'),
-    path('metadata/<path:token>', views.MetadataView.as_view(),
-         name='metadata'),
-    path('file/<path:token>', views.FileView.as_view(),
-         name='get-file'),
-]
+
+class Md5Mismatch(ValueError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(_("MD5 check failed"))

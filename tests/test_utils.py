@@ -24,32 +24,24 @@
 #
 # ##############################################################################
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
-from osis_document.tests.factories import WriteTokenFactory, PdfUploadFactory
-from osis_document.utils import is_uuid, get_metadata
-
-
-class IsUuidTestCase(TestCase):
-    def test_is_uuid(self):
-        self.assertFalse(is_uuid('foobar'))
-        self.assertFalse(is_uuid(''))
-        self.assertFalse(is_uuid(152))
-        self.assertFalse(is_uuid(None))
-        self.assertTrue(is_uuid('12345678-1234-5678-1234-567812345678'))
+from osis_document.exceptions import Md5Mismatch
+from osis_document.tests.factories import WriteTokenFactory
+from osis_document.utils import get_metadata
 
 
+@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls')
 class MetadataTestCase(TestCase):
     def test_with_token(self):
         token = WriteTokenFactory()
-        self.assertEqual(
-            get_metadata(token.token),
-            {'mimetype': 'application/pdf', 'size': 1024},
-        )
+        metadata = get_metadata(token.token)
+        self.assertEqual(metadata['size'], 1024)
+        self.assertEqual(metadata['mimetype'], 'application/pdf')
+        self.assertEqual(metadata['md5'], '5eb63bbbe01eeed093cb22bb8f5acdc3')
+        self.assertIn('url', metadata)
 
-    def test_with_uuid(self):
-        upload = PdfUploadFactory()
-        self.assertEqual(
-            get_metadata(upload.uuid),
-            {'mimetype': 'application/pdf', 'size': 1024},
-        )
+    def test_bad_md5(self):
+        token = WriteTokenFactory(upload__metadata={'md5': 'badvalue'})
+        with self.assertRaises(Md5Mismatch):
+            get_metadata(token.token)

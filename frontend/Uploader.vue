@@ -75,6 +75,18 @@
       {{ $t('uploader.trigger_upload') }}
     </button>
 
+    <ul class="media-list">
+      <ViewEntry
+          v-for="(token, index) in filteredTokens"
+          :id="index"
+          :key="index"
+          :value="token"
+          :base-url="baseUrl"
+          :editable="true"
+          @delete="$delete(tokens, index);"
+      />
+    </ul>
+
     <input
         v-for="(token, index) in Object.values(filteredTokens)"
         :key="`${name}_${index}`"
@@ -88,11 +100,12 @@
 <script>
 import { humanizedSize } from './utils';
 import UploadEntry from './components/UploadEntry';
+import ViewEntry from './components/ViewEntry';
 import EventBus from './event-bus';
 
 export default {
   name: 'Uploader',
-  components: { UploadEntry },
+  components: { UploadEntry, ViewEntry },
   props: {
     name: {
       type: String,

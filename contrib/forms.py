@@ -31,7 +31,7 @@ from osis_document.contrib.widgets import FileUploadWidget
 from osis_document.utils import get_metadata
 
 
-class TokenOrUuidField(forms.CharField):
+class TokenField(forms.CharField):
     default_error_messages = {
         'nonexistent': _("File upload is either non-existent or has expired"),
         'size': _("File upload is too large"),
@@ -68,7 +68,7 @@ class FileUploadField(SplitArrayField):
             automatic_upload=automatic_upload,
             size=limit or 1,
         ))
-        base_field = TokenOrUuidField(
+        base_field = TokenField(
             required=True,
             max_size=max_size,
             mimetypes=mimetypes,
