@@ -25,9 +25,9 @@
 # ##############################################################################
 import hashlib
 
+from django.conf import settings
 from django.core import signing
 from django.core.exceptions import FieldError
-from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
@@ -57,6 +57,14 @@ def confirm_upload(token):
     return upload.uuid
 
 
+def get_file_url(token: str):
+    # We can not use reverse because the potential prefix would be present twice
+    return '{base_url}file/{token}'.format(
+        base_url=settings.OSIS_DOCUMENT_BASE_URL,
+        token=token,
+    )
+
+
 def get_metadata(token: str):
     upload = Upload.objects.filter(tokens__token=token).first()
     if not upload:
@@ -69,7 +77,7 @@ def get_metadata(token: str):
         'size': upload.size,
         'mimetype': upload.mimetype,
         'name': upload.file.name,
-        'url': reverse('osis_document:get-file', kwargs={'token': token}),
+        'url': get_file_url(token),
         **upload.metadata,
     }
 

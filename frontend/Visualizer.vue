@@ -6,6 +6,7 @@
         :key="index"
         :value="value"
         :base-url="baseUrl"
+        :is-editable="false"
     />
   </ul>
 </template>

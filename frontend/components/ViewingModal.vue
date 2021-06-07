@@ -81,7 +81,7 @@
             Close
           </button>
           <button
-              v-if="isImage"
+              v-if="isImage && isEditable"
               type="button"
               class="btn btn-primary"
           >
@@ -104,6 +104,10 @@ export default {
     file: {
       type: Object,
       required: true,
+    },
+    isEditable: {
+      type: Boolean,
+      default: true,
     },
   },
   computed: {

@@ -23,35 +23,32 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.urls import path, reverse_lazy, include
-from django.views.generic import CreateView, UpdateView, DetailView
 
-from osis_document.tests.document_test.models import TestDocument
+from django import template
+from django.conf import settings
 
-app_name = 'document_test'
-urlpatterns = [
-    path(
-        '',
-        CreateView.as_view(
-            model=TestDocument,
-            fields='__all__',
-            success_url=reverse_lazy('document_test:test-upload'),
-        ),
-        name='test-upload',
-    ),
-    path(
-        'update/<int:pk>',
-        UpdateView.as_view(
-            model=TestDocument,
-            fields='__all__',
-            success_url=reverse_lazy('document_test:test-upload'),
-        ),
-        name='test-upload',
-    ),
-    path(
-        'view/<int:pk>',
-        DetailView.as_view(model=TestDocument,),
-        name='test-view',
-    ),
-    path('document/', include('osis_document.contrib.urls')),
-]
+from osis_document.utils import (
+    get_token,
+    get_metadata as utils_get_metadata,
+    get_file_url as utils_get_file_url,
+)
+
+register = template.Library()
+
+
+@register.inclusion_tag('osis_document/visualizer.html')
+def document_visualizer(values):
+    return {
+        'values': [get_token(value) for value in values],
+        'base_url': settings.OSIS_DOCUMENT_BASE_URL,
+    }
+
+
+@register.simple_tag
+def get_metadata(uuid):
+    return utils_get_metadata(get_token(uuid))
+
+
+@register.simple_tag
+def get_file_url(uuid):
+    return utils_get_file_url(get_token(uuid))

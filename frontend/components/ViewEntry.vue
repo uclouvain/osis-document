@@ -86,6 +86,7 @@
           <span class="glyphicon glyphicon-eye-open" />
         </a>
         <button
+            v-if="isEditable"
             class="btn btn-danger"
             @click="$emit('delete')"
         >
@@ -97,6 +98,7 @@
         v-if="isViewableDocument"
         :id="id"
         :file="file"
+        :is-editable="isEditable"
     />
   </li>
 </template>
@@ -123,6 +125,10 @@ export default {
     baseUrl: {
       type: String,
       required: true,
+    },
+    isEditable: {
+      type: Boolean,
+      default: true,
     },
   },
   data () {
