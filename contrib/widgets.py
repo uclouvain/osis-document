@@ -42,9 +42,8 @@ class FileUploadWidget(SplitArrayWidget):
         }
         js = ('osis_document/osis-document.umd.min.js',)
 
-    def __init__(self, max_size=None, mimetypes=None, upload_text='', automatic_upload=True, **kwargs):
+    def __init__(self, max_size=None, mimetypes=None, automatic_upload=True, **kwargs):
         self.automatic_upload = automatic_upload
-        self.upload_text = upload_text
         self.mimetypes = mimetypes
         self.max_size = max_size
         super().__init__(widget=forms.TextInput, **kwargs)

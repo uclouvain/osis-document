@@ -58,8 +58,7 @@ class TokenField(forms.CharField):
 
 
 class FileUploadField(SplitArrayField):
-    def __init__(self, limit=None, max_size=None, mimetypes=None, upload_text='', automatic_upload=True, **kwargs):
-        self.upload_text = upload_text
+    def __init__(self, limit=None, max_size=None, mimetypes=None, automatic_upload=True, **kwargs):
         self.mimetypes = mimetypes
         self.max_size = max_size
         kwargs.setdefault('widget', FileUploadWidget(

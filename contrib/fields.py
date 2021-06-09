@@ -31,10 +31,9 @@ from osis_document.utils import confirm_upload
 
 
 class FileField(ArrayField):
-    def __init__(self, max_size=None, limit=None, mimetypes=None, upload_text='', automatic_upload=True, **kwargs):
+    def __init__(self, max_size=None, limit=None, mimetypes=None, automatic_upload=True, **kwargs):
         self.automatic_upload = automatic_upload
         self.max_size = max_size
-        self.upload_text = upload_text
         self.mimetypes = mimetypes
         kwargs.setdefault('default', list)
         kwargs.setdefault('base_field', models.UUIDField())
@@ -47,7 +46,6 @@ class FileField(ArrayField):
             'max_size': self.max_size,
             'limit': self.size,
             'mimetypes': self.mimetypes,
-            'upload_text': self.upload_text,
             'automatic_upload': self.automatic_upload,
             **kwargs,
         })
