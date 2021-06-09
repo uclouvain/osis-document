@@ -54,7 +54,8 @@ const UploadingServerTemplate = (args, { argTypes }) => {
     url: './placeholder.odt',
     name: 'test document',
   };
-  fetchMock.restore()
+  fetchMock
+    .restore()
     .get('/metadata/12e68184-5cba-4b27-9988-609a6cc3be63', documentMetadata)
     .post('/change-metadata/12e68184-5cba-4b27-9988-609a6cc3be63', 200);
   if (process.env.NODE_ENV === 'test') {
@@ -68,10 +69,6 @@ const UploadingServerTemplate = (args, { argTypes }) => {
     components: { Uploader },
     props: Object.keys(argTypes),
     template: '<Uploader v-bind="$props" />',
-    destroyed () {
-      goodServer.remove();
-      fetchMock.restore();
-    },
     i18n,
   });
 };

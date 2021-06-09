@@ -500,6 +500,7 @@ exports[`Storyshots ViewingModal Portrait 1`] = `
 exports[`Storyshots Visualizer Basic 1`] = `
 <ul
   class="media-list"
+  metadata="[object Object]"
 >
   <li
     class="media"
@@ -545,6 +546,7 @@ exports[`Storyshots Visualizer Empty 1`] = `
 exports[`Storyshots Visualizer Image 1`] = `
 <ul
   class="media-list"
+  metadata="[object Object]"
 >
   <li
     class="media"
@@ -584,6 +586,7 @@ exports[`Storyshots Visualizer Image 1`] = `
 exports[`Storyshots Visualizer Loading 1`] = `
 <ul
   class="media-list"
+  metadata="[object Promise]"
 >
   <li
     class="media"
@@ -623,6 +626,7 @@ exports[`Storyshots Visualizer Loading 1`] = `
 exports[`Storyshots Visualizer Not Found 1`] = `
 <ul
   class="media-list"
+  metadata="404"
 >
   <li
     class="media"
@@ -662,6 +666,7 @@ exports[`Storyshots Visualizer Not Found 1`] = `
 exports[`Storyshots Visualizer Pdf 1`] = `
 <ul
   class="media-list"
+  metadata="[object Object]"
 >
   <li
     class="media"

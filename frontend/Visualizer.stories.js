@@ -28,93 +28,66 @@ import Visualizer from './Visualizer';
 import fetchMock from 'fetch-mock';
 import { i18n } from './i18n';
 
-const documentMetadata = {
-  mimetype: 'application/vnd.oasis.opendocument.text',
-  size: 82381,
-  url: './placeholder.odt',
-  name: 'test document',
-};
-const pdfMetadata = {
-  mimetype: 'application/pdf',
-  size: 82381,
-  url: './placeholder.pdf',
-  name: 'test document',
-};
-const imageMetadata = {
-  mimetype: 'image/jpeg',
-  size: 38329,
-  url: './placeholder.jpeg',
-  name: 'test image',
-};
-
-export const empty = () => {
+const VisualizerTemplate = (args, { argTypes }) => {
+  fetchMock.restore();
+  if (args.metadata) {
+    fetchMock.get('*', args.metadata);
+  }
   return {
     components: { Visualizer },
-    template: `
-      <Visualizer base-url="/"/>`,
-  };
-};
-
-export const basic = () => {
-  fetchMock.restore()
-    .get('/metadata/77d4b8f6-ee55-4c40-b118-e9fffd796198', documentMetadata);
-
-  return {
-    components: { Visualizer },
-    template: `
-      <Visualizer :values="['77d4b8f6-ee55-4c40-b118-e9fffd796198']" base-url="/" />`,
+    props: Object.keys(argTypes),
+    template: '<Visualizer v-bind="$props" base-url="/" />',
     i18n,
   };
 };
 
-export const pdf = () => {
-  fetchMock.restore()
-    .get('/metadata/77d4b8f6-ee55-4c40-b118-e9fffd796198', pdfMetadata);
+export const empty = VisualizerTemplate.bind({});
 
-  return {
-    components: { Visualizer },
-    template: `
-      <Visualizer :values="['77d4b8f6-ee55-4c40-b118-e9fffd796198']" base-url="/"/>`,
-    i18n,
-  };
-};
-export const image = () => {
-  fetchMock.restore()
-    .get('/metadata/77d4b8f6-ee55-4c40-b118-e9fffd796198', imageMetadata);
-
-  return {
-    components: { Visualizer },
-    template: `
-      <Visualizer :values="['77d4b8f6-ee55-4c40-b118-e9fffd796198']" base-url="/"/>`,
-    i18n,
-  };
+export const basic = VisualizerTemplate.bind({});
+basic.args  = {
+  values: ['77d4b8f6-ee55-4c40-b118-e9fffd796198'],
+  metadata: {
+    mimetype: 'application/vnd.oasis.opendocument.text',
+    size: 82381,
+    url: './placeholder.odt',
+    name: 'test document',
+  },
 };
 
-export const loading = () => {
-  fetchMock.restore()
-    .get('/metadata/77d4b8f6-ee55-4c40-b118-e9fffd796198',
-      new Promise(res => setTimeout(() => res(200), 2000000)),
-    );
-
-  return {
-    components: { Visualizer },
-    template: `
-      <Visualizer :values="['77d4b8f6-ee55-4c40-b118-e9fffd796198']" base-url="/"/>`,
-    i18n,
-  };
+export const pdf = VisualizerTemplate.bind({});
+pdf.args  = {
+  values: ['77d4b8f6-ee55-4c40-b118-e9fffd796198'],
+  metadata: {
+    mimetype: 'application/pdf',
+    size: 82381,
+    url: './placeholder.pdf',
+    name: 'test document',
+  },
 };
 
-export const notFound = () => {
-  fetchMock.restore()
-    .get('/metadata/77d4b8f6-ee55-4c40-b118-e9fffd796198', 404);
-
-  return {
-    components: { Visualizer },
-    template: `
-      <Visualizer :values="['77d4b8f6-ee55-4c40-b118-e9fffd796198']" base-url="/"/>`,
-    i18n,
-  };
+export const image = VisualizerTemplate.bind({});
+image.args  = {
+  values: ['77d4b8f6-ee55-4c40-b118-e9fffd796198'],
+  metadata: {
+    mimetype: 'image/jpeg',
+    size: 38329,
+    url: './placeholder.jpeg',
+    name: 'test image',
+  },
 };
+
+export const loading = VisualizerTemplate.bind({});
+loading.args  = {
+  values: ['77d4b8f6-ee55-4c40-b118-e9fffd796198'],
+  metadata: new Promise(res => setTimeout(() => res(200), 2000000)),
+};
+
+export const notFound = VisualizerTemplate.bind({});
+notFound.args  = {
+  values: ['77d4b8f6-ee55-4c40-b118-e9fffd796198'],
+  metadata: 404,
+};
+
 
 export default {
   title: 'Visualizer',
