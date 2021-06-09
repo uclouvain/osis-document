@@ -40,75 +40,15 @@ const goodServer = newServer({
       xhr.respond(
         200,
         { 'Content-Type': 'application/json' },
-        '{"token": "0123456789"}',
+        '{"token": "12e68184-5cba-4b27-9988-609a6cc3be63"}',
       );
     }, 2000);
   }],
 });
 
-const offlineServer = newServer({
-  post: ['/request-upload', function (xhr) {
-    xhr.respond(404);
-  }],
-});
-
-export const basic = () => {
-  offlineServer.install();
-
-  return {
-    components: { Uploader },
-    template: '<Uploader base-url="/" name="media"/>',
-    destroyed () {
-      offlineServer.remove();
-    },
-    i18n,
-  };
-};
-
-export const limited = () => {
-  offlineServer.install();
-
-  return {
-    components: { Uploader },
-    template: `
-      <Uploader
-          base-url="/"
-          name="media"
-          :max-size="100 * 1024"
-          :mimetypes="['image/png','image/jpeg']"
-          :limit="1"
-      />
-    `,
-    destroyed () {
-      offlineServer.remove();
-    },
-    i18n,
-  };
-};
-
-export const manualTrigger = () => {
-  offlineServer.install();
-
-  return {
-    components: { Uploader },
-    template: `
-      <Uploader
-          base-url="/"
-          name="media"
-          :limit="3"
-          :automatic-upload="false"
-      />
-    `,
-    destroyed () {
-      offlineServer.remove();
-    },
-    i18n,
-  };
-};
-
-export const withExistingValue = () => {
+const UploadingServerTemplate = (args, { argTypes }) => {
   goodServer.install();
-  const documentMetadata = {
+  const documentMetadata = args.metadata || {
     mimetype: 'application/vnd.oasis.opendocument.text',
     size: 82381,
     url: './placeholder.odt',
@@ -117,21 +57,62 @@ export const withExistingValue = () => {
   fetchMock.restore()
     .get('/metadata/12e68184-5cba-4b27-9988-609a6cc3be63', documentMetadata)
     .post('/change-metadata/12e68184-5cba-4b27-9988-609a6cc3be63', 200);
-  return {
+  if (process.env.NODE_ENV === 'test') {
+    // Mock jQuery for snapshots tests
+    window.jQuery = jest.fn(() => ({
+      modal: () => {},
+      on: () => {},
+    }));
+  }
+  return ({
     components: { Uploader },
-    template: `
-      <Uploader
-          base-url="/"
-          name="media"
-          :limit="5"
-          :values="['12e68184-5cba-4b27-9988-609a6cc3be63']"
-      />
-    `,
+    props: Object.keys(argTypes),
+    template: '<Uploader v-bind="$props" />',
     destroyed () {
       goodServer.remove();
+      fetchMock.restore();
     },
     i18n,
-  };
+  });
+};
+
+export const basic = UploadingServerTemplate.bind({});
+basic.args = {
+  baseUrl: '/',
+  name: 'media',
+};
+
+export const limited = UploadingServerTemplate.bind({});
+limited.args = {
+  ...basic.args,
+  maxSize: 100 * 1024,
+  mimeTypes: ['image/png', 'image/jpeg'],
+  limit: 1,
+};
+
+export const manualTrigger = UploadingServerTemplate.bind({});
+manualTrigger.args = {
+  ...basic.args,
+  automaticUpload: false,
+};
+
+export const withExistingValue = UploadingServerTemplate.bind({});
+withExistingValue.args = {
+  ...basic.args,
+  values: ['12e68184-5cba-4b27-9988-609a6cc3be63'],
+  limit: 5,
+};
+
+export const editableImage = UploadingServerTemplate.bind({});
+editableImage.args = {
+  ...basic.args,
+  values: ['12e68184-5cba-4b27-9988-609a6cc3be63'],
+  metadata: {
+    mimetype: 'image/jpeg',
+    size: 82381,
+    url: './placeholder.jpeg',
+    name: 'test image',
+  },
 };
 
 export default {

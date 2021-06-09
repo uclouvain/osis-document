@@ -24,8 +24,11 @@
 #
 # ##############################################################################
 import hashlib
+from io import BytesIO
 
+from PIL import Image
 from django.core.exceptions import FieldError
+from django.core.files.base import ContentFile
 from django.forms import modelform_factory
 from django.http import FileResponse
 from django.utils.translation import gettext_lazy as _
@@ -43,7 +46,7 @@ from osis_document.utils import confirm_upload, get_metadata, get_token
 __all__ = [
     'RequestUploadView',
     'ConfirmUploadView',
-    'rotate_upload',
+    'RotateImageView',
     'FileView',
     'MetadataView',
     'ChangeMetadataView',
@@ -127,8 +130,43 @@ class ChangeMetadataView(APIView):
         upload.save()
         return Response(status=status.HTTP_200_OK)
 
-def rotate_upload(request):
-    raise NotImplementedError
+
+class RotateImageView(APIView):
+    authentication_classes = []
+    permission_classes = []
+    http_method_names = ['post']
+
+    def post(self, request, token: str):
+        """Endpoint to change metadata name about an upload"""
+        token = get_object_or_404(
+            Token,
+            token=token,
+            access=TokenAccess.WRITE.name,
+        )
+        upload = token.upload
+
+        if upload.mimetype.split('/')[0] != 'image':
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        rotated_photo = BytesIO()
+        image = Image.open(upload.file)
+        original_format = image.format
+        image = image.rotate(-request.data.get('rotate', 0), expand=True)
+        image.save(rotated_photo, original_format)
+
+        upload.file.save(upload.file.name, ContentFile(rotated_photo.getvalue()))
+
+        md5 = hashlib.md5()
+        with upload.file.open('rb') as file:
+            for chunk in file.chunks():
+                md5.update(chunk)
+        upload.metadata['md5'] = md5.hexdigest()
+        upload.save()
+
+        # Regenerate new token
+        token.delete()
+        token = get_token(upload.uuid, access=TokenAccess.WRITE.name)
+        return Response({'token': token}, status=status.HTTP_200_OK)
 
 
 class FileView(APIView):

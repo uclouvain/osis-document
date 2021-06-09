@@ -44,6 +44,18 @@ class PdfUploadFactory(factory.django.DjangoModelFactory):
     }
 
 
+class ImageUploadFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Upload
+
+    file = factory.django.ImageField(filename='the_file.jpg')
+    size = 1024
+    mimetype = 'image/jpeg'
+    metadata = {
+        'md5': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+    }
+
+
 class WriteTokenFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Token

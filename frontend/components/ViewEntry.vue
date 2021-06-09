@@ -129,6 +129,9 @@
         :id="id"
         :file="file"
         :is-editable="isEditable"
+        :value="value"
+        :base-url="baseUrl"
+        @update-token="$emit('update-token', $event)"
     />
   </li>
 </template>
@@ -187,6 +190,9 @@ export default {
     originalName: function () {
       return this.file.name;
     },
+  },
+  watch: {
+    value: 'getFile',
   },
   mounted () {
     this.getFile();

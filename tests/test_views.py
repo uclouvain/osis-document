@@ -32,7 +32,7 @@ from django.test import TestCase, override_settings
 
 from osis_document.enums import FileStatus, TokenAccess
 from osis_document.models import Upload, Token
-from osis_document.tests.factories import WriteTokenFactory, ReadTokenFactory
+from osis_document.tests.factories import WriteTokenFactory, ReadTokenFactory, ImageUploadFactory
 
 
 @override_settings(ROOT_URLCONF='osis_document.contrib.urls')
@@ -43,11 +43,9 @@ class RequestUploadTestCase(TestCase):
 
     def test_upload(self):
         file = ContentFile(b'hello world', 'foo.pdf')
-        form_data = {'file': file}
-
         self.assertFalse(Upload.objects.exists())
 
-        response = self.client.post(resolve_url('request-upload'), form_data)
+        response = self.client.post(resolve_url('request-upload'), {'file': file})
         json = response.json()
         self.assertIn('token', json)
         self.assertTrue(Upload.objects.exists())
@@ -126,3 +124,23 @@ class MetadataViewTestCase(TestCase):
         upload = token.upload
         upload.refresh_from_db()
         self.assertEqual(upload.metadata['name'], 'foobar')
+
+
+@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls',
+                   OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+class RotateViewTestCase(TestCase):
+    def test_write_only(self):
+        token = ReadTokenFactory()
+        response = self.client.post(resolve_url('osis_document:rotate-image', token=token.token))
+        self.assertEqual(response.status_code, 404)
+
+    def test_image_only(self):
+        token = WriteTokenFactory()
+        response = self.client.post(resolve_url('osis_document:rotate-image', token=token.token))
+        self.assertEqual(response.status_code, 400)
+
+    def test_successfully_rotates(self):
+        token = WriteTokenFactory(upload=ImageUploadFactory())
+        response = self.client.post(resolve_url('osis_document:rotate-image', token=token.token))
+        self.assertNotEqual(response.json()['token'], token.token)
+        self.assertEqual(response.status_code, 200)
