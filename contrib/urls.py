@@ -35,6 +35,8 @@ urlpatterns = [
          name='confirm-upload'),
     path('metadata/<path:token>', views.MetadataView.as_view(),
          name='metadata'),
+    path('change-metadata/<path:token>', views.ChangeMetadataView.as_view(),
+         name='change-metadata'),
     path('file/<path:token>', views.FileView.as_view(),
          name='get-file'),
 ]

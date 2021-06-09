@@ -111,3 +111,18 @@ class MetadataViewTestCase(TestCase):
         token = ReadTokenFactory(upload__metadata={'md5': 'badvalue'})
         response = self.client.get(resolve_url('osis_document:metadata', token=token.token))
         self.assertEqual(response.status_code, 409)
+
+    def test_change_metadata_read_only(self):
+        token = ReadTokenFactory()
+        response = self.client.post(resolve_url('osis_document:change-metadata', token=token.token))
+        self.assertEqual(response.status_code, 404)
+
+    def test_change_metadata(self):
+        token = WriteTokenFactory()
+        response = self.client.post(resolve_url('osis_document:change-metadata', token=token.token), {
+            'name': 'foobar'
+        })
+        self.assertEqual(response.status_code, 200)
+        upload = token.upload
+        upload.refresh_from_db()
+        self.assertEqual(upload.metadata['name'], 'foobar')

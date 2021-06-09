@@ -115,7 +115,8 @@ export const withExistingValue = () => {
     name: 'test document',
   };
   fetchMock.restore()
-    .get('/metadata/12e68184-5cba-4b27-9988-609a6cc3be63', documentMetadata);
+    .get('/metadata/12e68184-5cba-4b27-9988-609a6cc3be63', documentMetadata)
+    .post('/change-metadata/12e68184-5cba-4b27-9988-609a6cc3be63', 200);
   return {
     components: { Uploader },
     template: `

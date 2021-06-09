@@ -30,19 +30,23 @@ from django.forms import modelform_factory
 from django.http import FileResponse
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
+from osis_document.enums import TokenAccess
 from osis_document.exceptions import Md5Mismatch
-from osis_document.models import Upload
+from osis_document.models import Upload, Token
 from osis_document.utils import confirm_upload, get_metadata, get_token
 
 __all__ = [
     'RequestUploadView',
     'ConfirmUploadView',
-    'change_metadata',
     'rotate_upload',
+    'FileView',
+    'MetadataView',
+    'ChangeMetadataView',
 ]
 
 
@@ -106,9 +110,22 @@ class ConfirmUploadView(APIView):
         return Response({'uuid': uuid}, status.HTTP_201_CREATED)
 
 
-def change_metadata(request):
-    raise NotImplementedError
+class ChangeMetadataView(APIView):
+    authentication_classes = []
+    permission_classes = []
+    http_method_names = ['post']
 
+    def post(self, request, token: str):
+        """Endpoint to change metadata name about an upload"""
+        token = get_object_or_404(
+            Token,
+            token=token,
+            access=TokenAccess.WRITE.name,
+        )
+        upload = token.upload
+        upload.metadata['name'] = request.data.get('name', '')
+        upload.save()
+        return Response(status=status.HTTP_200_OK)
 
 def rotate_upload(request):
     raise NotImplementedError

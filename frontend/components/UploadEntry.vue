@@ -67,6 +67,7 @@
     </div>
     <div class="media-right">
       <button
+          type="button"
           class="btn btn-danger"
           @click="$emit('delete')"
       >
