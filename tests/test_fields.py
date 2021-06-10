@@ -33,7 +33,8 @@ from osis_document.tests.document_test.models import TestDocument
 from osis_document.tests.factories import WriteTokenFactory
 
 
-@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls')
+@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls',
+                   OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class FieldTestCase(TestCase):
     def test_model_form_validation(self):
         ModelForm = modelform_factory(TestDocument, fields='__all__')

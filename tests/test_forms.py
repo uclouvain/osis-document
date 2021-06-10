@@ -34,7 +34,8 @@ from osis_document.contrib.forms import FileUploadField, TokenField
 from osis_document.tests.factories import WriteTokenFactory
 
 
-@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls')
+@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls',
+                   OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class FormTestCase(TestCase):
     def test_normal_behavior(self):
         class TestForm(forms.Form):

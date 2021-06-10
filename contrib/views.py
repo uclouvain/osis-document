@@ -25,7 +25,6 @@
 # ##############################################################################
 import hashlib
 
-from django.core import signing
 from django.core.exceptions import FieldError
 from django.forms import modelform_factory
 from django.http import FileResponse
@@ -35,10 +34,9 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
-from osis_document.enums import TokenAccess
 from osis_document.exceptions import Md5Mismatch
-from osis_document.models import Upload, Token
-from osis_document.utils import confirm_upload, get_metadata
+from osis_document.models import Upload
+from osis_document.utils import confirm_upload, get_metadata, get_token
 
 __all__ = [
     'RequestUploadView',
@@ -82,17 +80,8 @@ class RequestUploadView(APIView):
             )
             instance.save()
 
-            # Create a token based on uuid and md5
-            token = signing.dumps({
-                'uuid': str(instance.uuid),
-                'md5': md5,
-            })
-            Token.objects.create(
-                upload=instance,
-                access=TokenAccess.WRITE.name,
-                token=token,
-            )
-            return Response({'token': token}, status.HTTP_201_CREATED)
+            # Create a write token to allow persistance
+            return Response({'token': get_token(instance.uuid)}, status.HTTP_201_CREATED)
         return Response({'errors': form.errors}, status.HTTP_400_BAD_REQUEST)
 
 

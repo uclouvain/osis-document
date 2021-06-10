@@ -52,8 +52,12 @@ document.querySelectorAll('.document-uploader').forEach((elem) => {
 });
 
 document.querySelectorAll('.document-visualizer').forEach((elem) => {
+  const props = { ...elem.dataset };
+  if (typeof props.values !== 'undefined') {
+    props.values = props.values.split(',');
+  }
   new Vue({
-    render: (h) => h(Visualizer, { props: elem.dataset }),
+    render: (h) => h(Visualizer, { props }),
     i18n,
   }).$mount(elem);
 });

@@ -77,7 +77,8 @@ class RequestUploadTestCase(TestCase):
         self.assertEqual(400, response.status_code)
 
 
-@override_settings(ROOT_URLCONF='osis_document.contrib.urls')
+@override_settings(ROOT_URLCONF='osis_document.contrib.urls',
+                   OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class FileViewTestCase(TestCase):
     def test_get_file(self):
         token = ReadTokenFactory()
@@ -94,7 +95,8 @@ class FileViewTestCase(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls')
+@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls',
+                   OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class MetadataViewTestCase(TestCase):
     def test_get_metadata(self):
         token = ReadTokenFactory()
