@@ -23,36 +23,35 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.urls import path, reverse_lazy, include
-from django.views.generic import CreateView, UpdateView, DetailView
+from rest_framework import generics
 
-from osis_document.tests.document_test.models import TestDocument
+from osis_document.api.serializers import TokenSerializer, MetadataSerializer, UploadUUIDSerializer
+from osis_document.models import Upload, Token
+from osis_document.utils import confirm_upload
 
-app_name = 'document_test'
-urlpatterns = [
-    path(
-        '',
-        CreateView.as_view(
-            model=TestDocument,
-            fields='__all__',
-            success_url=reverse_lazy('document_test:test-upload'),
-        ),
-        name='test-upload',
-    ),
-    path(
-        'update/<int:pk>',
-        UpdateView.as_view(
-            model=TestDocument,
-            fields='__all__',
-            success_url=reverse_lazy('document_test:test-upload'),
-        ),
-        name='test-upload',
-    ),
-    path(
-        'view/<int:pk>',
-        DetailView.as_view(model=TestDocument,),
-        name='test-view',
-    ),
-    path('document/', include('osis_document.contrib.urls')),
-    path('api/', include('osis_document.api.url_v1', namespace="api")),
-]
+
+class GetTokenView(generics.CreateAPIView):
+    serializer_class = TokenSerializer
+    name = 'get-token'
+    queryset = Upload.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        upload = self.get_object()
+        request.data['upload_id'] = upload.pk
+        return super().create(request, *args, **kwargs)
+
+
+class MetadataView(generics.RetrieveAPIView):
+    serializer_class = MetadataSerializer
+    name = 'get-metadata'
+    queryset = Upload.objects.all()
+
+
+class ConfirmUploadView(generics.UpdateAPIView):
+    serializer_class = UploadUUIDSerializer
+    name = 'confirm-upload'
+    lookup_field = 'token'
+    queryset = Token.objects.writing_not_expired()
+
+    def perform_update(self, serializer):
+        confirm_upload(serializer.instance.token)
