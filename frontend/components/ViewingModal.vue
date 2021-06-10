@@ -104,7 +104,7 @@
               <button
                   type="button"
                   class="btn btn-primary"
-                  :disabled="!(rotation % 360)"
+                  :disabled="!isRotated"
                   @click="saveRotation"
               >
                 <i
@@ -185,14 +185,27 @@ export default {
     },
     imageStyle: function () {
       let transform = `rotate(${this.rotation}deg)`;
-      if (this.rotation % 180) {
-        transform += ` translate(${[-90, 270].includes(this.rotation % 360) ? '-50%' : '50%'}, -50%)`;
-      } else if (this.rotation % 360) {
+      if (this.isQuarterRotated) {
+        transform += ` translate(${this.isRotated90CounterClockwise ? '-50%' : '50%'}, -50%)`;
+      } else if (this.isRotated) {
         transform += ` translate(0, -100%)`;
       }
       // When image is portrait, constraint the rotated image height (which is width) to modal width
-      const height = (this.rotation % 180 && this.$refs.modal.clientWidth < this.originalHeight) ? (this.$refs.modal.clientWidth - 30) + 'px' : 'auto';
+      const height = (this.isQuarterRotated && this.$refs.modal.clientWidth < this.originalHeight)
+          ? (this.$refs.modal.clientWidth - 30) + 'px'
+          : 'auto';
       return { transform, height };
+    },
+    isRotated: function () {
+      return this.rotation % 360;
+    },
+    isQuarterRotated: function () {
+      // Check if the image is rotated at 90 or -90 degrees
+      return this.rotation % 180;
+    },
+    isRotated90CounterClockwise: function () {
+      // Check if the image is rotated at -90 degrees
+      return [-90, 270].includes(this.rotation % 360);
     },
   },
   watch: {
@@ -226,11 +239,11 @@ export default {
     },
     changeModalHeight: function () {
       if (!this.originalWidth) return 'auto';  // Image is not yet loaded
-      if (this.rotation % 180 && this.$refs.modal.clientWidth < this.originalHeight) {
+      if (this.isQuarterRotated && this.$refs.modal.clientWidth < this.originalHeight) {
         // Handle case when image is too tall for width (portrait)
         this.modalHeight = this.$refs.modal.clientWidth * this.originalWidth / this.originalHeight + 30 + 'px';
       } else {
-        this.modalHeight = (this.rotation % 180 ? this.originalWidth : this.originalHeight) + 30 + 'px';
+        this.modalHeight = (this.isQuarterRotated ? this.originalWidth : this.originalHeight) + 30 + 'px';
       }
     },
     saveRotation: async function () {
