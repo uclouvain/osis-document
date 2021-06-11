@@ -8,8 +8,6 @@
 
 - Django 2.2+
 - Django REST Framework 3.12+
-- python-magic 0.4.22+
-- Vue 3 (with teleport)
 
 
 # How to install ?
