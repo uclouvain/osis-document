@@ -39,6 +39,7 @@ module.exports = {
   }],
   globals: {
     jQuery: 'readonly',
+    process: 'readonly',
   },
   parserOptions: {
     ecmaVersion: 2021,

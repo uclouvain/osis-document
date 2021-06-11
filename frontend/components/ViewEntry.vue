@@ -63,31 +63,61 @@
           v-else
           class="media-heading"
       >
-        {{ file.name }}
+        <div
+            v-if="isEditable"
+            class="input-group"
+        >
+          <input
+              v-model="name"
+              type="text"
+              class="form-control"
+              @input="saved = false"
+          >
+          <span class="input-group-btn">
+            <button
+                type="button"
+                :disabled="originalName === name"
+                class="btn btn-primary"
+                @click="saveName"
+            >
+              <i
+                  class="fas"
+                  :class="saved ? 'fa-check' : 'fa-save'"
+              />
+            </button>
+          </span>
+        </div>
+        <div v-else>
+          {{ file.name }}
+        </div>
         <small><span class="text-nowrap">{{ humanizedSize }}</span> ({{ file.mimetype }})</small>
       </h4>
     </div>
     <div
         v-if="file"
         class="media-right text-right"
-        style="min-width: 7em"
+        :style="{'min-width': isViewableDocument ? '9.5em' : '7em'}"
     >
       <div class="btn-group">
         <a
+            v-if="isViewableDocument"
             class="btn btn-info"
-            v-bind="isViewableDocument ? {
-              'data-toggle': 'modal',
-              'data-target': `#modal-${id}`,
-            } : {
-              target: '_blank',
-              href: file.url,
-            }"
+            data-toggle="modal"
+            :data-target="`#modal-${id}`"
         >
           <span class="glyphicon glyphicon-eye-open" />
+        </a>
+        <a
+            class="btn btn-info"
+            target="_blank"
+            :href="file.url"
+        >
+          <span class="glyphicon glyphicon-download-alt" />
         </a>
         <button
             v-if="isEditable"
             class="btn btn-danger"
+            type="button"
             @click="$emit('delete')"
         >
           <span class="glyphicon glyphicon-trash" />
@@ -99,6 +129,9 @@
         :id="id"
         :file="file"
         :is-editable="isEditable"
+        :value="value"
+        :base-url="baseUrl"
+        @update-token="$emit('update-token', $event)"
     />
   </li>
 </template>
@@ -136,6 +169,8 @@ export default {
       file: null,
       loading: true,
       error: '',
+      name: '',
+      saved: false,
     };
   },
   computed: {
@@ -152,6 +187,12 @@ export default {
     humanizedSize: function () {
       return humanizedSize(this.file.size);
     },
+    originalName: function () {
+      return this.file.name;
+    },
+  },
+  watch: {
+    value: 'getFile',
   },
   mounted () {
     this.getFile();
@@ -162,6 +203,7 @@ export default {
         const response = await fetch(`${this.baseUrl}metadata/${this.value}`);
         if (response.status === 200) {
           this.file = await response.json();
+          this.name = this.file.name;
         } else {
           this.error = response.statusText;
         }
@@ -170,10 +212,23 @@ export default {
       }
       this.loading = false;
     },
+    saveName: async function () {
+      try {
+        const response = await fetch(`${this.baseUrl}change-metadata/${this.value}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: this.name }),
+        });
+        if (response.status === 200) {
+          this.saved = true;
+          this.file.name = this.name;
+        } else {
+          this.error = response.statusText;
+        }
+      } catch (e) {
+        this.error = e;
+      }
+    },
   },
 };
 </script>
-
-<style lang="scss">
-
-</style>

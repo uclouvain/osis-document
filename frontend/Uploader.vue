@@ -84,6 +84,7 @@
           :base-url="baseUrl"
           :editable="true"
           @delete="$delete(tokens, index);"
+          @update-token="$set(tokens, index, $event);"
       />
     </ul>
 

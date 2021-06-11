@@ -72,6 +72,10 @@ class Upload(models.Model):
     class Meta:
         verbose_name = _("Upload")
 
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        assert self.metadata.get('md5')
+        super().save(force_insert, force_update, using, update_fields)
+
 
 def default_expiration_time():
     from django.utils.timezone import now

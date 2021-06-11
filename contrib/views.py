@@ -24,25 +24,32 @@
 #
 # ##############################################################################
 import hashlib
+from io import BytesIO
 
+from PIL import Image
 from django.core.exceptions import FieldError
+from django.core.files.base import ContentFile
 from django.forms import modelform_factory
 from django.http import FileResponse
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
+from osis_document.enums import TokenAccess
 from osis_document.exceptions import Md5Mismatch
-from osis_document.models import Upload
+from osis_document.models import Upload, Token
 from osis_document.utils import confirm_upload, get_metadata, get_token
 
 __all__ = [
     'RequestUploadView',
     'ConfirmUploadView',
-    'change_metadata',
-    'rotate_upload',
+    'RotateImageView',
+    'FileView',
+    'MetadataView',
+    'ChangeMetadataView',
 ]
 
 
@@ -106,12 +113,60 @@ class ConfirmUploadView(APIView):
         return Response({'uuid': uuid}, status.HTTP_201_CREATED)
 
 
-def change_metadata(request):
-    raise NotImplementedError
+class ChangeMetadataView(APIView):
+    authentication_classes = []
+    permission_classes = []
+    http_method_names = ['post']
+
+    def post(self, request, token: str):
+        """Endpoint to change metadata name about an upload"""
+        token = get_object_or_404(
+            Token,
+            token=token,
+            access=TokenAccess.WRITE.name,
+        )
+        upload = token.upload
+        upload.metadata['name'] = request.data.get('name', '')
+        upload.save()
+        return Response(status=status.HTTP_200_OK)
 
 
-def rotate_upload(request):
-    raise NotImplementedError
+class RotateImageView(APIView):
+    authentication_classes = []
+    permission_classes = []
+    http_method_names = ['post']
+
+    def post(self, request, token: str):
+        """Endpoint to change metadata name about an upload"""
+        token = get_object_or_404(
+            Token,
+            token=token,
+            access=TokenAccess.WRITE.name,
+        )
+        upload = token.upload
+
+        if upload.mimetype.split('/')[0] != 'image':
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        rotated_photo = BytesIO()
+        image = Image.open(upload.file)
+        original_format = image.format
+        image = image.rotate(-request.data.get('rotate', 0), expand=True)
+        image.save(rotated_photo, original_format)
+
+        upload.file.save(upload.file.name, ContentFile(rotated_photo.getvalue()))
+
+        md5 = hashlib.md5()
+        with upload.file.open('rb') as file:
+            for chunk in file.chunks():
+                md5.update(chunk)
+        upload.metadata['md5'] = md5.hexdigest()
+        upload.save()
+
+        # Regenerate new token
+        token.delete()
+        token = get_token(upload.uuid, access=TokenAccess.WRITE.name)
+        return Response({'token': token}, status=status.HTTP_200_OK)
 
 
 class FileView(APIView):
