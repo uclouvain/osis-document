@@ -8,8 +8,6 @@
 
 - Django 2.2+
 - Django REST Framework 3.12+
-- python-magic 0.4.22+
-- Vue 3 (with teleport)
 
 
 # How to install ?
@@ -30,6 +28,12 @@ INSTALLED_APPS = (
 OSIS_DOCUMENT_BASE_URL = os.environ.get('OSIS_DOCUMENT_BASE_URL', '/osis-document/')
 ```
 
+OSIS-Document is aimed at being run on another server, but for easier development, you can add it
+locally to your `backoffice/urls.py`:
+```
+if 'osis_document' in settings.INSTALLED_APPS:
+    urlpatterns += (path('osis_document/', include('osis_document.contrib.urls')), )
+```
 
 # Using OSIS Document
 
@@ -133,3 +137,8 @@ Commands available:
  - `npm run lint` checks Javascript syntax
  - `npm run test` launch tests
  - `npm run coverage` launch tests with coverage
+
+# Communication between servers
+
+To communicate between two servers (e.g., with SDK-based code), you need to send requests with the header `X-Api-Key`
+containing the shared secret set in the server using the setting `OSIS_DOCUMENT_API_SHARED_SECRET`. 

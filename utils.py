@@ -28,23 +28,19 @@ import hashlib
 from django.conf import settings
 from django.core import signing
 from django.core.exceptions import FieldError
-from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
-from osis_document.enums import FileStatus, TokenAccess
+from osis_document.enums import FileStatus
 from osis_document.exceptions import Md5Mismatch
 from osis_document.models import Upload, Token
 
 
 def confirm_upload(token):
     # Verify token existence and expiration
-    token = Token.objects.filter(
+    token = Token.objects.writing_not_expired().filter(
         token=token,
-        access=TokenAccess.WRITE.name,
     ).select_related('upload').first()
     if not token:
-        raise FieldError(_("Token non-existent or expired"))
-    if now() > token.expires_at:
         raise FieldError(_("Token non-existent or expired"))
 
     # Delete token
@@ -66,7 +62,7 @@ def get_file_url(token: str):
 
 
 def get_metadata(token: str):
-    upload = Upload.objects.filter(tokens__token=token).first()
+    upload = Upload.objects.from_token(token)
     if not upload:
         return None
     with upload.file.open() as file:

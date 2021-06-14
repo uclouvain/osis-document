@@ -23,6 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from datetime import datetime
+from unittest import mock
 
 from django.test import TestCase, override_settings
 
@@ -41,6 +43,10 @@ class MetadataTestCase(TestCase):
         self.assertEqual(metadata['mimetype'], 'application/pdf')
         self.assertEqual(metadata['md5'], '5eb63bbbe01eeed093cb22bb8f5acdc3')
         self.assertIn('url', metadata)
+
+        with mock.patch('django.utils.timezone.now', return_value=datetime(1990, 1, 1)):
+            old_token = WriteTokenFactory(upload=token.upload)
+            self.assertIsNone(get_metadata(old_token.token))
 
     def test_bad_md5(self):
         token = WriteTokenFactory(upload__metadata={'md5': 'badvalue'})

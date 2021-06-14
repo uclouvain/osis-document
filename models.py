@@ -29,9 +29,18 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.db.models.functions import Now
 from django.utils.translation import gettext_lazy as _
 
 from .enums import FileStatus, TokenAccess
+
+
+class UploadManager(models.Manager):
+    def from_token(self, token):
+        return self.filter(
+            tokens__token=token,
+            tokens__expires_at__gt=Now(),
+        ).first()
 
 
 class Upload(models.Model):
@@ -69,6 +78,8 @@ class Upload(models.Model):
         default=dict,
     )
 
+    objects = UploadManager()
+
     class Meta:
         verbose_name = _("Upload")
 
@@ -81,6 +92,14 @@ def default_expiration_time():
     from django.utils.timezone import now
     max_age = getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
     return now() + timedelta(seconds=max_age)
+
+
+class TokenManager(models.Manager):
+    def writing_not_expired(self):
+        return self.filter(
+            access=TokenAccess.WRITE.name,
+            expires_at__gt=Now(),
+        )
 
 
 class Token(models.Model):
@@ -108,3 +127,5 @@ class Token(models.Model):
         choices=TokenAccess.choices(),
         default=TokenAccess.WRITE.name,
     )
+
+    objects = TokenManager()

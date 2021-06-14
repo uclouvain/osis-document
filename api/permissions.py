@@ -23,36 +23,20 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.urls import path, reverse_lazy, include
-from django.views.generic import CreateView, UpdateView, DetailView
+from django.conf import settings
+from rest_framework.permissions import BasePermission
 
-from osis_document.tests.document_test.models import TestDocument
 
-app_name = 'document_test'
-urlpatterns = [
-    path(
-        '',
-        CreateView.as_view(
-            model=TestDocument,
-            fields='__all__',
-            success_url=reverse_lazy('document_test:test-upload'),
-        ),
-        name='test-upload',
-    ),
-    path(
-        'update/<int:pk>',
-        UpdateView.as_view(
-            model=TestDocument,
-            fields='__all__',
-            success_url=reverse_lazy('document_test:test-upload'),
-        ),
-        name='test-upload',
-    ),
-    path(
-        'view/<int:pk>',
-        DetailView.as_view(model=TestDocument,),
-        name='test-view',
-    ),
-    path('document/', include('osis_document.contrib.urls')),
-    path('api/', include('osis_document.api.url_v1', namespace="api")),
-]
+class APIKeyPermission(BasePermission):
+    """Simple header based permission."""
+
+    @staticmethod
+    def check_secret_header(request):
+        auth = request.headers.get('X-Api-Key', '')
+        return auth == settings.OSIS_DOCUMENT_API_SHARED_SECRET
+
+    def has_permission(self, request, view):
+        return self.check_secret_header(request)
+
+    def has_object_permission(self, request, view, obj):
+        return self.check_secret_header(request)

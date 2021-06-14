@@ -1,0 +1,65 @@
+openapi: 3.0.0
+servers:
+  - url: https://{environment}.osis.uclouvain.be/api/v1/osis_document/
+    variables:
+      environment:
+        default: dev
+        enum:
+          - dev # Development server
+          - qa # Staging server
+          - test # Test server
+  - url: https://osis.uclouvain.be/api/v1/osis_document/
+    description: 'Production server'
+info:
+  version: '1.00'
+  title: 'OSIS Document Service'
+  description: |-
+    A set of API endpoints that allow you to get information about uploads
+paths:
+  /confirm-upload/{token}:
+    put:
+      operationId: confirm-upload_update
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            description: ''
+            title: Jeton
+            type: string
+      tags:
+        - confirm-upload
+  /get-metadata/{uuid}:
+    get:
+      operationId: get-metadata_read
+      parameters:
+        - in: path
+          name: uuid
+          required: true
+          schema:
+            description: A UUID string identifying this upload.
+            title: UUID
+            type: string
+      tags:
+        - get-metadata
+  /get-token/{uuid}:
+    post:
+      operationId: get-token_create
+      parameters:
+        - in: path
+          name: uuid
+          required: true
+          schema:
+            description: A UUID string identifying this upload.
+            title: UUID
+            type: string
+      tags:
+        - get-token
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+security:
+  - ApiKeyAuth: [ ]

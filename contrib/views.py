@@ -121,9 +121,8 @@ class ChangeMetadataView(APIView):
     def post(self, request, token: str):
         """Endpoint to change metadata name about an upload"""
         token = get_object_or_404(
-            Token,
+            Token.objects.writing_not_expired(),
             token=token,
-            access=TokenAccess.WRITE.name,
         )
         upload = token.upload
         upload.metadata['name'] = request.data.get('name', '')
@@ -139,9 +138,8 @@ class RotateImageView(APIView):
     def post(self, request, token: str):
         """Endpoint to change metadata name about an upload"""
         token = get_object_or_404(
-            Token,
+            Token.objects.writing_not_expired(),
             token=token,
-            access=TokenAccess.WRITE.name,
         )
         upload = token.upload
 
@@ -175,7 +173,7 @@ class FileView(APIView):
 
     def get(self, request, token: str):
         """Endpoint to get real file"""
-        upload = Upload.objects.filter(tokens__token=token).first()
+        upload = Upload.objects.from_token(token)
         if not upload:
             return Response({
                 'error': _("Resource not found")
