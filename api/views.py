@@ -25,6 +25,7 @@
 # ##############################################################################
 from rest_framework import generics
 
+from osis_document.api.permissions import APIKeyPermission
 from osis_document.api.serializers import TokenSerializer, MetadataSerializer, UploadUUIDSerializer
 from osis_document.models import Upload, Token
 from osis_document.utils import confirm_upload
@@ -34,6 +35,8 @@ class GetTokenView(generics.CreateAPIView):
     serializer_class = TokenSerializer
     name = 'get-token'
     queryset = Upload.objects.all()
+    authentication_classes = []
+    permission_classes = [APIKeyPermission]
 
     def create(self, request, *args, **kwargs):
         upload = self.get_object()
@@ -45,6 +48,8 @@ class MetadataView(generics.RetrieveAPIView):
     serializer_class = MetadataSerializer
     name = 'get-metadata'
     queryset = Upload.objects.all()
+    authentication_classes = []
+    permission_classes = [APIKeyPermission]
 
 
 class ConfirmUploadView(generics.UpdateAPIView):
@@ -52,6 +57,8 @@ class ConfirmUploadView(generics.UpdateAPIView):
     name = 'confirm-upload'
     lookup_field = 'token'
     queryset = Token.objects.writing_not_expired()
+    authentication_classes = []
+    permission_classes = [APIKeyPermission]
 
     def perform_update(self, serializer):
         confirm_upload(serializer.instance.token)

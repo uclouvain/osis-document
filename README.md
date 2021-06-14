@@ -131,3 +131,8 @@ Commands available:
  - `npm run lint` checks Javascript syntax
  - `npm run test` launch tests
  - `npm run coverage` launch tests with coverage
+
+# Communication between servers
+
+To communicate between two servers (e.g., with SDK-based code), you need to send requests with the header `X-Api-Key`
+containing the shared secret set in the server using the setting `OSIS_DOCUMENT_API_SHARED_SECRET`. 

@@ -30,15 +30,27 @@ from django.test import override_settings
 from django.utils.datetime_safe import datetime
 from rest_framework.test import APITestCase
 
-from base.tests.factories.user import UserFactory
 from osis_document.enums import TokenAccess
 from osis_document.tests.factories import PdfUploadFactory, WriteTokenFactory, ReadTokenFactory
 
 
-@override_settings(ROOT_URLCONF="osis_document.tests.document_test.urls")
+@override_settings(ROOT_URLCONF="osis_document.tests.document_test.urls",
+                   OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
 class APIViewsTestCase(APITestCase):
+    def test_all_views_protected(self):
+        token = WriteTokenFactory()
+        upload_pk = token.upload.pk
+        response = self.client.post(resolve_url('api:get-token', pk=upload_pk))
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(resolve_url('api:get-metadata', pk=upload_pk))
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.put(resolve_url('api:confirm-upload', token=token.token))
+        self.assertEqual(response.status_code, 403)
+
     def test_get_token(self):
-        self.client.force_authenticate(UserFactory())
+        self.client.defaults = {'HTTP_X_API_KEY': 'foobar'}
         response = self.client.post(resolve_url('api:get-token', pk=PdfUploadFactory().pk))
         self.assertEqual(response.status_code, 201)
         token = response.json()
@@ -57,7 +69,7 @@ class APIViewsTestCase(APITestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_get_metadata(self):
-        self.client.force_authenticate(UserFactory())
+        self.client.defaults = {'HTTP_X_API_KEY': 'foobar'}
         response = self.client.get(resolve_url('api:get-metadata', pk=PdfUploadFactory().pk))
         self.assertEqual(response.status_code, 200)
         metadata = response.json()
@@ -69,7 +81,7 @@ class APIViewsTestCase(APITestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_confirm_upload(self):
-        self.client.force_authenticate(UserFactory())
+        self.client.defaults = {'HTTP_X_API_KEY': 'foobar'}
         token = WriteTokenFactory()
         response = self.client.put(resolve_url('api:confirm-upload', token=token.token))
         self.assertEqual(200, response.status_code)
