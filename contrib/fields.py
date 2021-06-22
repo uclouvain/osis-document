@@ -51,4 +51,6 @@ class FileField(ArrayField):
         })
 
     def pre_save(self, model_instance, add):
-        return [confirm_upload(token) for token in super().pre_save(model_instance, add)]
+        value = [confirm_upload(token) for token in super().pre_save(model_instance, add)]
+        setattr(model_instance, self.attname, value)
+        return value
