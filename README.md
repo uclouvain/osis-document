@@ -51,8 +51,14 @@ from osis_document.contrib import FileField
 class MyModel(models.Model):
     files = FileField(
         verbose_name=_("ID card"),
-        max_files=2,
+        max_size=True,  # To restrict file size
+        upload_button_text='',  # To customize dropzone button text
+        upload_text='', # To customize dropzone text
+        min_files=1,  # To require at least 1 file
+        max_files=2,  # To require at most 2 files
         mimetypes=['application/pdf', 'image/png', 'image/jpeg'],
+        can_edit_filename=False,  # To prevent filename editing
+        automatic_upload=False,  # To force displaying upload button
     )
 )
 ```
@@ -61,16 +67,10 @@ This `FileField` model field is associated with the form field `FileUploadField`
 
 ```python
 from django.forms import forms
-from django.utils.translation import gettext_lazy as _
 from osis_document.contrib import FileUploadField
 
 class MyModelForm(forms.Form):
-    files = FileUploadField(
-        verbose_name=_("ID card"),
-        max_files=2,
-        mimetypes=['application/pdf', 'image/png', 'image/jpeg'],
-        automatic_upload=False,  # May be set to force displaying upload button
-    )
+    files = FileUploadField()
 
     def save(self):
         uuids = self.files.persist(self.cleaned_data['files'])

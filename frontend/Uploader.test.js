@@ -42,6 +42,7 @@ it('should mount', () => {
     },
     mocks: {
       $t: (k) => k,
+      $tc: (k) => k,
     },
   });
   expect(wrapper.text()).toContain('uploader.drag_n_drop_label');
@@ -58,6 +59,7 @@ it('should add upload entry', async () => {
     },
     mocks: {
       $t: (k) => k,
+      $tc: (k) => k,
     },
   });
   expect(wrapper.findComponent(UploadEntry).exists()).toBe(false);
@@ -81,6 +83,7 @@ describe('file already uploaded', function () {
     },
     mocks: {
       $t: (k) => k,
+      $tc: (k) => k,
     },
   });
 
@@ -117,6 +120,7 @@ it('triggers upload when manual', async () => {
     },
     mocks: {
       $t: (k) => k,
+      $tc: (k) => k,
     },
   });
 
@@ -141,6 +145,7 @@ it('should handle existing value', async () => {
     },
     mocks: {
       $t: (k) => k,
+      $tc: (k) => k,
     },
   });
 

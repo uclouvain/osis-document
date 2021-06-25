@@ -23,6 +23,9 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import re
+
+import uuid
 from django import forms
 from django.conf import settings
 from django.contrib.postgres.forms import SplitArrayWidget
@@ -42,11 +45,36 @@ class FileUploadWidget(SplitArrayWidget):
         }
         js = ('osis_document/osis-document.umd.min.js',)
 
-    def __init__(self, max_size=None, mimetypes=None, automatic_upload=True, **kwargs):
-        self.automatic_upload = automatic_upload
-        self.mimetypes = mimetypes
-        self.max_size = max_size
+    def __init__(self, **kwargs):
+        self.automatic_upload = kwargs.pop('automatic_upload', True)
+        self.mimetypes = kwargs.pop('mimetypes', None)
+        self.max_size = kwargs.pop('max_size', None)
+        self.upload_button_text = kwargs.pop('upload_button_text', None)
+        self.upload_text = kwargs.pop('upload_text', None)
+        self.can_edit_filename = kwargs.pop('can_edit_filename', True)
+        if kwargs.get('size', None) is None:
+            kwargs['size'] = 0
         super().__init__(widget=forms.TextInput, **kwargs)
+
+    def value_from_datadict(self, data, files, name):
+        return [self.widget.value_from_datadict(data, files, '%s_%s' % (name, index))
+                for index in range(self.get_size(data, name))]
+
+    @staticmethod
+    def get_size(data, name):
+        # Detect the size of the array by sorting prefixed data and getting the last number via regex
+        names = sorted([field_name for field_name in data if field_name.startswith(name)], reverse=True)
+        if names:
+            search = re.findall(r'\d+', names[0]) or ['-1']
+            return int(search[-1]) + 1
+        return 0
+
+    def value_omitted_from_data(self, data, files, name):
+        fn = all if self.size else any
+        return fn(
+            self.widget.value_omitted_from_data(data, files, '%s_%s' % (name, index))
+            for index in range(self.get_size(data, name))
+        )
 
     def build_attrs(self, base_attrs, extra_attrs=None):
         attrs = super().build_attrs(base_attrs, extra_attrs)
@@ -58,13 +86,20 @@ class FileUploadWidget(SplitArrayWidget):
             attrs['data-mimetypes'] = ','.join(self.mimetypes)
         if not self.automatic_upload:
             attrs['data-automatic-upload'] = "false"
+        if self.can_edit_filename is False:
+            attrs['data-editable-filename'] = "false"
         if self.max_size is not None:
             attrs['data-max-size'] = self.max_size
+        if self.upload_button_text is not None:
+            attrs['data-upload-button-text'] = self.upload_button_text
+        if self.upload_text is not None:
+            attrs['data-upload-text'] = self.upload_text
         return attrs
 
-    def format_value(self, value):
-        # Convert the raw value (which is a list of uuids) to a list of write tokens
-        return [
-            get_token(uuid, access=TokenAccess.WRITE.name)
-            for uuid in value
-        ]
+    def format_value(self, values):
+        # Values is an array of either tokens or uuid, or None
+        # Convert the uuid values to write tokens, and filter out None values
+        return filter(None, [
+            get_token(value, access=TokenAccess.WRITE.name) if isinstance(value, uuid.UUID) else value
+            for value in values
+        ])

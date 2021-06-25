@@ -31,22 +31,30 @@ from osis_document.utils import confirm_upload
 
 
 class FileField(ArrayField):
-    def __init__(self, max_size=None, limit=None, mimetypes=None, automatic_upload=True, **kwargs):
-        self.automatic_upload = automatic_upload
-        self.max_size = max_size
-        self.mimetypes = mimetypes
+    def __init__(self, **kwargs):
+        self.automatic_upload = kwargs.pop('automatic_upload', True)
+        self.can_edit_filename = kwargs.pop('can_edit_filename', True)
+        self.max_size = kwargs.pop('max_size', None)
+        self.mimetypes = kwargs.pop('mimetypes', None)
+        self.upload_button_text = kwargs.pop('upload_button_text', None)
+        self.upload_text = kwargs.pop('upload_text', None)
+        self.max_files = kwargs.pop('max_files', None)
         kwargs.setdefault('default', list)
         kwargs.setdefault('base_field', models.UUIDField())
-        kwargs.setdefault('size', limit)
+        kwargs.setdefault('size', kwargs.pop('min_files', None))
         super().__init__(**kwargs)
 
     def formfield(self, **kwargs):
         return super(ArrayField, self).formfield(**{
             'form_class': FileUploadField,
             'max_size': self.max_size,
-            'limit': self.size,
+            'min_files': self.size,
+            'max_files': self.max_files,
             'mimetypes': self.mimetypes,
             'automatic_upload': self.automatic_upload,
+            'can_edit_filename': self.can_edit_filename,
+            'upload_button_text': self.upload_button_text,
+            'upload_text': self.upload_text,
             **kwargs,
         })
 

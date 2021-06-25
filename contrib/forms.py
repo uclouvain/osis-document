@@ -58,25 +58,44 @@ class TokenField(forms.CharField):
 
 
 class FileUploadField(SplitArrayField):
-    def __init__(self, limit=None, max_size=None, mimetypes=None, automatic_upload=True, **kwargs):
-        self.mimetypes = mimetypes
-        self.max_size = max_size
+    default_error_messages = {
+        'max_files': _("Too many files uploaded"),
+        'min_files': _("Too few files uploaded"),
+    }
+
+    def __init__(self, **kwargs):
+        self.mimetypes = kwargs.pop('mimetypes', None)
+        self.max_size = kwargs.pop('max_size', None)
+        self.max_files = kwargs.pop('max_files', None)
+        self.min_files = kwargs.pop('min_files', None)
         kwargs.setdefault('widget', FileUploadWidget(
-            max_size=max_size,
-            mimetypes=mimetypes,
-            automatic_upload=automatic_upload,
-            size=limit or 1,
+            max_size=self.max_size,
+            mimetypes=self.mimetypes,
+            automatic_upload=kwargs.pop('automatic_upload', True),
+            can_edit_filename=kwargs.pop('can_edit_filename', True),
+            upload_button_text=kwargs.pop('upload_button_text', None),
+            upload_text=kwargs.pop('upload_text', None),
+            size=self.min_files,
         ))
         base_field = TokenField(
             required=True,
-            max_size=max_size,
-            mimetypes=mimetypes,
+            max_size=self.max_size,
+            mimetypes=self.mimetypes,
         )
         kwargs.setdefault('base_field', base_field)
-        kwargs.setdefault('size', limit or 1)
+        # We need at least an integer for SplitArrayField
+        kwargs['size'] = self.min_files or 0
         super().__init__(**kwargs)
+
+    def clean(self, value):
+        if self.max_files and len(value) > self.max_files:
+            raise forms.ValidationError(self.error_messages['max_files'])
+        if self.min_files and len(value) < self.min_files:
+            raise forms.ValidationError(self.error_messages['min_files'])
+        return super().clean(value)
 
     @staticmethod
     def persist(values):
         from osis_document.utils import confirm_upload
+
         return [confirm_upload(token) for token in values]

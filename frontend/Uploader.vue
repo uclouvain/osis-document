@@ -26,7 +26,7 @@
 <template>
   <div>
     <div
-        v-if="Object.values(filteredTokens).length < limit"
+        v-if="Object.values(filteredTokens).length < Math.max(limit, 1)"
         class="dropzone"
         :class="{hovering: isDragging}"
         @dragenter="isDragging = true"
@@ -39,14 +39,14 @@
           @dragleave="isDragging = false"
           @change="onFilePicked"
       >
-      {{ $t('uploader.drag_n_drop_label') }}
+      {{ uploadText || $tc('uploader.drag_n_drop_label', limit) }}
       <button
           class="btn btn-primary"
           type="button"
           @click="$refs.fileInput.click()"
       >
         <span class="glyphicon glyphicon-plus" />
-        {{ $t('uploader.add_file_label') }}
+        {{ uploadButtonText || $t('uploader.add_file_label') }}
       </button>
       <span v-if="maxSize">
         {{ $t('uploader.max_size_label', { size: humanizedSize(maxSize) }) }}
@@ -83,6 +83,7 @@
           :value="token"
           :base-url="baseUrl"
           :editable="true"
+          :editable-filename="editableFilename"
           @delete="$delete(tokens, index);"
           @update-token="$set(tokens, index, $event);"
       />
@@ -118,7 +119,11 @@ export default {
     },
     uploadText: {
       type: String,
-      default: 'Upload file',
+      default: null,
+    },
+    uploadButtonText: {
+      type: String,
+      default: null,
     },
     maxSize: {
       type: Number,
@@ -126,9 +131,13 @@ export default {
     },
     limit: {
       type: Number,
-      default: 1,
+      default: 0,
     },
     automaticUpload: {
+      type: Boolean,
+      default: true,
+    },
+    editableFilename: {
       type: Boolean,
       default: true,
     },

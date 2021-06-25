@@ -21,7 +21,7 @@ exports[`Storyshots Uploader Basic 1`] = `
         class="glyphicon glyphicon-plus"
       />
       
-      click to add a file
+      click to add
     
     </button>
      
@@ -112,7 +112,7 @@ exports[`Storyshots Uploader Limited 1`] = `
       type="file"
     />
     
-    Drag and drop one or more files here or
+    Drag and drop a file here or
     
     <button
       class="btn btn-primary"
@@ -122,7 +122,7 @@ exports[`Storyshots Uploader Limited 1`] = `
         class="glyphicon glyphicon-plus"
       />
       
-      click to add a file
+      click to add
     
     </button>
      
@@ -167,7 +167,7 @@ exports[`Storyshots Uploader Manual Trigger 1`] = `
         class="glyphicon glyphicon-plus"
       />
       
-      click to add a file
+      click to add
     
     </button>
      
@@ -189,31 +189,7 @@ exports[`Storyshots Uploader Manual Trigger 1`] = `
 
 exports[`Storyshots Uploader With Existing Value 1`] = `
 <div>
-  <div
-    class="dropzone"
-  >
-    <input
-      accept=""
-      multiple="multiple"
-      type="file"
-    />
-    
-    Drag and drop one or more files here or
-    
-    <button
-      class="btn btn-primary"
-      type="button"
-    >
-      <span
-        class="glyphicon glyphicon-plus"
-      />
-      
-      click to add a file
-    
-    </button>
-     
-    <!---->
-  </div>
+  <!---->
    
   <ul
     class="media-list"
