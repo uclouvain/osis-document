@@ -64,7 +64,7 @@
           class="media-heading"
       >
         <div
-            v-if="isEditable"
+            v-if="isEditable && editableFilename"
             class="input-group"
         >
           <input
@@ -160,6 +160,10 @@ export default {
       required: true,
     },
     isEditable: {
+      type: Boolean,
+      default: true,
+    },
+    editableFilename: {
       type: Boolean,
       default: true,
     },

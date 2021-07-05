@@ -23,7 +23,6 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-import uuid
 from unittest.mock import patch
 
 from django import forms
@@ -57,16 +56,56 @@ class FormTestCase(TestCase):
         error = TokenField.default_error_messages['nonexistent']
         self.assertIn(str(error), form.errors['media'][0])
 
-    def test_check_limit(self):
-        class TestForm(forms.Form):
-            media = FileUploadField(limit=1)
+    def test_check_file_min_count(self):
+        class TestFormMin(forms.Form):
+            media = FileUploadField(min_files=2)
 
-        form = TestForm({
+        form = TestFormMin({
             'media_0': WriteTokenFactory().token,
-            'media_1': uuid.uuid4(),
+            'media_1': WriteTokenFactory().token,
         })
         self.assertTrue(form.is_valid(), msg=form.errors)
+        self.assertEqual(2, len(form.cleaned_data['media']))
+        form = TestFormMin({
+            'media_0': WriteTokenFactory().token,
+        })
+        self.assertFalse(form.is_valid())
+
+    def test_check_file_max_count(self):
+        class TestFormMax(forms.Form):
+            media = FileUploadField(max_files=1)
+
+        form = TestFormMax({
+            'media_0': WriteTokenFactory().token,
+            'media_1': WriteTokenFactory().token,
+        })
+        self.assertFalse(form.is_valid())
+        form = TestFormMax({
+            'media_0': WriteTokenFactory().token,
+        })
+        self.assertTrue(form.is_valid())
         self.assertEqual(1, len(form.cleaned_data['media']))
+
+    def test_check_file_min_max_count(self):
+        class TestFormMinMax(forms.Form):
+            media = FileUploadField(min_files=2, max_files=2)
+
+        form = TestFormMinMax({
+            'media_0': WriteTokenFactory().token,
+        })
+        self.assertFalse(form.is_valid())
+        form = TestFormMinMax({
+            'media_0': WriteTokenFactory().token,
+            'media_1': WriteTokenFactory().token,
+            'media_2': WriteTokenFactory().token,
+        })
+        self.assertFalse(form.is_valid())
+        form = TestFormMinMax({
+            'media_0': WriteTokenFactory().token,
+            'media_1': WriteTokenFactory().token,
+        })
+        self.assertTrue(form.is_valid())
+        self.assertEqual(2, len(form.cleaned_data['media']))
 
     def test_check_max_size(self):
         class TestForm(forms.Form):

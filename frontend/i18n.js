@@ -32,8 +32,8 @@ Vue.use(VueI18n);
 const messages = {
   en: {
     uploader: {
-      drag_n_drop_label: 'Drag and drop one or more files here or',
-      add_file_label: 'click to add a file',
+      drag_n_drop_label: 'Drag and drop one or more files here or | Drag and drop a file here or | Drag and drop at most {count} files here or',
+      add_file_label: 'click to add',
       max_size_label: '(max size {size})',
       trigger_upload: 'Upload',
     },
@@ -55,8 +55,8 @@ const messages = {
   },
   'fr-be': {
     uploader: {
-      drag_n_drop_label: 'Glisser-déposer un ou plusieurs fichiers ici ou',
-      add_file_label: 'cliquer pour ajouter un fichier',
+      drag_n_drop_label: 'Glisser-déposer un ou plusieurs fichiers ici ou | Glisser-déposer un fichier ici ou | Glisser-déposer au maximum {count} fichiers ici ou',
+      add_file_label: 'cliquer pour en ajouter',
       max_size_label: '(taille maximum {size})',
       trigger_upload: 'Transférer',
     },

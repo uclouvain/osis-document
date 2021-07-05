@@ -97,7 +97,6 @@ export const withExistingValue = UploadingServerTemplate.bind({});
 withExistingValue.args = {
   ...basic.args,
   values: ['12e68184-5cba-4b27-9988-609a6cc3be63'],
-  limit: 5,
 };
 
 export const editableImage = UploadingServerTemplate.bind({});

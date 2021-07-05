@@ -45,6 +45,9 @@ document.querySelectorAll('.document-uploader').forEach((elem) => {
   if (typeof props.automaticUpload !== 'undefined') {
     props.automaticUpload = props.automaticUpload === "true";
   }
+  if (typeof props.editableFilename !== 'undefined') {
+    props.editableFilename = props.editableFilename === "true";
+  }
   new Vue({
     render: (h) => h(Uploader, { props }),
     i18n,
