@@ -41,7 +41,7 @@ from rest_framework.views import APIView
 from osis_document.enums import TokenAccess
 from osis_document.exceptions import Md5Mismatch
 from osis_document.models import Upload, Token
-from osis_document.utils import confirm_upload, get_metadata, get_token
+from osis_document.utils import confirm_upload, get_metadata, get_token, calculate_md5
 
 __all__ = [
     'RequestUploadView',
@@ -75,10 +75,7 @@ class RequestUploadView(APIView):
 
             # Process file: calculate md5 and save it to db
             file = request.FILES['file']
-            m = hashlib.md5()
-            for chunk in file.chunks():
-                m.update(chunk)
-            md5 = m.hexdigest()
+            md5 = calculate_md5(file)
             instance = Upload(
                 file=file,
                 mimetype=file.content_type,

@@ -84,3 +84,14 @@ def get_token(uuid, **kwargs):
         token=signing.dumps(str(uuid)),
         **kwargs
     ).token
+
+
+def calculate_md5(file):
+    hash_md5 = hashlib.md5()
+    if isinstance(file, bytes):
+        hash_md5.update(file)
+    else:
+        with open(file, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+    return hash_md5.hexdigest()
