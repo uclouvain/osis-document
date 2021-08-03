@@ -24,10 +24,12 @@
 #
 # ##############################################################################
 import hashlib
+import sys
 
 from django.conf import settings
 from django.core import signing
 from django.core.exceptions import FieldError
+from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
 
 from osis_document.enums import FileStatus
@@ -95,3 +97,25 @@ def calculate_md5(file):
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_md5.update(chunk)
     return hash_md5.hexdigest()
+
+
+def save_raw_upload(file, name, mimetype, **metadata):
+    """Save a file into an Upload object with given parameters."""
+
+    md5 = calculate_md5(file)
+    upload = Upload.objects.create(
+        mimetype=mimetype,
+        size=sys.getsizeof(file),
+        metadata={"md5": md5, **metadata},
+    )
+    upload.file.save(
+        content=ContentFile(file),
+        name=name,
+        save=True,
+    )
+    # create a related token
+    token = Token.objects.create(
+        upload_id=upload.uuid,
+        token=signing.dumps(str(upload.uuid)),
+    )
+    return token
