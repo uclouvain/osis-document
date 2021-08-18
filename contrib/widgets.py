@@ -63,7 +63,8 @@ class FileUploadWidget(SplitArrayWidget):
     @staticmethod
     def get_size(data, name):
         # Detect the size of the array by sorting prefixed data and getting the last number via regex
-        names = sorted([field_name for field_name in data if field_name.startswith(name)], reverse=True)
+        pattern = re.compile(r'{}_\d+'.format(name))
+        names = sorted([field_name for field_name in data if pattern.fullmatch(field_name)], reverse=True)
         if names:
             search = re.findall(r'\d+', names[0]) or ['-1']
             return int(search[-1]) + 1
