@@ -59,6 +59,7 @@ class FileField(ArrayField):
         })
 
     def pre_save(self, model_instance, add):
-        value = [confirm_upload(token) for token in super().pre_save(model_instance, add)]
+        # Get all writing tokens (by filtering uuids) and confirm their upload
+        value = [confirm_upload(token) for token in getattr(model_instance, self.attname) if isinstance(token, str)]
         setattr(model_instance, self.attname, value)
         return value

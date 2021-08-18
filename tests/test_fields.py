@@ -28,7 +28,7 @@ from django.test import TestCase, override_settings
 from django.utils.translation import gettext as _
 
 from osis_document.enums import FileStatus
-from osis_document.models import Token
+from osis_document.models import Token, Upload
 from osis_document.tests.document_test.models import TestDocument
 from osis_document.tests.factories import WriteTokenFactory
 
@@ -40,7 +40,7 @@ class FieldTestCase(TestCase):
         ModelForm = modelform_factory(TestDocument, fields='__all__')
 
         form = ModelForm({})
-        self.assertFalse(form.is_valid())
+        self.assertTrue(form.is_valid())
 
         form = ModelForm({
             'documents_0': [],
@@ -67,7 +67,26 @@ class FieldTestCase(TestCase):
             'documents_0': token.token,
         })
         self.assertTrue(form.is_valid(), form.errors)
-        form.save()
+
+        # 4 queries (one for loading obj, one for upload state, one for deleting token, one for saving obj)
+        with self.assertNumQueries(4):
+            document = form.save()
+
         self.assertIsNone(Token.objects.filter(token=token.token).first())
         token.upload.refresh_from_db()
+        self.assertEqual(len(document.documents), 1)
         self.assertEqual(token.upload.status, FileStatus.UPLOADED.name)
+
+        token = WriteTokenFactory(upload=Upload.objects.first())
+        form = ModelForm({
+            'documents_0': token.token,
+        })
+        # 4 queries (one for loading obj, one for loading toke, one for deleting token, one for saving obj)
+        with self.assertNumQueries(4):
+            document = form.save()
+
+        # Saving an empty form should empty the field
+        form = ModelForm({}, instance=document)
+        self.assertTrue(form.is_valid(), form.errors)
+        document = form.save()
+        self.assertEqual(len(document.documents), 0)

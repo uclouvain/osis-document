@@ -48,8 +48,9 @@ def confirm_upload(token):
     token.delete()
 
     # Set upload as persisted and return its uuid
-    upload.status = FileStatus.UPLOADED.name
-    upload.save()
+    if upload.status != FileStatus.UPLOADED.name:
+        upload.status = FileStatus.UPLOADED.name
+        upload.save()
     return upload.uuid
 
 
