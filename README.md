@@ -121,7 +121,7 @@ Available metadata info:
 - `url`: The file url to get the file
 
 
-# Contributing to OSIS-History
+# Contributing to OSIS-Document
 
 To contribute to the frontend part of this module, install `npm` > 6 (included in [https://nodejs.org/en/download/](nodejs)), and run:
 ```console

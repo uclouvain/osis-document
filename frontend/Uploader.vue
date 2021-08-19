@@ -41,7 +41,7 @@
       >
       {{ uploadText || $tc('uploader.drag_n_drop_label', limit) }}
       <button
-          class="btn btn-primary"
+          class="btn btn-default"
           type="button"
           @click="$refs.fileInput.click()"
       >
@@ -78,7 +78,7 @@
     <ul class="media-list">
       <ViewEntry
           v-for="(token, index) in filteredTokens"
-          :id="index"
+          :id="`${name}-${index}`"
           :key="index"
           :value="token"
           :base-url="baseUrl"

@@ -103,7 +103,7 @@
               </button>
               <button
                   type="button"
-                  class="btn btn-primary"
+                  class="btn btn-default"
                   :disabled="!isRotated"
                   @click="saveRotation"
               >
