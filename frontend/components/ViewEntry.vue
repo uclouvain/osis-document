@@ -77,7 +77,7 @@
             <button
                 type="button"
                 :disabled="originalName === name"
-                class="btn btn-primary"
+                class="btn btn-default"
                 @click="saveName"
             >
               <i
@@ -101,14 +101,14 @@
       <div class="btn-group">
         <a
             v-if="isViewableDocument"
-            class="btn btn-info"
+            class="btn btn-default"
             data-toggle="modal"
             :data-target="`#modal-${id}`"
         >
           <span class="glyphicon glyphicon-eye-open" />
         </a>
         <a
-            class="btn btn-info"
+            class="btn btn-default"
             target="_blank"
             :href="file.url"
         >

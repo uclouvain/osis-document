@@ -41,7 +41,7 @@
       >
       {{ uploadText || $tc('uploader.drag_n_drop_label', limit) }}
       <button
-          class="btn btn-primary"
+          class="btn btn-default"
           type="button"
           @click="$refs.fileInput.click()"
       >
