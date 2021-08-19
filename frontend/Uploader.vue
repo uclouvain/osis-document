@@ -78,7 +78,7 @@
     <ul class="media-list">
       <ViewEntry
           v-for="(token, index) in filteredTokens"
-          :id="index"
+          :id="`${name}-${index}`"
           :key="index"
           :value="token"
           :base-url="baseUrl"
