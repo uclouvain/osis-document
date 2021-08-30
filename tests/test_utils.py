@@ -30,7 +30,7 @@ from django.test import TestCase, override_settings
 
 from osis_document.exceptions import Md5Mismatch
 from osis_document.tests.factories import WriteTokenFactory
-from osis_document.utils import get_metadata
+from osis_document.utils import get_metadata, save_raw_upload
 
 
 @override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls',
@@ -52,3 +52,17 @@ class MetadataTestCase(TestCase):
         token = WriteTokenFactory(upload__metadata={'md5': 'badvalue'})
         with self.assertRaises(Md5Mismatch):
             get_metadata(token.token)
+
+
+@override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+class RawUploadTestCase(TestCase):
+    def test_with_bytes(self):
+        token = save_raw_upload(
+            file=bytes('my file content', encoding='utf8'),
+            name='my_file_name.txt',
+            mimetype='text/plain',
+        )
+        metadata = get_metadata(token.token)
+        self.assertEqual(metadata['size'], 48)
+        self.assertEqual(metadata['mimetype'], 'text/plain')
+        self.assertEqual(metadata['md5'], 'ebf9d9524ad7f702a2c3a75f060024f1')
