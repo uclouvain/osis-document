@@ -1,9 +1,8 @@
 [run]
 branch = True
-source = osis_document
+source = osis_document/osis_document
 omit =
     */migrations/*
-    venv/*
     */tests/*
     */management/*
     */admin.py
