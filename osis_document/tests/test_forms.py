@@ -26,16 +26,26 @@
 from unittest.mock import patch
 
 from django import forms
-
 from django.test import TestCase, override_settings
 
 from osis_document.contrib.forms import FileUploadField, TokenField
 from osis_document.tests.factories import WriteTokenFactory
 
 
-@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls',
-                   OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+@override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class FormTestCase(TestCase):
+    def setUp(self):
+        self.mock_remote_metadata = patch('osis_document.api.utils.get_remote_metadata', return_value={
+            "size": 1024,
+            "mimetype": "application/pdf",
+            "name": "test.pdf",
+            "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
+        })
+        self.mock_remote_metadata.start()
+
+    def tearDown(self):
+        self.mock_remote_metadata.stop()
+
     def test_normal_behavior(self):
         class TestForm(forms.Form):
             media = FileUploadField()
@@ -52,7 +62,10 @@ class FormTestCase(TestCase):
         form = TestForm({
             'media_0': 'foobar',
         })
-        self.assertFalse(form.is_valid(), form.errors)
+
+        with patch('osis_document.api.utils.get_remote_metadata') as get_remote_metadata:
+            get_remote_metadata.return_value = None
+            self.assertFalse(form.is_valid(), form.errors)
         error = TokenField.default_error_messages['nonexistent']
         self.assertIn(str(error), form.errors['media'][0])
 
@@ -136,6 +149,6 @@ class FormTestCase(TestCase):
         token = WriteTokenFactory().token
         form = TestForm({'media_0': token})
         self.assertTrue(form.is_valid(), msg=form.errors)
-        with patch('osis_document.utils.confirm_upload') as confirm:
+        with patch('osis_document.api.utils.confirm_remote_upload') as confirm_remote_upload:
+            confirm_remote_upload.return_value = {"uuid": "something"}
             form.fields['media'].persist(form.cleaned_data['media'])
-            confirm.assert_called_with(token)

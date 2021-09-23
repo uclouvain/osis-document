@@ -24,16 +24,13 @@
 #
 # ##############################################################################
 import re
-
 import uuid
+
 from django import forms
 from django.conf import settings
 from django.contrib.postgres.forms import SplitArrayWidget
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
-
-from osis_document.enums import TokenAccess
-from osis_document.utils import get_token
 
 
 class FileUploadWidget(SplitArrayWidget):
@@ -99,8 +96,11 @@ class FileUploadWidget(SplitArrayWidget):
 
     def format_value(self, values):
         # Values is an array of either tokens or uuid, or None
+        if not values:
+            return []
         # Convert the uuid values to write tokens, and filter out None values
+        from osis_document.api.utils import get_remote_token
         return filter(None, [
-            get_token(value, access=TokenAccess.WRITE.name) if isinstance(value, uuid.UUID) else value
+            get_remote_token(value, write_token=True) if isinstance(value, uuid.UUID) else value
             for value in values
         ])

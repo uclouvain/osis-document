@@ -23,12 +23,12 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+
 from django import forms
 from django.contrib.postgres.forms import SplitArrayField
 from django.utils.translation import gettext_lazy as _
 
 from osis_document.contrib.widgets import FileUploadWidget
-from osis_document.utils import get_metadata
 
 
 class TokenField(forms.CharField):
@@ -47,7 +47,8 @@ class TokenField(forms.CharField):
     def clean(self, value):
         cleaned_data = super().clean(value)
         # Check file presence, size and mimetype
-        metadata = get_metadata(cleaned_data)
+        from osis_document.api.utils import get_remote_metadata
+        metadata = get_remote_metadata(cleaned_data)
         if not metadata:
             raise forms.ValidationError(self.error_messages['nonexistent'], code='nonexistent')
         if self.max_size is not None and metadata['size'] > self.max_size:
@@ -96,6 +97,5 @@ class FileUploadField(SplitArrayField):
 
     @staticmethod
     def persist(values):
-        from osis_document.utils import confirm_upload
-
-        return [confirm_upload(token) for token in values]
+        from osis_document.api.utils import confirm_remote_upload
+        return [confirm_remote_upload(token) for token in values]

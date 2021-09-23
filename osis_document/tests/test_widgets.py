@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from unittest.mock import patch
 
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
@@ -31,16 +32,21 @@ from osis_document.contrib.widgets import FileUploadWidget
 from osis_document.tests.factories import PdfUploadFactory
 
 
-@override_settings(
-    ROOT_URLCONF='osis_document.tests.document_test.urls',
-    OSIS_DOCUMENT_BASE_URL='/document/',
-)
+@override_settings(OSIS_DOCUMENT_BASE_URL='/document/')
 class WidgetTestCase(TestCase):
-    def test_widget_should_not_expose_uuid(self):
+    def test_widget_with_no_value(self):
+        widget = FileUploadWidget(size=2)
+        render = widget.render('foo', None)
+        self.assertNotIn('data-values', render)
+
+    @patch('osis_document.api.utils.get_remote_token')
+    def test_widget_should_not_expose_uuid(self, mock_remote_token):
+        mock_remote_token.return_value = 'some:token'
         widget = FileUploadWidget(size=2)
         stub_uuid = PdfUploadFactory().uuid
         render = widget.render('foo', [stub_uuid])
         self.assertNotIn(str(stub_uuid), render)
+        self.assertIn('data-values="some:token"', render)
 
     def test_widget_renders_attributes(self):
         widget = FileUploadWidget(size=1, mimetypes=['application/pdf'])

@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from urllib.error import HTTPError
 
 from django.utils.translation import gettext_lazy as _
 
@@ -30,3 +31,7 @@ from django.utils.translation import gettext_lazy as _
 class Md5Mismatch(ValueError):
     def __init__(self, *args: object) -> None:
         super().__init__(_("MD5 check failed"))
+
+
+class UploadConfirmationException(HTTPError):
+    pass

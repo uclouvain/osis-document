@@ -23,15 +23,32 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.template import Template, Context
+from unittest.mock import patch
+
+from django.template import Context, Template
 from django.test import TestCase, override_settings
 
 from osis_document.tests.factories import PdfUploadFactory
 
 
-@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls',
+@override_settings(OSIS_DOCUMENT_API_SHARED_SECRET='verysecret',
                    OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/')
 class TemplateTagsTestCase(TestCase):
+    def setUp(self):
+        self.mock_remote_metadata = patch('osis_document.api.utils.get_remote_metadata', return_value={
+            "size": 1024,
+            "mimetype": "application/pdf",
+            "name": "test.pdf",
+            "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
+        })
+        self.mock_remote_metadata.start()
+        self.mock_remote_token = patch('osis_document.api.utils.get_remote_token', return_value='a:token')
+        self.mock_remote_token.start()
+
+    def tearDown(self):
+        self.mock_remote_metadata.stop()
+        self.mock_remote_token.stop()
+
     def test_visualizer_does_not_expose_uuid(self):
         stub_uuid = PdfUploadFactory().uuid
         context = Context({

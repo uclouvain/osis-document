@@ -48,7 +48,7 @@ OSIS-Document is aimed at being run on another server, but for easier developmen
 locally to your `backoffice/urls.py`:
 ```
 if 'osis_document' in settings.INSTALLED_APPS:
-    urlpatterns += (path('osis_document/', include('osis_document.contrib.urls')), )
+    urlpatterns += (path('osis_document/', include('osis_document.urls')), )
 ```
 
 # Using OSIS Document
