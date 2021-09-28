@@ -132,6 +132,7 @@ class MetadataViewTestCase(APITestCase):
         self.assertIn('mimetype', metadata)
         self.assertIn('md5', metadata)
         self.assertIn('name', metadata)
+        self.assertIn('uploaded_at', metadata)
 
     def test_get_file_bad_token(self):
         response = self.client.get(resolve_url('get-metadata', token='token'))
@@ -185,6 +186,14 @@ class FileViewTestCase(TestCase):
         token = ReadTokenFactory()
         response = self.client.get(resolve_url('raw-file', token=token.token))
         self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.has_header('Content-Security-Policy'))
+
+    @override_settings(OSIS_DOCUMENT_DOMAIN_LIST=['127.0.0.1'])
+    def test_get_file_with_csp(self):
+        token = ReadTokenFactory()
+        response = self.client.get(resolve_url('raw-file', token=token.token))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header('Content-Security-Policy'))
 
     def test_get_file_bad_md5(self):
         token = ReadTokenFactory(upload__metadata={'md5': 'badvalue'})

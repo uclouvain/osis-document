@@ -6,6 +6,7 @@ omit =
     */tests/*
     */management/*
     */admin.py
+    */schema.py
 
 [report]
 skip_covered = True

@@ -27,8 +27,7 @@ git clone git@github.com:uclouvain/osis-document.git
 pip install -e ./osis-document
 ```
 
-
-## Configuring Django
+## Configuring OSIS Document
 
 Add `osis_document` to `INSTALLED_APPS` and configure the base url:
 
@@ -41,21 +40,28 @@ INSTALLED_APPS = (
     ...
 )
 
-OSIS_DOCUMENT_BASE_URL = os.environ.get('OSIS_DOCUMENT_BASE_URL', '/osis-document/')
+OSIS_DOCUMENT_BASE_URL = os.environ.get('OSIS_DOCUMENT_BASE_URL', '/osis_document/')
+OSIS_DOCUMENT_API_SHARED_SECRET = os.environ.get('OSIS_DOCUMENT_API_SHARED_SECRET', 'change-this-secret')
+# When used on multiple servers, set the domains on which raw files may be displayed (for Content Security Policy)
+OSIS_DOCUMENT_DOMAIN_LIST = [
+    '127.0.0.1:8001',
+]
 ```
 
-OSIS-Document is aimed at being run on another server, but for easier development, you can add it
-locally to your `backoffice/urls.py`:
-```
+OSIS-Document is aimed at being run on multiple servers, so on your primary server, add it to your `urls.py` 
+matching what you set in `settings.OSIS_DOCUMENT_BASE_URL`:
+
+```python
 if 'osis_document' in settings.INSTALLED_APPS:
     urlpatterns += (path('osis_document/', include('osis_document.urls')), )
 ```
+
 
 # Using OSIS Document
 
 `osis_document` is used to decouple file upload handling and retrieving from Django forms and apps with an accent on user interface.
 
-## Declaring a file field
+## Declaring a file field on a model
 
 To declare a file field within a Django model :
 
@@ -79,7 +85,8 @@ class MyModel(models.Model):
 )
 ```
 
-This `FileField` model field is associated with the form field `FileUploadField` , which can handle file upload on custom forms.
+This `FileField` model field is associated with the form field `FileUploadField`, which can handle file upload on 
+custom forms, even on a secondary server.
 
 ```python
 from django.forms import forms
@@ -89,7 +96,7 @@ class MyModelForm(forms.Form):
     files = FileUploadField()
 
     def save(self):
-        uuids = self.files.persist(self.cleaned_data['files'])
+        uuids = self.fields['files'].persist(self.cleaned_data['files'])
 ```
 
 Note 1: it is very important to call the persists method on the field upon saving, it returns the uuid of the files (it is your job to store these uuids).
@@ -119,12 +126,12 @@ See next section on what information is available in the metadata.
 
 ## Getting info about an uploaded file
 
-To get raw info or download url given a file uuid:
+To get raw info or download url given a file token:
 
 ```python
-from osis_document.utils import get_metadata
+from osis_document.api.utils import get_remote_metadata
  
-metadata = get_metadata(token)
+metadata = get_remote_metadata(token)
 ```
 
 Available metadata info:
@@ -138,6 +145,8 @@ Available metadata info:
 
 
 # Contributing to OSIS-Document
+
+## Frontend
 
 To contribute to the frontend part of this module, install `npm` > 6 (included in [https://nodejs.org/en/download/](nodejs)), and run:
 ```console
@@ -154,7 +163,14 @@ Commands available:
  - `npm run test` launch tests
  - `npm run coverage` launch tests with coverage
 
+## OpenAPI schema generation
+
+To ease generation, use the provided generator:
+```console
+./manage.py generateschema --urlconf=osis_document.urls --generator_class osis_document.api.schema.OsisDocumentSchemaGenerator --file osis_document/schema.yml
+```
+
 # Communication between servers
 
-To communicate between two servers (e.g., with SDK-based code), you need to send requests with the header `X-Api-Key`
-containing the shared secret set in the server using the setting `OSIS_DOCUMENT_API_SHARED_SECRET`. 
+To communicate between two servers (e.g., with SDK-based code), requests are sent with the header `X-Api-Key`
+containing the shared secret set in the server using the setting `OSIS_DOCUMENT_API_SHARED_SECRET`, so make sure it set. 

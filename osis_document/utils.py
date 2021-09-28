@@ -79,6 +79,7 @@ def get_metadata(token: str):
         'mimetype': upload.mimetype,
         'name': upload.file.name,
         'url': get_file_url(token),
+        'uploaded_at': upload.uploaded_at,
         **upload.metadata,
     }
 

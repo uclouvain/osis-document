@@ -23,19 +23,38 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.urls import path
+from rest_framework import generics
+from rest_framework.schemas.openapi import AutoSchema
 
-from .api import views
-from .enums import TokenAccess
+from osis_document.api import serializers
+from osis_document.api.permissions import APIKeyPermission
+from osis_document.models import Upload
 
-app_name = 'osis_document'
-urlpatterns = [
-    path('request-upload', views.RequestUploadView.as_view(), name=views.RequestUploadView.name),
-    path('confirm-upload/<path:token>', views.ConfirmUploadView.as_view(), name=views.ConfirmUploadView.name),
-    path('read-token/<uuid:pk>', views.GetTokenView.as_view(token_access=TokenAccess.READ.name), name='read-token'),
-    path('write-token/<uuid:pk>', views.GetTokenView.as_view(token_access=TokenAccess.WRITE.name), name='write-token'),
-    path('metadata/<path:token>', views.MetadataView.as_view(), name=views.MetadataView.name),
-    path('change-metadata/<path:token>', views.ChangeMetadataView.as_view(), name=views.ChangeMetadataView.name),
-    path('rotate-image/<path:token>', views.RotateImageView.as_view(), name=views.RotateImageView.name),
-    path('file/<path:token>', views.RawFileView.as_view(), name=views.RawFileView.name),
-]
+
+class GetTokenSchema(AutoSchema):  # pragma: no cover
+    def get_operation_id(self, path, method):
+        if 'write' in path:
+            return 'getWriteToken'
+        return 'getReadToken'
+
+    def get_operation(self, path, method):
+        operation = super().get_operation(path, method)
+        operation['security'] = [{"ApiKeyAuth": []}]
+        return operation
+
+
+class GetTokenView(generics.CreateAPIView):
+    """Get a token for an upload"""
+    name = 'get-token'
+    serializer_class = serializers.TokenSerializer
+    queryset = Upload.objects.all()
+    authentication_classes = []
+    permission_classes = [APIKeyPermission]
+    token_access = None
+    schema = GetTokenSchema()
+
+    def create(self, request, *args, **kwargs):
+        upload = self.get_object()
+        request.data['upload_id'] = upload.pk
+        request.data['access'] = self.token_access
+        return super().create(request, *args, **kwargs)
