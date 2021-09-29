@@ -23,7 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-
+from django.conf import settings
 from django.core.exceptions import FieldError
 from django.forms import modelform_factory
 from rest_framework import status
@@ -78,7 +78,8 @@ class RequestUploadSchema(DetailedAutoSchema):  # pragma: no cover
 
 
 class UploadUserThrottle(UserRateThrottle):
-    rate = '10/minute'
+    def get_rate(self):
+        return getattr(settings, 'OSIS_DOCUMENT_UPLOAD_LIMIT', '10/minute')
 
 
 class RequestUploadView(APIView):

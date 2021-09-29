@@ -97,7 +97,7 @@ class FieldTestCase(TestCase):
         form = ModelForm({
             'documents_0': token.token,
         })
-        # 4 queries (one for loading obj, one for deleting token, one for saving obj)
+        # 3 queries (one for loading obj, one for deleting token, one for saving obj)
         with self.assertNumQueries(3):
             document = form.save()
 

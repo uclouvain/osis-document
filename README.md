@@ -40,8 +40,12 @@ INSTALLED_APPS = (
     ...
 )
 
-OSIS_DOCUMENT_BASE_URL = os.environ.get('OSIS_DOCUMENT_BASE_URL', '/osis_document/')
+# The primary server full url
+OSIS_DOCUMENT_BASE_URL = os.environ.get('OSIS_DOCUMENT_BASE_URL', 'https://yourserver.com/osis_document/')
+# The shared secret between servers
 OSIS_DOCUMENT_API_SHARED_SECRET = os.environ.get('OSIS_DOCUMENT_API_SHARED_SECRET', 'change-this-secret')
+# The request upload rate limit for a user, see https://www.django-rest-framework.org/api-guide/throttling/#setting-the-throttling-policy
+OSIS_DOCUMENT_UPLOAD_LIMIT = '10/minute'
 # When used on multiple servers, set the domains on which raw files may be displayed (for Content Security Policy)
 OSIS_DOCUMENT_DOMAIN_LIST = [
     '127.0.0.1:8001',
