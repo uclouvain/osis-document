@@ -24,11 +24,37 @@
 #
 # ##############################################################################
 from django.core import signing
-from django.urls import reverse
 from rest_framework import serializers
 
 from osis_document.models import Token
-from osis_document.utils import get_token
+
+
+class RequestUploadResponseSerializer(serializers.Serializer):
+    token = serializers.CharField(help_text="A writing token for the uploaded file")
+
+
+class ConfirmUploadResponseSerializer(serializers.Serializer):
+    uuid = serializers.UUIDField(help_text="The uuid of the persisted file upload")
+
+
+class MetadataSerializer(serializers.Serializer):
+    size = serializers.IntegerField(help_text="The size, in bytes, of the file")
+    mimetype = serializers.CharField(help_text="The file's mimetype")
+    name = serializers.CharField(help_text="The file's name")
+    uploaded_at = serializers.DateTimeField(help_text="The file's upload date")
+    url = serializers.CharField(help_text="An url for direct access to the raw file")
+
+
+class ChangeMetadataSerializer(serializers.Serializer):
+    name = serializers.CharField(help_text="The file's new name")
+
+
+class RotateImageSerializer(serializers.Serializer):
+    rotate = serializers.IntegerField(help_text="The rotation requested, in degrees, usually 90, 180 or 270")
+
+
+class RotateImageResponseSerializer(serializers.Serializer):
+    token = serializers.CharField(help_text="A fresh writing token for the rotated file")
 
 
 class TokenSerializer(serializers.ModelSerializer):
@@ -45,30 +71,5 @@ class TokenSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        validated_data['token'] = signing.dumps(str( validated_data['upload_id']))
+        validated_data['token'] = signing.dumps(str(validated_data['upload_id']))
         return super().create(validated_data)
-
-
-class UploadUUIDSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Token
-        fields = [
-            'upload_id',
-        ]
-
-
-class MetadataSerializer(serializers.Serializer):
-    size = serializers.IntegerField(read_only=True)
-    mimetype = serializers.CharField(read_only=True)
-    name = serializers.CharField(read_only=True)
-    url = serializers.URLField(read_only=True)
-
-    def to_representation(self, instance):
-        url = reverse('osis_document:get-file', kwargs={'token': get_token(instance.uuid)})
-        return {
-            'size': instance.size,
-            'mimetype': instance.mimetype,
-            'name': instance.file.name,
-            'url': url,
-            **instance.metadata,
-        }

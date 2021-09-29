@@ -25,6 +25,7 @@
 # ##############################################################################
 import hashlib
 import sys
+from uuid import UUID
 
 from django.conf import settings
 from django.core import signing
@@ -37,8 +38,8 @@ from osis_document.exceptions import Md5Mismatch
 from osis_document.models import Upload, Token
 
 
-def confirm_upload(token):
-    # Verify token existence and expiration
+def confirm_upload(token) -> UUID:
+    """Verify local token existence and expiration"""
     token = Token.objects.writing_not_expired().filter(
         token=token,
     ).select_related('upload').first()
@@ -56,7 +57,8 @@ def confirm_upload(token):
     return upload.uuid
 
 
-def get_file_url(token: str):
+def get_file_url(token: str) -> str:
+    """Get the raw file url given a token"""
     # We can not use reverse because the potential prefix would be present twice
     return '{base_url}file/{token}'.format(
         base_url=settings.OSIS_DOCUMENT_BASE_URL,
@@ -77,6 +79,7 @@ def get_metadata(token: str):
         'mimetype': upload.mimetype,
         'name': upload.file.name,
         'url': get_file_url(token),
+        'uploaded_at': upload.uploaded_at,
         **upload.metadata,
     }
 

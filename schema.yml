@@ -1,65 +1,381 @@
 openapi: 3.0.0
-servers:
-  - url: https://{environment}.osis.uclouvain.be/api/v1/osis_document/
-    variables:
-      environment:
-        default: dev
-        enum:
-          - dev # Development server
-          - qa # Staging server
-          - test # Test server
-  - url: https://osis.uclouvain.be/api/v1/osis_document/
-    description: 'Production server'
 info:
-  version: '1.00'
-  title: 'OSIS Document Service'
-  description: |-
-    A set of API endpoints that allow you to get information about uploads
+  title: OSIS Document Service
+  version: 1.0.1
+  description: A set of API endpoints that allow you to get information about uploads
 paths:
-  /confirm-upload/{token}:
-    put:
-      operationId: confirm-upload_update
-      parameters:
-        - in: path
-          name: token
-          required: true
-          schema:
-            description: ''
-            title: Jeton
-            type: string
-      tags:
-        - confirm-upload
-  /get-metadata/{uuid}:
+  /metadata/{token}:
     get:
-      operationId: get-metadata_read
+      operationId: retrieveMetadata
+      description: Get metadata for an upload given a token
       parameters:
-        - in: path
-          name: uuid
-          required: true
-          schema:
-            description: A UUID string identifying this upload.
-            title: UUID
-            type: string
+      - name: token
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Metadata'
+          description: ''
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
       tags:
-        - get-metadata
-  /get-token/{uuid}:
+      - metadata
+  /file/{token}:
+    get:
+      operationId: retrieveRawFile
+      description: Get raw file from a token
+      parameters:
+      - name: token
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The raw binary file
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - file
+  /request-upload:
     post:
-      operationId: get-token_create
-      parameters:
-        - in: path
-          name: uuid
-          required: true
-          schema:
-            description: A UUID string identifying this upload.
-            title: UUID
-            type: string
+      operationId: requestUpload
+      description: Receive a file (from VueJS) and create a temporary upload object
+      parameters: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestUploadResponse'
+          description: ''
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
       tags:
-        - get-token
+      - request-upload
+  /confirm-upload/{token}:
+    post:
+      operationId: confirmUpload
+      description: Given a writing token and server-to-server request, persist the
+        matching upload
+      parameters:
+      - name: token
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmUploadResponse'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - confirm-upload
+      security:
+      - ApiKeyAuth: []
+  /read-token/{uuid}:
+    post:
+      operationId: getReadToken
+      description: Get a token for an upload
+      parameters:
+      - name: uuid
+        in: path
+        required: true
+        description: A UUID string identifying this Envoyer.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Token'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - read-token
+      security:
+      - ApiKeyAuth: []
+  /write-token/{uuid}:
+    post:
+      operationId: getWriteToken
+      description: Get a token for an upload
+      parameters:
+      - name: uuid
+        in: path
+        required: true
+        description: A UUID string identifying this Envoyer.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Token'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - write-token
+      security:
+      - ApiKeyAuth: []
+  /change-metadata/{token}:
+    post:
+      operationId: changeMetadata
+      description: Change metadata from a writing token
+      parameters:
+      - name: token
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeMetadata'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - change-metadata
+  /rotate-image/{token}:
+    post:
+      operationId: rotateImage
+      description: Rotate an image from a writing token
+      parameters:
+      - name: token
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RotateImage'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RotateImageResponse'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - rotate-image
 components:
+  schemas:
+    Metadata:
+      type: object
+      properties:
+        size:
+          type: integer
+          description: The size, in bytes, of the file
+        mimetype:
+          type: string
+          description: The file's mimetype
+        name:
+          type: string
+          description: The file's name
+        url:
+          type: string
+          description: An url for direct access to the raw file
+      required:
+      - size
+      - mimetype
+      - name
+      - url
+    RequestUploadResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: A writing token for the uploaded file
+      required:
+      - token
+    ConfirmUploadResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          description: The uuid of the persisted file upload
+      required:
+      - uuid
+    Token:
+      type: object
+      properties:
+        token:
+          type: string
+          readOnly: true
+        upload_id:
+          type: string
+          format: uuid
+        access:
+          enum:
+          - READ
+          - WRITE
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+      required:
+      - upload_id
+    ChangeMetadata:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The file's new name
+      required:
+      - name
+    RotateImageResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: A fresh writing token for the rotated file
+      required:
+      - token
+    RotateImage:
+      type: object
+      properties:
+        rotate:
+          type: integer
+          description: The rotation requested, in degrees, usually 90, 180 or 270
+      required:
+      - rotate
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
   securitySchemes:
     ApiKeyAuth:
       type: apiKey
       in: header
       name: X-API-KEY
-security:
-  - ApiKeyAuth: [ ]
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+servers:
+- url: https://{environment}.osis.uclouvain.be/api/v1/osis_document/
+  variables:
+    environment:
+      default: dev
+      enum:
+      - dev
+      - qa
+      - test
+- url: https://osis.uclouvain.be/api/v1/osis_document/
+  description: Production server

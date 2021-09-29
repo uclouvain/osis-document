@@ -24,41 +24,37 @@
 #
 # ##############################################################################
 from rest_framework import generics
+from rest_framework.schemas.openapi import AutoSchema
 
+from osis_document.api import serializers
 from osis_document.api.permissions import APIKeyPermission
-from osis_document.api.serializers import TokenSerializer, MetadataSerializer, UploadUUIDSerializer
-from osis_document.models import Upload, Token
-from osis_document.utils import confirm_upload
+from osis_document.models import Upload
+
+
+class GetTokenSchema(AutoSchema):  # pragma: no cover
+    def get_operation_id(self, path, method):
+        if 'write' in path:
+            return 'getWriteToken'
+        return 'getReadToken'
+
+    def get_operation(self, path, method):
+        operation = super().get_operation(path, method)
+        operation['security'] = [{"ApiKeyAuth": []}]
+        return operation
 
 
 class GetTokenView(generics.CreateAPIView):
-    serializer_class = TokenSerializer
+    """Get a token for an upload"""
     name = 'get-token'
+    serializer_class = serializers.TokenSerializer
     queryset = Upload.objects.all()
     authentication_classes = []
     permission_classes = [APIKeyPermission]
+    token_access = None
+    schema = GetTokenSchema()
 
     def create(self, request, *args, **kwargs):
         upload = self.get_object()
         request.data['upload_id'] = upload.pk
+        request.data['access'] = self.token_access
         return super().create(request, *args, **kwargs)
-
-
-class MetadataView(generics.RetrieveAPIView):
-    serializer_class = MetadataSerializer
-    name = 'get-metadata'
-    queryset = Upload.objects.all()
-    authentication_classes = []
-    permission_classes = [APIKeyPermission]
-
-
-class ConfirmUploadView(generics.UpdateAPIView):
-    serializer_class = UploadUUIDSerializer
-    name = 'confirm-upload'
-    lookup_field = 'token'
-    queryset = Token.objects.writing_not_expired()
-    authentication_classes = []
-    permission_classes = [APIKeyPermission]
-
-    def perform_update(self, serializer):
-        confirm_upload(serializer.instance.token)

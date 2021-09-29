@@ -53,6 +53,5 @@ urlpatterns = [
         DetailView.as_view(model=TestDocument,),
         name='test-view',
     ),
-    path('document/', include('osis_document.contrib.urls')),
-    path('api/', include('osis_document.api.url_v1', namespace="api")),
+    path('document/', include('osis_document.urls')),
 ]

@@ -33,8 +33,7 @@ from osis_document.tests.factories import WriteTokenFactory
 from osis_document.utils import get_metadata, save_raw_upload
 
 
-@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls',
-                   OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+@override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class MetadataTestCase(TestCase):
     def test_with_token(self):
         token = WriteTokenFactory()

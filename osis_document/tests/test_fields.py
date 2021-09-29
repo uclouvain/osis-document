@@ -23,6 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from unittest.mock import patch
+
 from django.forms import modelform_factory
 from django.test import TestCase, override_settings
 from django.utils.translation import gettext as _
@@ -33,10 +35,11 @@ from osis_document.tests.document_test.models import TestDocument
 from osis_document.tests.factories import WriteTokenFactory
 
 
-@override_settings(ROOT_URLCONF='osis_document.tests.document_test.urls',
-                   OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+@override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class FieldTestCase(TestCase):
-    def test_model_form_validation(self):
+    @patch('osis_document.api.utils.get_remote_metadata')
+    def test_model_form_validation(self, get_remote_metadata):
+        get_remote_metadata.return_value = None
         ModelForm = modelform_factory(TestDocument, fields='__all__')
 
         form = ModelForm({})
@@ -53,13 +56,26 @@ class FieldTestCase(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn(_("File upload is either non-existent or has expired"), form.errors['documents'][0])
 
+        get_remote_metadata.return_value = {
+            "size": 1024,
+            "mimetype": "image/jpeg",
+            "name": "test.jpg",
+            "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
+        }
         token = WriteTokenFactory()
         form = ModelForm({
             'documents_0': token.token,
         })
         self.assertTrue(form.is_valid(), form.errors)
 
-    def test_model_form_submit(self):
+    @patch('osis_document.api.utils.get_remote_metadata')
+    def test_model_form_submit(self, get_remote_metadata):
+        get_remote_metadata.return_value = {
+            "size": 1024,
+            "mimetype": "image/jpeg",
+            "name": "test.jpg",
+            "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
+        }
         ModelForm = modelform_factory(TestDocument, fields='__all__')
 
         token = WriteTokenFactory()
@@ -81,8 +97,8 @@ class FieldTestCase(TestCase):
         form = ModelForm({
             'documents_0': token.token,
         })
-        # 4 queries (one for loading obj, one for loading toke, one for deleting token, one for saving obj)
-        with self.assertNumQueries(4):
+        # 3 queries (one for loading obj, one for deleting token, one for saving obj)
+        with self.assertNumQueries(3):
             document = form.save()
 
         # Saving an empty form should empty the field
