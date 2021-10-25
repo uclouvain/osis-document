@@ -24,6 +24,7 @@
 #
 # ##############################################################################
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.validators import ArrayMinLengthValidator
 from django.db import models
 
 from osis_document.contrib.forms import FileUploadField
@@ -39,10 +40,15 @@ class FileField(ArrayField):
         self.upload_button_text = kwargs.pop('upload_button_text', None)
         self.upload_text = kwargs.pop('upload_text', None)
         self.max_files = kwargs.pop('max_files', None)
+        self.min_files = kwargs.pop('min_files', None)
+
         kwargs.setdefault('default', list)
         kwargs.setdefault('base_field', models.UUIDField())
-        kwargs.setdefault('size', kwargs.pop('min_files', None))
+        kwargs.setdefault('size', self.max_files)
+
         super().__init__(**kwargs)
+        if self.min_files and not self.blank:
+            self.default_validators = [*self.default_validators, ArrayMinLengthValidator(self.min_files)]
 
     def formfield(self, **kwargs):
         return super(ArrayField, self).formfield(**{
@@ -59,7 +65,10 @@ class FileField(ArrayField):
         })
 
     def pre_save(self, model_instance, add):
-        # Get all writing tokens (by filtering uuids) and confirm their upload
-        value = [confirm_upload(token) for token in getattr(model_instance, self.attname) if isinstance(token, str)]
+        # Convert all writing tokens to UUIDs by confirming their upload, leaving existing uuids
+        value = [
+            confirm_upload(token) if isinstance(token, str) else token
+            for token in getattr(model_instance, self.attname)
+        ]
         setattr(model_instance, self.attname, value)
         return value
