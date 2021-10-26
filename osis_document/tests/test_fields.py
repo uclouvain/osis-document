@@ -23,12 +23,15 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import uuid
 from unittest.mock import patch
 
+from django.core.exceptions import ValidationError
 from django.forms import modelform_factory
 from django.test import TestCase, override_settings
 from django.utils.translation import gettext as _
 
+from osis_document.contrib import FileField
 from osis_document.enums import FileStatus
 from osis_document.models import Token, Upload
 from osis_document.tests.document_test.models import TestDocument
@@ -106,3 +109,58 @@ class FieldTestCase(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         document = form.save()
         self.assertEqual(len(document.documents), 0)
+
+    def test_update_or_create(self):
+        doc_pk = TestDocument.objects.create(documents=[WriteTokenFactory().upload_id]).pk
+
+        instance, updated = TestDocument.objects.update_or_create(pk=doc_pk)
+        self.assertFalse(updated)
+        self.assertEqual(len(instance.documents), 1)
+
+        instance = TestDocument.objects.get(pk=doc_pk)
+        self.assertEqual(len(instance.documents), 1)
+
+    def test_create_from_uuid_orm(self):
+        doc_pk = TestDocument.objects.create(documents=[WriteTokenFactory().upload_id]).pk
+
+        instance = TestDocument.objects.filter(pk=doc_pk).first()
+        self.assertIsNotNone(instance)
+        self.assertEqual(len(instance.documents), 1)
+
+    def test_create_from_uuid_saving(self):
+        instance = TestDocument(documents=[WriteTokenFactory().token])
+        instance.save()
+        self.assertEqual(len(instance.documents), 1)
+        self.assertIsInstance(instance.documents[0], uuid.UUID)
+
+        instance = TestDocument.objects.filter(pk=instance.pk).first()
+        self.assertIsNotNone(instance)
+        self.assertEqual(len(instance.documents), 1)
+        self.assertIsInstance(instance.documents[0], uuid.UUID)
+
+    @patch('osis_document.api.utils.get_remote_metadata')
+    def test_field_having_requirements(self, get_remote_metadata):
+        get_remote_metadata.return_value = {
+            "size": 1024,
+            "mimetype": "image/jpeg",
+            "name": "test.jpg",
+            "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
+        }
+        upload_id = WriteTokenFactory().upload_id
+
+        field = FileField(min_files=1)
+        with self.assertRaises(ValidationError):
+            field.clean([], None)
+        with self.assertRaises(ValidationError):
+            field.clean(None, None)
+        self.assertEqual(field.clean([upload_id], None), [upload_id])
+
+        field = FileField(min_files=1, blank=True)
+        with self.assertRaises(ValidationError):
+            field.clean(None, None)
+        self.assertEqual(field.clean([], None), [])
+        self.assertEqual(field.clean([upload_id], None), [upload_id])
+
+        field = FileField(min_files=1, null=True, blank=True)
+        self.assertEqual(field.clean([], None), [])
+        self.assertEqual(field.clean([upload_id], None), [upload_id])
