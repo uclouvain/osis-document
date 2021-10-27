@@ -24,7 +24,7 @@
  *
  */
 module.exports = {
-  outputDir: "static/osis_document",
+  outputDir: "osis_document/static/osis_document",
   configureWebpack(config) {
     // Removes demo.html
     config.plugins.some((plugin, index) => {
@@ -41,7 +41,7 @@ module.exports = {
   },
   filenameHashing: false,
   chainWebpack: config => {
-    config.plugins.delete('preload')
-    config.plugins.delete('prefetch')
+    config.plugins.delete('preload');
+    config.plugins.delete('prefetch');
   },
-}
+};

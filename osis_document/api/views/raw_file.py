@@ -74,7 +74,10 @@ class RawFileView(APIView):
                 'error': _("MD5 checksum mismatch")
             }, status.HTTP_409_CONFLICT)
         # TODO handle internal nginx redirect based on a setting
-        response = FileResponse(upload.file.open('rb'))
+        kwargs = {}
+        if self.request.GET.get('dl'):
+            kwargs = dict(as_attachment=True, filename=upload.metadata.get('name'))
+        response = FileResponse(upload.file.open('rb'), **kwargs)
         domain_list = getattr(settings, 'OSIS_DOCUMENT_DOMAIN_LIST', [])
         if domain_list:
             response['Content-Security-Policy'] = "frame-ancestors {};".format(' '.join(domain_list))

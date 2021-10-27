@@ -110,7 +110,7 @@
         <a
             class="btn btn-default"
             target="_blank"
-            :href="file.url"
+            :href="`${file.url}?dl=1`"
         >
           <span class="glyphicon glyphicon-download-alt" />
         </a>
