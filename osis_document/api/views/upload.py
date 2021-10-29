@@ -35,6 +35,7 @@ from rest_framework.views import APIView
 from osis_document.api import serializers
 from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api.permissions import APIKeyPermission
+from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.models import Upload
 from osis_document.utils import calculate_md5, confirm_upload, get_token
 
@@ -82,13 +83,12 @@ class UploadUserThrottle(UserRateThrottle):
         return getattr(settings, 'OSIS_DOCUMENT_UPLOAD_LIMIT', '10/minute')
 
 
-class RequestUploadView(APIView):
+class RequestUploadView(CorsAllowOriginMixin, APIView):
     """Receive a file (from VueJS) and create a temporary upload object"""
     name = 'request-upload'
     authentication_classes = []
     permission_classes = []
     throttle_classes = [UploadUserThrottle]
-    http_method_names = ['post']
     parser_classes = [MultiPartParser]
     schema = RequestUploadSchema()
 
@@ -126,12 +126,11 @@ class ConfirmUploadSchema(DetailedAutoSchema):  # pragma: no cover
         return operation
 
 
-class ConfirmUploadView(APIView):
+class ConfirmUploadView(CorsAllowOriginMixin, APIView):
     """Given a writing token and server-to-server request, persist the matching upload"""
     name = 'confirm-upload'
     authentication_classes = []
     permission_classes = [APIKeyPermission]
-    http_method_names = ['post']
     schema = ConfirmUploadSchema()
 
     def post(self, *args, **kwargs):
