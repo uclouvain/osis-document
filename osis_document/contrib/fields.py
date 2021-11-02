@@ -47,7 +47,7 @@ class FileField(ArrayField):
         kwargs.setdefault('size', self.max_files)
 
         super().__init__(**kwargs)
-        if self.min_files and not self.blank:
+        if self.min_files and not self.blank and not self.null:
             self.default_validators = [*self.default_validators, ArrayMinLengthValidator(self.min_files)]
 
     def formfield(self, **kwargs):

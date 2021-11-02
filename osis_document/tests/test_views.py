@@ -54,6 +54,14 @@ class RequestUploadViewTestCase(TestCase):
         self.assertEqual(Upload.objects.first().status, FileStatus.REQUESTED.name)
         self.assertTrue(Token.objects.first().access, TokenAccess.WRITE.name)
 
+    @override_settings(OSIS_DOCUMENT_DOMAIN_LIST=['http://dummyurl.com/'])
+    def test_cors(self):
+        file = ContentFile(b'hello world', 'foo.pdf')
+        response = self.client.post(resolve_url('request-upload'), {'file': file}, HTTP_ORIGIN="http://dummyurl.com/")
+        self.assertTrue(response.has_header("Access-Control-Allow-Origin"))
+        response = self.client.post(resolve_url('request-upload'), {'file': file}, HTTP_ORIGIN="http://wrongurl.com/")
+        self.assertFalse(response.has_header("Access-Control-Allow-Origin"))
+
 
 @override_settings(ROOT_URLCONF="osis_document.urls",
                    OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
@@ -182,6 +190,7 @@ class RotateViewTestCase(APITestCase):
 @override_settings(ROOT_URLCONF='osis_document.urls',
                    OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class FileViewTestCase(TestCase):
+    @override_settings(OSIS_DOCUMENT_DOMAIN_LIST=[])
     def test_get_file(self):
         token = ReadTokenFactory()
         response = self.client.get(resolve_url('raw-file', token=token.token))
@@ -194,6 +203,13 @@ class FileViewTestCase(TestCase):
         response = self.client.get(resolve_url('raw-file', token=token.token))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header('Content-Security-Policy'))
+        self.assertFalse(response.has_header('Content-Disposition'))
+
+    def test_get_file_as_attachement(self):
+        token = ReadTokenFactory()
+        response = self.client.get(resolve_url('raw-file', token=token.token) + '?dl=1')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header('Content-Disposition'))
 
     def test_get_file_bad_md5(self):
         token = ReadTokenFactory(upload__metadata={'md5': 'badvalue'})

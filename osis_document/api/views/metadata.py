@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from osis_document.api.schema import DetailedAutoSchema
+from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.exceptions import Md5Mismatch
 from osis_document.api import serializers
 from osis_document.models import Token
@@ -31,7 +32,7 @@ class MetadataSchema(DetailedAutoSchema):  # pragma: no cover
         return responses
 
 
-class MetadataView(APIView):
+class MetadataView(CorsAllowOriginMixin, APIView):
     """Get metadata for an upload given a token"""
     name = 'get-metadata'
     authentication_classes = []
@@ -66,12 +67,11 @@ class ChangeMetadataSchema(DetailedAutoSchema):  # pragma: no cover
         return responses
 
 
-class ChangeMetadataView(APIView):
+class ChangeMetadataView(CorsAllowOriginMixin, APIView):
     """Change metadata from a writing token"""
     name = 'change-metadata'
     authentication_classes = []
     permission_classes = []
-    http_method_names = ['post']
     schema = ChangeMetadataSchema()
 
     def post(self, *args, **kwargs):

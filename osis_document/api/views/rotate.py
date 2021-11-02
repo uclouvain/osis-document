@@ -37,6 +37,7 @@ from django.utils.translation import gettext_lazy as _
 
 from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api import serializers
+from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import TokenAccess
 from osis_document.models import Token
 from osis_document.utils import get_token
@@ -56,12 +57,11 @@ class RotateImageSchema(DetailedAutoSchema):  # pragma: no cover
         return responses
 
 
-class RotateImageView(APIView):
+class RotateImageView(CorsAllowOriginMixin, APIView):
     """Rotate an image from a writing token"""
     name = 'rotate-image'
     authentication_classes = []
     permission_classes = []
-    http_method_names = ['post']
     schema = RotateImageSchema()
 
     def post(self, *args, **kwargs):

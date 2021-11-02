@@ -28,6 +28,7 @@ from rest_framework.schemas.openapi import AutoSchema
 
 from osis_document.api import serializers
 from osis_document.api.permissions import APIKeyPermission
+from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.models import Upload
 
 
@@ -43,7 +44,7 @@ class GetTokenSchema(AutoSchema):  # pragma: no cover
         return operation
 
 
-class GetTokenView(generics.CreateAPIView):
+class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
     """Get a token for an upload"""
     name = 'get-token'
     serializer_class = serializers.TokenSerializer
