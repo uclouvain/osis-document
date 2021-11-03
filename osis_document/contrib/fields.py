@@ -68,7 +68,7 @@ class FileField(ArrayField):
         # Convert all writing tokens to UUIDs by confirming their upload, leaving existing uuids
         value = [
             confirm_upload(token) if isinstance(token, str) else token
-            for token in getattr(model_instance, self.attname)
+            for token in (getattr(model_instance, self.attname) or [])
         ]
         setattr(model_instance, self.attname, value)
         return value
