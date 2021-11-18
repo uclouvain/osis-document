@@ -1,3 +1,5 @@
+TEST ci
+
 # OSIS Document
 
 `OSIS Document` is a Django application to manage document uploads across OSIS plateform.
