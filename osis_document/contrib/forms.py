@@ -77,6 +77,8 @@ class FileUploadField(SplitArrayField):
             upload_button_text=kwargs.pop('upload_button_text', None),
             upload_text=kwargs.pop('upload_text', None),
             size=self.min_files,
+            min_files=self.min_files,
+            max_files=self.max_files,
         ))
         base_field = TokenField(
             required=True,

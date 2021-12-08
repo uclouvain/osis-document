@@ -45,7 +45,6 @@ class FileField(ArrayField):
         kwargs.setdefault('default', list)
         kwargs.setdefault('base_field', models.UUIDField())
         kwargs.setdefault('size', self.max_files)
-
         super().__init__(**kwargs)
         if self.min_files and not self.blank and not self.null:
             self.default_validators = [*self.default_validators, ArrayMinLengthValidator(self.min_files)]
@@ -54,7 +53,7 @@ class FileField(ArrayField):
         return super(ArrayField, self).formfield(**{
             'form_class': FileUploadField,
             'max_size': self.max_size,
-            'min_files': self.size,
+            'min_files': self.min_files,
             'max_files': self.max_files,
             'mimetypes': self.mimetypes,
             'automatic_upload': self.automatic_upload,
