@@ -36,6 +36,12 @@ document.querySelectorAll('.document-uploader').forEach((elem) => {
   if (typeof props.maxSize !== 'undefined') {
     props.maxSize = Number.parseInt(props.maxSize);
   }
+  if (typeof props.minFiles !== 'undefined') {
+    props.minFiles = Number.parseInt(props.minFiles);
+  }
+  if (typeof props.maxFiles !== 'undefined') {
+    props.maxFiles = Number.parseInt(props.maxFiles);
+  }
   if (typeof props.mimetypes !== 'undefined') {
     props.mimetypes = props.mimetypes.split(',');
   }

@@ -26,7 +26,7 @@
 <template>
   <div>
     <div
-        v-if="Object.values(filteredTokens).length < Math.max(limit, 1)"
+        v-if="maxFiles === 0 || nbUploadedFiles < maxFiles"
         class="dropzone"
         :class="{hovering: isDragging}"
         @dragenter="isDragging = true"
@@ -39,7 +39,7 @@
           @dragleave="isDragging = false"
           @change="onFilePicked"
       >
-      {{ uploadText || $tc('uploader.drag_n_drop_label', limit) }}
+      {{ uploadText || dragNDropLabel }}
       <button
           class="btn btn-default"
           type="button"
@@ -149,6 +149,14 @@ export default {
       type: Array,
       default: () => [],
     },
+    minFiles: {
+      type: Number,
+      default: 0,
+    },
+    maxFiles: {
+      type: Number,
+      default: 0,
+    },
   },
   data () {
     let indexGenerated = 0;
@@ -165,6 +173,19 @@ export default {
   computed: {
     filteredTokens: function () {
       return Object.fromEntries(Object.entries(this.tokens).filter(e => !!e[1]));
+    },
+    nbUploadedFiles: function () {
+      return Object.values(this.filteredTokens).length;
+    },
+    /**
+     * Custom the drag and drop button label depending on the number of uploaded files and the limits
+     * @returns {string} the drag and drop label
+     */
+    dragNDropLabel: function () {
+      // Get a sub label depending on the maximum number of files
+      const max = this.$tc('uploader.max_drag_n_drop_label', Math.max(0, this.maxFiles - this.nbUploadedFiles));
+      // Custom the label depending on the minimum and maximum numbers of files
+      return this.$tc('uploader.drag_n_drop_label', Math.max(0, this.minFiles - this.nbUploadedFiles), { max });
     },
   },
   methods: {

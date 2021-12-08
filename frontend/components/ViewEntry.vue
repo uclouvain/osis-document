@@ -103,7 +103,7 @@
             v-if="isViewableDocument"
             class="btn btn-default"
             data-toggle="modal"
-            :data-target="`#modal-${id}`"
+            :data-target="`#modal-${formattedValue}`"
         >
           <span class="glyphicon glyphicon-eye-open" />
         </a>
@@ -126,7 +126,7 @@
     </div>
     <ViewingModal
         v-if="isViewableDocument"
-        :id="id"
+        :id="formattedValue"
         :file="file"
         :is-editable="isEditable"
         :value="value"
@@ -193,6 +193,9 @@ export default {
     },
     originalName: function () {
       return this.file.name;
+    },
+    formattedValue: function ()  {
+      return this.value.replaceAll(':', '-');
     },
   },
   watch: {

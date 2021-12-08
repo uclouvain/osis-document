@@ -11,17 +11,17 @@ exports[`Storyshots Uploader Basic 1`] = `
       type="file"
     />
     
-    Drag and drop one or more files here or
+    Drag and drop file(s) here
     
     <button
-      class="btn btn-primary"
+      class="btn btn-default"
       type="button"
     >
       <span
         class="glyphicon glyphicon-plus"
       />
       
-      click to add
+      or click to add
     
     </button>
      
@@ -45,7 +45,31 @@ exports[`Storyshots Uploader Editable Image 1`] = `
 <div
   metadata="[object Object]"
 >
-  <!---->
+  <div
+    class="dropzone"
+  >
+    <input
+      accept=""
+      multiple="multiple"
+      type="file"
+    />
+    
+    Drag and drop file(s) here
+    
+    <button
+      class="btn btn-default"
+      type="button"
+    >
+      <span
+        class="glyphicon glyphicon-plus"
+      />
+      
+      or click to add
+    
+    </button>
+     
+    <!---->
+  </div>
    
   <ul
     class="media-list"
@@ -112,17 +136,17 @@ exports[`Storyshots Uploader Limited 1`] = `
       type="file"
     />
     
-    Drag and drop a file here or
+    Drag and drop file(s) here
     
     <button
-      class="btn btn-primary"
+      class="btn btn-default"
       type="button"
     >
       <span
         class="glyphicon glyphicon-plus"
       />
       
-      click to add
+      or click to add
     
     </button>
      
@@ -157,17 +181,17 @@ exports[`Storyshots Uploader Manual Trigger 1`] = `
       type="file"
     />
     
-    Drag and drop one or more files here or
+    Drag and drop file(s) here
     
     <button
-      class="btn btn-primary"
+      class="btn btn-default"
       type="button"
     >
       <span
         class="glyphicon glyphicon-plus"
       />
       
-      click to add
+      or click to add
     
     </button>
      
@@ -189,7 +213,31 @@ exports[`Storyshots Uploader Manual Trigger 1`] = `
 
 exports[`Storyshots Uploader With Existing Value 1`] = `
 <div>
-  <!---->
+  <div
+    class="dropzone"
+  >
+    <input
+      accept=""
+      multiple="multiple"
+      type="file"
+    />
+    
+    Drag and drop file(s) here
+    
+    <button
+      class="btn btn-default"
+      type="button"
+    >
+      <span
+        class="glyphicon glyphicon-plus"
+      />
+      
+      or click to add
+    
+    </button>
+     
+    <!---->
+  </div>
    
   <ul
     class="media-list"
@@ -323,7 +371,7 @@ exports[`Storyshots ViewingModal Landscape 1`] = `
             </button>
              
             <button
-              class="btn btn-primary"
+              class="btn btn-default"
               disabled="disabled"
               type="button"
             >
@@ -438,7 +486,7 @@ exports[`Storyshots ViewingModal Portrait 1`] = `
             </button>
              
             <button
-              class="btn btn-primary"
+              class="btn btn-default"
               disabled="disabled"
               type="button"
             >
