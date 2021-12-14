@@ -25,7 +25,7 @@
  */
 
 import {createLocalVue, mount, shallowMount} from '@vue/test-utils';
-import { i18n } from './i18n'
+import { i18n } from './i18n';
 import VueI18n from 'vue-i18n';
 import Uploader from './Uploader.vue';
 import UploadEntry from './components/UploadEntry';
@@ -171,93 +171,93 @@ describe('must return the right drag-and-drop label', () => {
       i18n,
       localVue,
     });
-  })
+  });
 
   it('with an undefined maximum limit and undefined minimum limit', async () => {
     await wrapper.setProps({
       minFiles: undefined,
       maxFiles: undefined,
-    })
-    const dropZoneText = wrapper.find('.dropzone').text()
-    expect(dropZoneText).toContain('Drag and drop file(s) here')
-  })
+    });
+    const dropZoneText = wrapper.find('.dropzone').text();
+    expect(dropZoneText).toContain('Drag and drop file(s) here');
+  });
 
   it('with an undefined maximum limit and defined but not reached minimum limit (1 missing)', async () => {
     await wrapper.setProps({
       minFiles: 2,
       maxFiles: undefined,
-    })
-    const dropZoneText = wrapper.find('.dropzone').text()
-    expect(dropZoneText).toContain('Please drag and drop here at least one additional file')
-  })
+    });
+    const dropZoneText = wrapper.find('.dropzone').text();
+    expect(dropZoneText).toContain('Please drag and drop here at least one additional file');
+  });
 
   it('with an undefined maximum limit and defined but not reached minimum limit (more than 1 missing)', async () => {
     await wrapper.setProps({
       minFiles: 3,
       maxFiles: undefined,
-    })
-    const dropZoneText = wrapper.find('.dropzone').text()
-    expect(dropZoneText).toContain('Please drag and drop here at least 2 additional files')
-  })
+    });
+    const dropZoneText = wrapper.find('.dropzone').text();
+    expect(dropZoneText).toContain('Please drag and drop here at least 2 additional files');
+  });
 
   it('with an undefined maximum limit and defined and reached minimum limit', async () => {
     await wrapper.setProps({
       minFiles: 1,
       maxFiles: undefined,
-    })
-    const dropZoneText = wrapper.find('.dropzone').text()
-    expect(dropZoneText).toContain('Drag and drop file(s) here')
-  })
+    });
+    const dropZoneText = wrapper.find('.dropzone').text();
+    expect(dropZoneText).toContain('Drag and drop file(s) here');
+  });
 
   it('with an undefined minimum limit and defined but not reached maximum limit (1 missing)', async () => {
     await wrapper.setProps({
       minFiles: undefined,
       maxFiles: 2,
-    })
-    const dropZoneText = wrapper.find('.dropzone').text()
-    expect(dropZoneText).toContain('Drag and drop file(s) here (up to one)')
-  })
+    });
+    const dropZoneText = wrapper.find('.dropzone').text();
+    expect(dropZoneText).toContain('Drag and drop file(s) here (up to one)');
+  });
 
   it('with an undefined minimum limit and defined but not reached maximum limit (more than 1 missing)', async () => {
     await wrapper.setProps({
       minFiles: undefined,
       maxFiles: 3,
-    })
-    const dropZoneText = wrapper.find('.dropzone').text()
-    expect(dropZoneText).toContain('Drag and drop file(s) here (up to 2)')
-  })
+    });
+    const dropZoneText = wrapper.find('.dropzone').text();
+    expect(dropZoneText).toContain('Drag and drop file(s) here (up to 2)');
+  });
 
   it('with an undefined minimum limit and defined and reached maximum limit', async () => {
     await wrapper.setProps({
       minFiles: undefined,
       maxFiles: 1,
-    })
-    expect(wrapper.find('.dropzone').exists()).toBe(false)
-  })
+    });
+    expect(wrapper.find('.dropzone').exists()).toBe(false);
+  });
 
   it('with defined and reached minimum and maximum limits', async () => {
     await wrapper.setProps({
       minFiles: 1,
       maxFiles: 1,
-    })
-    expect(wrapper.find('.dropzone').exists()).toBe(false)
-  })
+    });
+    expect(wrapper.find('.dropzone').exists()).toBe(false);
+  });
 
   it('with defined minimum (reached) and maximum (not reached) limits', async () => {
     await wrapper.setProps({
       minFiles: 1,
       maxFiles: 3,
-    })
-    const dropZoneText = wrapper.find('.dropzone').text()
-    expect(dropZoneText).toContain('Drag and drop file(s) here (up to 2)')
-  })
+    });
+    const dropZoneText = wrapper.find('.dropzone').text();
+    expect(dropZoneText).toContain('Drag and drop file(s) here (up to 2)');
+  });
 
   it('with defined minimum (not reached) and maximum (not reached) limits', async () => {
     await wrapper.setProps({
       minFiles: 2,
       maxFiles: 3,
-    })
-    const dropZoneText = wrapper.find('.dropzone').text()
-    expect(dropZoneText).toContain('Please drag and drop here at least one additional file (up to 2)')
-  })
-})
+    });
+    const dropZoneText = wrapper.find('.dropzone').text();
+    expect(dropZoneText).toContain('Please drag and drop here at least one additional file (up to 2)');
+  });
+});
