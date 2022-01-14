@@ -69,6 +69,8 @@ class FileUploadField(SplitArrayField):
         self.max_size = kwargs.pop('max_size', None)
         self.max_files = kwargs.pop('max_files', None)
         self.min_files = kwargs.pop('min_files', None)
+        self.upload_to = kwargs.pop('upload_to', None)
+        self.related_model = kwargs.pop('related_model', None)
         kwargs.setdefault('widget', FileUploadWidget(
             max_size=self.max_size,
             mimetypes=self.mimetypes,
@@ -97,7 +99,14 @@ class FileUploadField(SplitArrayField):
             raise forms.ValidationError(self.error_messages['min_files'])
         return super().clean(value)
 
-    @staticmethod
-    def persist(values):
+    def persist(self, values, related_model_instance=None):
         from osis_document.api.utils import confirm_remote_upload
-        return [confirm_remote_upload(token) for token in values]
+        return [
+            confirm_remote_upload(
+                token=token,
+                upload_to=self.upload_to,
+                related_model=self.related_model,
+                related_model_instance=related_model_instance,
+            )
+            for token in values
+        ]

@@ -23,14 +23,18 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from unittest import mock
+from unittest.mock import Mock, patch
 
+from django.core.exceptions import FieldError
 from django.test import TestCase, override_settings
 
+from osis_document.enums import FileStatus
 from osis_document.exceptions import Md5Mismatch
-from osis_document.tests.factories import WriteTokenFactory
-from osis_document.utils import get_metadata, save_raw_upload
+from osis_document.models import Upload
+from osis_document.tests.factories import WriteTokenFactory, PdfUploadFactory
+from osis_document.utils import get_metadata, save_raw_upload, generate_filename, confirm_upload
 
 
 @override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
@@ -65,3 +69,90 @@ class RawUploadTestCase(TestCase):
         self.assertEqual(metadata['size'], 48)
         self.assertEqual(metadata['mimetype'], 'text/plain')
         self.assertEqual(metadata['md5'], 'ebf9d9524ad7f702a2c3a75f060024f1')
+
+
+class GenerateFilenameTestCase(TestCase):
+    def test_with_callable_upload_to_without_instance(self):
+        generated_filename = generate_filename(
+            instance=None,
+            filename='my_file.txt',
+            upload_to=(lambda _, filename: 'path/{}'.format(filename)),
+        )
+        self.assertEqual(generated_filename, 'path/my_file.txt')
+
+    def test_with_callable_upload_to_with_instance(self):
+        generated_filename = generate_filename(
+            instance=Mock(attr_a=10),
+            filename='my_file.txt',
+            upload_to=(lambda instance, filename: 'path/{}/{}'.format(instance.attr_a, filename)),
+        )
+        self.assertEqual(generated_filename, 'path/10/my_file.txt')
+
+    def test_with_string_upload_to(self):
+        generated_filename = generate_filename(
+            instance=None,
+            filename='my_file.txt',
+            upload_to='my-path/',
+        )
+        self.assertEqual(generated_filename, 'my-path/my_file.txt')
+
+    def test_with_date_string_upload_to(self):
+        with patch('osis_document.utils.datetime') as mock_datetime:
+            mock_datetime.datetime.now.return_value = date(2022, 1, 10)
+            mock_datetime.side_effect = lambda *args, **kw: date(*args, **kw)
+
+            generated_filename = generate_filename(
+                instance=None,
+                filename='my_file.txt',
+                upload_to='%Y/%m/%d',
+            )
+            self.assertEqual(generated_filename, '2022/01/10/my_file.txt')
+
+    def test_with_undefined_upload(self):
+        generated_filename = generate_filename(
+            instance=None,
+            filename='my_file.txt',
+            upload_to=None,
+        )
+        self.assertEqual(generated_filename, 'my_file.txt')
+
+
+
+@override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+class ConfirmUploadTestCase(TestCase):
+    def test_with_token(self):
+        token = WriteTokenFactory()
+        original_upload = token.upload
+        # The file has been saved at the root path
+        self.assertTrue(original_upload.file.storage.exists(original_upload.file.name))
+        self.assertEqual(original_upload.status, FileStatus.REQUESTED.name)
+        # Confirm the upload
+        original_upload_uuid = confirm_upload(token.token, upload_to='path/')
+        # The file has been moved to the 'path/' repository
+        updated_upload = Upload.objects.get(uuid=original_upload_uuid)
+        self.assertFalse(original_upload.file.storage.exists(original_upload.file.name))
+        self.assertNotEqual(original_upload.file.name, updated_upload.file.name)
+        # The status file has been updated
+        self.assertEqual(updated_upload.status, FileStatus.UPLOADED.name)
+
+    def test_with_confirmed_upload(self):
+        original_upload = PdfUploadFactory(status=FileStatus.UPLOADED.name)
+        token = WriteTokenFactory(upload=original_upload)
+        self.assertTrue(original_upload.file.storage.exists(original_upload.file.name))
+        # Confirm the upload
+        original_upload_uuid = confirm_upload(token.token, upload_to='path/')
+        # The file hasn't been moved
+        updated_upload = Upload.objects.get(uuid=original_upload_uuid)
+        self.assertTrue(original_upload.file.storage.exists(original_upload.file.name))
+        self.assertEqual(original_upload.file.name, updated_upload.file.name)
+
+    def test_with_unknown_token(self):
+        with self.assertRaises(FieldError):
+            confirm_upload('unknown-token', upload_to='path/')
+
+    def test_with_expired_token(self):
+        token = WriteTokenFactory()
+        token.expires_at = token.created_at - timedelta(1)
+        token.save()
+        with self.assertRaises(FieldError):
+            confirm_upload(token.token, upload_to='path/')

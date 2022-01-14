@@ -55,7 +55,7 @@ describe('file is displayed', () => {
       mimetype: 'application/vnd.oasis.opendocument.text',
       size: 82381,
       url: './placeholder.odt',
-      name: 'test document',
+      name: 'test document.odt',
     };
 
     fetchMock.get('/metadata/dummytoken', documentMetadata);
@@ -77,8 +77,14 @@ describe('file is displayed', () => {
     expect(wrapper.text()).toContain('application/vnd.oasis.opendocument.text');
 
     const input = wrapper.find('input[type=text]');
+    expect(input.element.value).toBe('test document');
     expect(input.exists()).toBe(true);
     await input.setValue('new name');
+
+    const displayedExtension = wrapper.find('.input-group-addon');
+    expect(displayedExtension.exists()).toBe(true);
+    expect(displayedExtension.element.textContent).toContain('.odt');
+
     return wrapper;
   }
 
@@ -87,7 +93,7 @@ describe('file is displayed', () => {
     fetchMock.post('/change-metadata/dummytoken', 200);
     await wrapper.find('.input-group-btn button').trigger('click');
     await Vue.nextTick(); // wait for request
-    expect(wrapper.vm.file.name).toBe('new name');
+    expect(wrapper.vm.file.name).toBe('new name.odt');
   });
 
   it('should show http error', async () => {
@@ -95,7 +101,7 @@ describe('file is displayed', () => {
     fetchMock.post('/change-metadata/dummytoken', 400);
     await wrapper.find('.input-group-btn button').trigger('click');
     await Vue.nextTick(); // wait for request
-    expect(wrapper.vm.file.name).not.toBe('new name');
+    expect(wrapper.vm.file.name).not.toBe('new name.odt');
     expect(wrapper.vm.error).toBeTruthy();
   });
 
@@ -104,7 +110,49 @@ describe('file is displayed', () => {
     fetchMock.post('/change-metadata/dummytoken', { throws : new Error("Network fail") });
     await wrapper.find('.input-group-btn button').trigger('click');
     await Vue.nextTick(); // wait for request
-    expect(wrapper.vm.file.name).not.toBe('new name');
+    expect(wrapper.vm.file.name).not.toBe('new name.odt');
     expect(wrapper.vm.error).toBeTruthy();
+  });
+
+  describe('should have a valid name and extension depending of the full filename', () => {
+    it('if the fullname is empty', async () => {
+      const wrapper = await setUp();
+      wrapper.vm.fullName = '';
+      await Vue.nextTick();
+      expect(wrapper.vm.name).toBe('');
+      expect(wrapper.vm.extension).toBe('');
+    });
+
+    it('if the fullname has no dot', async () => {
+      const wrapper = await setUp();
+      wrapper.vm.fullName = 'my_file';
+      await Vue.nextTick();
+      expect(wrapper.vm.name).toBe('my_file');
+      expect(wrapper.vm.extension).toBe('');
+    });
+
+     it('if the fullname has no extension', async () => {
+      const wrapper = await setUp();
+      wrapper.vm.fullName = 'my_file.';
+      await Vue.nextTick();
+      expect(wrapper.vm.name).toBe('my_file.');
+      expect(wrapper.vm.extension).toBe('');
+    });
+
+     it('if the fullname has a name and an extension, separated by a dot', async () => {
+      const wrapper = await setUp();
+      wrapper.vm.fullName = 'my_file.txt';
+      await Vue.nextTick();
+      expect(wrapper.vm.name).toBe('my_file');
+      expect(wrapper.vm.extension).toBe('.txt');
+    });
+
+     it('if the fullname has a name (containing a dot) and an extension, separated by a dot', async () => {
+      const wrapper = await setUp();
+      wrapper.vm.fullName = 'my.file.txt';
+      await Vue.nextTick();
+      expect(wrapper.vm.name).toBe('my.file');
+      expect(wrapper.vm.extension).toBe('.txt');
+    });
   });
 });

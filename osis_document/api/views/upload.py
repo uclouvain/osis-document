@@ -103,7 +103,7 @@ class RequestUploadView(CorsAllowOriginMixin, APIView):
                 file=file,
                 mimetype=file.content_type,
                 size=file.size,
-                metadata={'md5': md5},
+                metadata={'md5': md5, 'name': file.name},
             )
             instance.save()
 
@@ -114,7 +114,7 @@ class RequestUploadView(CorsAllowOriginMixin, APIView):
 
 class ConfirmUploadSchema(DetailedAutoSchema):  # pragma: no cover
     serializer_mapping = {
-        'POST': (None, serializers.ConfirmUploadResponseSerializer),
+        'POST': (serializers.ConfirmUploadRequestSerializer, serializers.ConfirmUploadResponseSerializer),
     }
 
     def get_operation_id(self, path, method):
@@ -135,7 +135,17 @@ class ConfirmUploadView(CorsAllowOriginMixin, APIView):
 
     def post(self, *args, **kwargs):
         try:
-            uuid = confirm_upload(self.kwargs['token'])
+            input_serializer_data = serializers.ConfirmUploadRequestSerializer(data={
+                'token': self.kwargs['token'],
+                **self.request.data,
+            })
+            input_serializer_data.is_valid(raise_exception=True)
+            validated_data = input_serializer_data.validated_data
+            uuid = confirm_upload(
+                token=validated_data.get('token'),
+                upload_to=validated_data.get('upload_to'),
+                model_instance=validated_data.get('related_model', {}).get('instance'),
+            )
         except FieldError as e:
             return Response({
                 'error': str(e)

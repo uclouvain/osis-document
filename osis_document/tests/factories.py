@@ -28,7 +28,7 @@ import string
 import factory
 from factory.fuzzy import FuzzyText
 
-from osis_document.enums import TokenAccess
+from osis_document.enums import TokenAccess, FileStatus
 from osis_document.models import Upload, Token
 
 
@@ -41,7 +41,9 @@ class PdfUploadFactory(factory.django.DjangoModelFactory):
     mimetype = 'application/pdf'
     metadata = {
         'md5': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+        'name': 'the_file.pdf',
     }
+    # status = FileStatus.REQUESTED.name
 
 
 class ImageUploadFactory(factory.django.DjangoModelFactory):
@@ -53,6 +55,7 @@ class ImageUploadFactory(factory.django.DjangoModelFactory):
     mimetype = 'image/jpeg'
     metadata = {
         'md5': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+        'name': 'the_file.jpg',
     }
 
 
