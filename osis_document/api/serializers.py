@@ -65,8 +65,9 @@ class ContentTypeSerializer(serializers.Serializer):
             app_label=data['app'],
             model=data['model'],
         )
+        model_class = content_type.model_class()
 
-        if not content_type.model_class():
+        if not model_class:
             raise ValidationError("The following model cannot be found: " + "'{app}:{model}'".format_map(data))
 
         internal_value = {
@@ -75,7 +76,7 @@ class ContentTypeSerializer(serializers.Serializer):
 
         # Get the file field thanks to the content type and the specified name
         try:
-            internal_value['content_type_field'] = content_type.model_class()._meta.get_field(data['field'])
+            internal_value['content_type_field'] = model_class._meta.get_field(data['field'])
 
         except FieldDoesNotExist:
             raise ValidationError(
@@ -88,9 +89,9 @@ class ContentTypeSerializer(serializers.Serializer):
                 internal_value['instance'] = content_type.get_object_for_this_type(**data['instance_filters'])
             except FieldError:
                 raise ValidationError('The provided filters contain an unknown field')
-            except (content_type.model_class().DoesNotExist, content_type.model_class().MultipleObjectsReturned):
+            except (model_class.DoesNotExist, model_class.MultipleObjectsReturned):
                 raise ValidationError(
-                    'Impossible to found one single object on which to compute the upload directory path',
+                    'Impossible to find one single object on which to compute the upload directory path',
                 )
 
         return internal_value

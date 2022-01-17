@@ -114,12 +114,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ConfirmUploadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ConfirmUploadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ConfirmUploadRequest'
       responses:
         '201':
           content:
@@ -151,12 +145,6 @@ paths:
       requestBody:
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/Token'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Token'
-          multipart/form-data:
             schema:
               $ref: '#/components/schemas/Token'
       responses:
@@ -192,12 +180,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Token'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Token'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Token'
       responses:
         '201':
           content:
@@ -231,12 +213,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ChangeMetadata'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ChangeMetadata'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ChangeMetadata'
       responses:
         '200':
           content:
@@ -265,12 +241,6 @@ paths:
       requestBody:
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/RotateImage'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/RotateImage'
-          multipart/form-data:
             schema:
               $ref: '#/components/schemas/RotateImage'
       responses:

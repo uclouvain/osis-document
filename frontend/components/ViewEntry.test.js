@@ -115,7 +115,7 @@ describe('file is displayed', () => {
   });
 
   describe('should have a valid name and extension depending of the full filename', () => {
-    it('if the fullname is empty', async () => {
+    test('if the fullname is empty', async () => {
       const wrapper = await setUp();
       wrapper.vm.fullName = '';
       await Vue.nextTick();
@@ -123,7 +123,7 @@ describe('file is displayed', () => {
       expect(wrapper.vm.extension).toBe('');
     });
 
-    it('if the fullname has no dot', async () => {
+    test('if the fullname has no dot', async () => {
       const wrapper = await setUp();
       wrapper.vm.fullName = 'my_file';
       await Vue.nextTick();
@@ -131,7 +131,7 @@ describe('file is displayed', () => {
       expect(wrapper.vm.extension).toBe('');
     });
 
-     it('if the fullname has no extension', async () => {
+    test('if the fullname has no extension', async () => {
       const wrapper = await setUp();
       wrapper.vm.fullName = 'my_file.';
       await Vue.nextTick();
@@ -139,7 +139,7 @@ describe('file is displayed', () => {
       expect(wrapper.vm.extension).toBe('');
     });
 
-     it('if the fullname has a name and an extension, separated by a dot', async () => {
+    test('if the fullname has a name and an extension, separated by a dot', async () => {
       const wrapper = await setUp();
       wrapper.vm.fullName = 'my_file.txt';
       await Vue.nextTick();
@@ -147,7 +147,7 @@ describe('file is displayed', () => {
       expect(wrapper.vm.extension).toBe('.txt');
     });
 
-     it('if the fullname has a name (containing a dot) and an extension, separated by a dot', async () => {
+    test('if the fullname has a name (containing a dot) and an extension, separated by a dot', async () => {
       const wrapper = await setUp();
       wrapper.vm.fullName = 'my.file.txt';
       await Vue.nextTick();
