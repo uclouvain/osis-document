@@ -85,8 +85,8 @@ class MyModel(models.Model):
         mimetypes=['application/pdf', 'image/png', 'image/jpeg'],
         can_edit_filename=False,  # To prevent filename editing
         automatic_upload=False,  # To force displaying upload button
+        upload_to='',  # This attribute provides a way of setting the upload directory
     )
-)
 ```
 
 This `FileField` model field is associated with the form field `FileUploadField`, which can handle file upload on 
@@ -106,6 +106,28 @@ class MyModelForm(forms.Form):
 Note 1: it is very important to call the persists method on the field upon saving, it returns the uuid of the files (it is your job to store these uuids).
 
 Note 2: you can pick examples of MIME types from [this list](<https://developer.mozilla.org/fr/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types>).
+
+
+### Specify the upload directory
+
+You can specify the upload directory through the `upload_to` property.
+
+When you use the `FileField` model field, the `upload_to` property can either be a string or a function:
+- if it is a string, it is prepended to the file name. It may contain strftime() formatting, which will be replaced by the date/time of the file upload.
+- if it is a function, it will be called to obtain the upload path, including the file name. This callable must accept two arguments:
+  - the current instance of the model where the file field is defined;
+  - the file name that was originally given to the file.
+
+When you use the `FileUploadField` form field, you can specify the `upload_to` property as a string that will be prepended to the file name.
+However, if you want to reuse the `upload_to` property defined in the related `FileField` model field, you need to specify the `related_model` property in the `FileUploadField` form field with the three following properties to identify the related model field:
+- `field`: the name of the model field;
+- `model`: the name of the model containing the previous field;
+- `app`: the name of the application containing the previous model.
+
+In addition, if the `upload_to` property is a function based on some instance attributes, you must also:
+- add a 4th property to the `related_model` property:
+  - `instance_filter_fields`: a list of field names that uniquely identify an instance (such as `["uuid"]`).
+- Pass the model instance as a parameter to the `persist` function. The fields specified in the `instance_filter_fields` property must be accessible via this instance.
 
 ## Rendering an uploaded file in a template
 
