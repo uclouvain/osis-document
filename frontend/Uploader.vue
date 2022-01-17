@@ -188,6 +188,16 @@ export default {
       return this.$tc('uploader.drag_n_drop_label', Math.max(0, this.minFiles - this.nbUploadedFiles), { max });
     },
   },
+  mounted() {
+    // Watch for external changes on hidden inputs
+    jQuery('> input', this.$el).on('change', (event) => {
+      const $input = jQuery(event.target);
+      if (!$input.val()) {
+        // If an input is emptied, remove all
+        Object.entries(this.tokens).map(e => this.$delete(this.tokens, e[0]));
+      }
+    });
+  },
   methods: {
     humanizedSize,
     triggerUpload() {
