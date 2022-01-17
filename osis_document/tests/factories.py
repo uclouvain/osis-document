@@ -43,7 +43,6 @@ class PdfUploadFactory(factory.django.DjangoModelFactory):
         'md5': '5eb63bbbe01eeed093cb22bb8f5acdc3',
         'name': 'the_file.pdf',
     }
-    # status = FileStatus.REQUESTED.name
 
 
 class ImageUploadFactory(factory.django.DjangoModelFactory):

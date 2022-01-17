@@ -74,14 +74,13 @@ class ContentTypeSerializer(serializers.Serializer):
         }
 
         # Get the file field thanks to the content type and the specified name
-        if data.get('field'):
-            try:
-                internal_value['content_type_field'] = content_type.model_class()._meta.get_field(data['field'])
+        try:
+            internal_value['content_type_field'] = content_type.model_class()._meta.get_field(data['field'])
 
-            except FieldDoesNotExist:
-                raise ValidationError(
-                    "The following field cannot be found: " + "'{field}' (in '{app}:{model}')".format_map(data),
-                )
+        except FieldDoesNotExist:
+            raise ValidationError(
+                "The following field cannot be found: " + "'{field}' (in '{app}:{model}')".format_map(data),
+            )
 
         # Get the instance thanks to the content type and the specified filters
         if data.get('instance_filters'):
@@ -98,9 +97,6 @@ class ContentTypeSerializer(serializers.Serializer):
 
 
 class ConfirmUploadRequestSerializer(serializers.Serializer):
-    token = serializers.CharField(
-        help_text="The token of the file that we want to confirm",
-    )
     related_model = ContentTypeSerializer(
         help_text="The related model having the file field",
         required=False,

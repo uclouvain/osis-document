@@ -136,13 +136,12 @@ class ConfirmUploadView(CorsAllowOriginMixin, APIView):
     def post(self, *args, **kwargs):
         try:
             input_serializer_data = serializers.ConfirmUploadRequestSerializer(data={
-                'token': self.kwargs['token'],
                 **self.request.data,
             })
             input_serializer_data.is_valid(raise_exception=True)
             validated_data = input_serializer_data.validated_data
             uuid = confirm_upload(
-                token=validated_data.get('token'),
+                token=self.kwargs.get('token'),
                 upload_to=validated_data.get('upload_to'),
                 model_instance=validated_data.get('related_model', {}).get('instance'),
             )
