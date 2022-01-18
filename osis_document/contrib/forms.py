@@ -29,6 +29,7 @@ from django.contrib.postgres.forms import SplitArrayField
 from django.utils.translation import gettext_lazy as _
 
 from osis_document.contrib.widgets import FileUploadWidget
+from osis_document.utils import is_uuid
 
 
 class TokenField(forms.CharField):
@@ -110,3 +111,11 @@ class FileUploadField(SplitArrayField):
             )
             for token in values
         ]
+
+    def prepare_value(self, value):
+        """Get a remote token when given an uuid as initial value"""
+        if isinstance(value, list):
+            from osis_document.api.utils import get_remote_token
+            return [get_remote_token(v, write_token=True) if is_uuid(v) else v
+                    for v in value]
+        return value

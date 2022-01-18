@@ -23,7 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from django import forms
 from django.test import TestCase, override_settings
@@ -42,9 +42,10 @@ class FormTestCase(TestCase):
             "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
         })
         self.mock_remote_metadata.start()
-
-    def tearDown(self):
-        self.mock_remote_metadata.stop()
+        self.addCleanup(self.mock_remote_metadata.stop)
+        mock_remote_token = patch('osis_document.api.utils.get_remote_token', return_value='a:token')
+        self.mock_remote_token = mock_remote_token.start()
+        self.addCleanup(mock_remote_token.stop)
 
     def test_normal_behavior(self):
         class TestForm(forms.Form):
@@ -54,6 +55,37 @@ class FormTestCase(TestCase):
             'media_0': WriteTokenFactory().token,
         })
         self.assertTrue(form.is_valid(), msg=form.errors)
+
+    def test_initial_uuid(self):
+        class TestForm(forms.Form):
+            media = FileUploadField()
+
+        random_uuid = '8620708e-13fe-437d-9193-edb37e46055d'
+        form = TestForm(initial={
+            'media': [random_uuid],
+        })
+        self.assertNotIn(random_uuid, form.as_p())
+        self.mock_remote_token.assert_called()
+
+    def test_initial_no_value(self):
+        class TestForm(forms.Form):
+            media = FileUploadField()
+
+        TestForm(initial={
+            'media': None,
+        }).as_p()
+        self.mock_remote_token.assert_not_called()
+
+    def test_initial_token(self):
+        class TestForm(forms.Form):
+            media = FileUploadField()
+
+        TestForm(initial={
+            'media': [WriteTokenFactory().token],
+        }).as_p()
+        self.mock_remote_token.assert_not_called()
+        TestForm().as_p()
+        self.mock_remote_token.assert_not_called()
 
     def test_wrong_upload(self):
         class TestForm(forms.Form):
