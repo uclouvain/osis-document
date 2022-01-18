@@ -73,10 +73,16 @@
               class="form-control"
               @input="saved = false"
           >
+          <span
+              v-if="extension"
+              class="input-group-addon"
+          >
+            {{ extension }}
+          </span>
           <span class="input-group-btn">
             <button
                 type="button"
-                :disabled="originalName === name"
+                :disabled="originalName === fullName"
                 class="btn btn-default"
                 @click="saveName"
             >
@@ -174,6 +180,7 @@ export default {
       loading: true,
       error: '',
       name: '',
+      extension: '',
       saved: false,
     };
   },
@@ -197,6 +204,22 @@ export default {
     formattedValue: function ()  {
       return this.value.replaceAll(':', '-');
     },
+    fullName: {
+      // The full name is composed of the file name and extension (if specified)
+      get() {
+        return `${this.name}${this.extension}`;
+      },
+      set: function(newValue) {
+        const splitName = /^(.+)(\.[^.]+)$/.exec(newValue);
+        if (splitName?.length === 3) {
+          this.name = splitName[1];
+          this.extension = splitName[2];
+        } else {
+          this.name = newValue;
+          this.extension = '';
+        }
+      },
+    },
   },
   watch: {
     value: 'getFile',
@@ -210,7 +233,7 @@ export default {
         const response = await fetch(`${this.baseUrl}metadata/${this.value}`);
         if (response.status === 200) {
           this.file = await response.json();
-          this.name = this.file.name;
+          this.fullName = this.file.name;
         } else {
           this.error = response.statusText;
         }
@@ -224,11 +247,11 @@ export default {
         const response = await fetch(`${this.baseUrl}change-metadata/${this.value}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: this.name }),
+          body: JSON.stringify({ name: this.fullName }),
         });
         if (response.status === 200) {
           this.saved = true;
-          this.file.name = this.name;
+          this.file.name = this.fullName;
         } else {
           this.error = response.statusText;
         }

@@ -23,7 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from django import forms
 from django.test import TestCase, override_settings
@@ -144,11 +144,18 @@ class FormTestCase(TestCase):
 
     def test_persist_confirms_token(self):
         class TestForm(forms.Form):
-            media = FileUploadField()
+            media = FileUploadField(related_model={
+                'app': 'app_name',
+                'model': 'model_name',
+                'field': 'field_name',
+                'instance_filter_fields': ['id'],
+            })
 
+        mock_instance = Mock(id=10)
         token = WriteTokenFactory().token
         form = TestForm({'media_0': token})
         self.assertTrue(form.is_valid(), msg=form.errors)
         with patch('osis_document.api.utils.confirm_remote_upload') as confirm_remote_upload:
             confirm_remote_upload.return_value = {"uuid": "something"}
-            form.fields['media'].persist(form.cleaned_data['media'])
+            confirmed_ids = form.fields['media'].persist(form.cleaned_data['media'], mock_instance)
+            self.assertListEqual(confirmed_ids, [{"uuid": "something"}])

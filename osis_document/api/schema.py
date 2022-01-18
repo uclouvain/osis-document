@@ -33,7 +33,7 @@ class OsisDocumentSchemaGenerator(SchemaGenerator):
         schema = super().get_schema(*args, **kwargs)
         schema["openapi"] = "3.0.0"
         schema["info"]["title"] = "OSIS Document Service"
-        schema["info"]["version"] = "1.0.1"
+        schema["info"]["version"] = "1.0.2"
         schema["info"]["description"] = "A set of API endpoints that allow you to get information about uploads"
         schema["servers"] = [
             {

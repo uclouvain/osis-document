@@ -61,10 +61,26 @@ def get_remote_token(uuid, write_token=False):
         return None
 
 
-def confirm_remote_upload(token):
+def confirm_remote_upload(token, upload_to=None, related_model=None, related_model_instance=None):
     from urllib import request
     url = "{}confirm-upload/{}".format(settings.OSIS_DOCUMENT_BASE_URL, token)
-    req = request.Request(url, method='POST')
+    data = {}
+    # Add facultative params
+    if upload_to:
+        # The 'upload_to' property is explicitly defined as a string
+        data['upload_to'] = upload_to
+    elif related_model:
+        # The 'upload_to' property will be automatically computed in api side
+        instance_filter_fields = related_model.pop('instance_filter_fields', None)
+        if instance_filter_fields and related_model_instance:
+            # And will be based on a specific instance
+            related_model['instance_filters'] = {
+                key: getattr(related_model_instance, key, None) for key in instance_filter_fields
+            }
+        data['related_model'] = related_model
+
+    # Create the request
+    req = request.Request(url, method='POST', data=data)
     req.add_header('X-Api-Key', settings.OSIS_DOCUMENT_API_SHARED_SECRET)
     try:
         with request.urlopen(req) as f:
@@ -75,9 +91,14 @@ def confirm_remote_upload(token):
 
 class CorsAllowOriginMixin(APIView):
     ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin"
+    ACCESS_CONTROL_ALLOW_METHODS = "Access-Control-Allow-Methods"
+    ACCESS_CONTROL_ALLOW_HEADERS = "Access-Control-Allow-Headers"
 
     def finalize_response(self, request, response, *args, **kwargs):
         response = super().finalize_response(request, response, *args, **kwargs)
+
+        response[self.ACCESS_CONTROL_ALLOW_METHODS] = "GET, POST"
+        response[self.ACCESS_CONTROL_ALLOW_HEADERS] = "Content-Type"
 
         origin = request.META.get("HTTP_ORIGIN")
         if not origin:

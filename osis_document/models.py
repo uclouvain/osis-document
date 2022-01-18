@@ -51,6 +51,7 @@ class Upload(models.Model):
     )
     file = models.FileField(
         verbose_name=_("File"),
+        max_length=255,
     )
     uploaded_at = models.DateTimeField(
         verbose_name=_("Uploaded at"),

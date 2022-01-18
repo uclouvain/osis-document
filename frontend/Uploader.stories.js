@@ -52,7 +52,7 @@ const UploadingServerTemplate = (args, { argTypes }) => {
     mimetype: 'application/vnd.oasis.opendocument.text',
     size: 82381,
     url: './placeholder.odt',
-    name: 'test document',
+    name: 'test document.odt',
   };
   fetchMock
     .restore()
@@ -107,7 +107,7 @@ editableImage.args = {
     mimetype: 'image/jpeg',
     size: 82381,
     url: './placeholder.jpeg',
-    name: 'test image',
+    name: 'test image.jpeg',
   },
 };
 

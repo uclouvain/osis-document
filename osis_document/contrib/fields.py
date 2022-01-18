@@ -41,6 +41,7 @@ class FileField(ArrayField):
         self.upload_text = kwargs.pop('upload_text', None)
         self.max_files = kwargs.pop('max_files', None)
         self.min_files = kwargs.pop('min_files', None)
+        self.upload_to = kwargs.pop('upload_to', '')
 
         kwargs.setdefault('default', list)
         kwargs.setdefault('base_field', models.UUIDField())
@@ -60,13 +61,14 @@ class FileField(ArrayField):
             'can_edit_filename': self.can_edit_filename,
             'upload_button_text': self.upload_button_text,
             'upload_text': self.upload_text,
+            'upload_to': self.upload_to,
             **kwargs,
         })
 
     def pre_save(self, model_instance, add):
         # Convert all writing tokens to UUIDs by confirming their upload, leaving existing uuids
         value = [
-            confirm_upload(token) if isinstance(token, str) else token
+            confirm_upload(token, self.upload_to, model_instance) if isinstance(token, str) else token
             for token in (getattr(model_instance, self.attname) or [])
         ]
         setattr(model_instance, self.attname, value)

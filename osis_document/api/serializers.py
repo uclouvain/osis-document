@@ -23,8 +23,11 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from django.contrib.contenttypes.models import ContentType
 from django.core import signing
+from django.core.exceptions import FieldDoesNotExist, FieldError
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from osis_document.models import Token
 
@@ -35,6 +38,87 @@ class RequestUploadResponseSerializer(serializers.Serializer):
 
 class ConfirmUploadResponseSerializer(serializers.Serializer):
     uuid = serializers.UUIDField(help_text="The uuid of the persisted file upload")
+
+
+class ContentTypeSerializer(serializers.Serializer):
+    app = serializers.CharField(
+        help_text="The name of the application containing the desired model",
+        required=True,
+    )
+    model = serializers.CharField(
+        help_text="The name of the desired model",
+        required=True,
+    )
+    field = serializers.CharField(
+        help_text="The name of the file field in the desired model",
+        required=True,
+    )
+    instance_filters = serializers.JSONField(
+        help_text="Lookup arguments allowing to filter the model instances to return one single object that will be "
+                  "used to compute the upload directory path (via the 'upload_to' property)",
+        required=False,
+    )
+
+    def to_internal_value(self, data):
+        # Get the content type
+        content_type = ContentType(
+            app_label=data['app'],
+            model=data['model'],
+        )
+        model_class = content_type.model_class()
+
+        if not model_class:
+            raise ValidationError("The following model cannot be found: " + "'{app}:{model}'".format_map(data))
+
+        internal_value = {
+            'content_type': content_type,
+        }
+
+        # Get the file field thanks to the content type and the specified name
+        try:
+            internal_value['content_type_field'] = model_class._meta.get_field(data['field'])
+
+        except FieldDoesNotExist:
+            raise ValidationError(
+                "The following field cannot be found: " + "'{field}' (in '{app}:{model}')".format_map(data),
+            )
+
+        # Get the instance thanks to the content type and the specified filters
+        if data.get('instance_filters'):
+            try:
+                internal_value['instance'] = content_type.get_object_for_this_type(**data['instance_filters'])
+            except FieldError:
+                raise ValidationError('The provided filters contain an unknown field')
+            except (model_class.DoesNotExist, model_class.MultipleObjectsReturned):
+                raise ValidationError(
+                    'Impossible to find one single object on which to compute the upload directory path',
+                )
+
+        return internal_value
+
+
+class ConfirmUploadRequestSerializer(serializers.Serializer):
+    related_model = ContentTypeSerializer(
+        help_text="The related model having the file field",
+        required=False,
+    )
+    upload_to = serializers.CharField(
+        help_text="This attribute provides a way of setting the upload directory",
+        required=False,
+    )
+
+    def to_internal_value(self, data):
+        internal_value = super().to_internal_value(data)
+
+        # If the 'upload_to' property isn't specified, maybe we can get it from the related model
+        if not internal_value.get('upload_to') and internal_value.get('related_model'):
+            internal_value['upload_to'] = getattr(
+                internal_value['related_model']['content_type_field'],
+                'upload_to',
+                None,
+            )
+
+        return internal_value
 
 
 class MetadataSerializer(serializers.Serializer):

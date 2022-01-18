@@ -23,7 +23,10 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import datetime
 import hashlib
+import posixpath
+
 import sys
 from uuid import UUID
 
@@ -38,7 +41,7 @@ from osis_document.exceptions import Md5Mismatch
 from osis_document.models import Upload, Token
 
 
-def confirm_upload(token) -> UUID:
+def confirm_upload(token, upload_to, model_instance=None) -> UUID:
     """Verify local token existence and expiration"""
     token = Token.objects.writing_not_expired().filter(
         token=token,
@@ -50,9 +53,20 @@ def confirm_upload(token) -> UUID:
     upload = token.upload
     token.delete()
 
-    # Set upload as persisted and return its uuid
+    # Set upload as persisted, move the related file to a specified location and return the upload uuid
     if upload.status != FileStatus.UPLOADED.name:
         upload.status = FileStatus.UPLOADED.name
+        # Create a file with the new name at the specified location
+        previous_file_name = upload.file.name
+        new_file_name = generate_filename(
+            instance=model_instance,
+            filename=upload.metadata['name'],
+            upload_to=upload_to,
+        )
+        upload.file.open()
+        upload.file.save(name=new_file_name, content=upload.file.file, save=False)
+        # Remove the file at the previous location
+        upload.file.storage.delete(previous_file_name)
         upload.save()
     return upload.uuid
 
@@ -64,6 +78,19 @@ def get_file_url(token: str) -> str:
         base_url=settings.OSIS_DOCUMENT_BASE_URL,
         token=token,
     )
+
+
+def generate_filename(instance, filename, upload_to):
+    """
+    Apply (if callable) or prepend (if a string) upload_to to the filename. If you specify a string value,
+    it may contain strftime() formatting, which will be replaced by the date/time of the file upload.
+    """
+    if callable(upload_to):
+        filename = upload_to(instance, filename)
+    elif upload_to:
+        dirname = datetime.datetime.now().strftime(upload_to)
+        filename = posixpath.join(dirname, filename)
+    return filename
 
 
 def get_metadata(token: str):
