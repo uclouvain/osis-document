@@ -23,11 +23,13 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import contextlib
 import datetime
 import hashlib
 import posixpath
-
 import sys
+import uuid
+from typing import Union
 from uuid import UUID
 
 from django.conf import settings
@@ -38,7 +40,7 @@ from django.utils.translation import gettext_lazy as _
 
 from osis_document.enums import FileStatus
 from osis_document.exceptions import Md5Mismatch
-from osis_document.models import Upload, Token
+from osis_document.models import Token, Upload
 
 
 def confirm_upload(token, upload_to, model_instance=None) -> UUID:
@@ -117,6 +119,15 @@ def get_token(uuid, **kwargs):
         token=signing.dumps(str(uuid)),
         **kwargs
     ).token
+
+
+def is_uuid(value: Union[str, uuid.UUID]) -> bool:
+    if isinstance(value, uuid.UUID):
+        return True
+    with contextlib.suppress(ValueError, AttributeError):
+        uuid.UUID(hex=value)
+        return True
+    return False
 
 
 def calculate_md5(file):

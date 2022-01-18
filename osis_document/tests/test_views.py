@@ -29,7 +29,6 @@ from django.core.files.base import ContentFile
 from django.shortcuts import resolve_url
 from django.test import TestCase, override_settings
 from django.utils.datetime_safe import datetime
-from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
 from osis_document.enums import FileStatus, TokenAccess
@@ -211,7 +210,7 @@ class ConfirmUploadViewTestCase(APITestCase):
         })
         self.assertEqual(400, response.status_code)
         self.assertTrue('related_model' in response.json())
-        self.assertTrue('Impossible to found one single object' in response.json()['related_model'][0])
+        self.assertTrue('Impossible to find one single object' in response.json()['related_model'][0])
 
     def test_bad_token(self):
         response = self.client.post(resolve_url('confirm-upload', token='foobar'))

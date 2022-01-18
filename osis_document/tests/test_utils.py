@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import uuid
 from datetime import date, datetime, timedelta
 from unittest import mock
 from unittest.mock import Mock, patch
@@ -33,8 +34,8 @@ from django.test import TestCase, override_settings
 from osis_document.enums import FileStatus
 from osis_document.exceptions import Md5Mismatch
 from osis_document.models import Upload
-from osis_document.tests.factories import WriteTokenFactory, PdfUploadFactory
-from osis_document.utils import get_metadata, save_raw_upload, generate_filename, confirm_upload
+from osis_document.tests.factories import PdfUploadFactory, WriteTokenFactory
+from osis_document.utils import confirm_upload, generate_filename, get_metadata, is_uuid, save_raw_upload
 
 
 @override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
@@ -69,6 +70,14 @@ class RawUploadTestCase(TestCase):
         self.assertEqual(metadata['size'], 48)
         self.assertEqual(metadata['mimetype'], 'text/plain')
         self.assertEqual(metadata['md5'], 'ebf9d9524ad7f702a2c3a75f060024f1')
+
+
+class IsUuidTestCase(TestCase):
+    def test_is_uuid(self):
+        self.assertFalse(is_uuid(WriteTokenFactory().token))
+        self.assertFalse(is_uuid(1))
+        self.assertTrue(is_uuid('a91c3af8-91eb-4b68-96fc-0769a28a95c3'))
+        self.assertTrue(is_uuid(uuid.UUID('a91c3af8-91eb-4b68-96fc-0769a28a95c3')))
 
 
 class GenerateFilenameTestCase(TestCase):
@@ -115,7 +124,6 @@ class GenerateFilenameTestCase(TestCase):
             upload_to=None,
         )
         self.assertEqual(generated_filename, 'my_file.txt')
-
 
 
 @override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')

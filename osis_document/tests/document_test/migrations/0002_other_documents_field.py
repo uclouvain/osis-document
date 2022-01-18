@@ -7,7 +7,7 @@ import osis_document.contrib.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('osis_document', '0001_initial'),
+        ('document_test', '0001_initial'),
     ]
 
     operations = [
