@@ -46,6 +46,10 @@ OSIS_DOCUMENT_BASE_URL = os.environ.get('OSIS_DOCUMENT_BASE_URL', 'https://yours
 OSIS_DOCUMENT_API_SHARED_SECRET = os.environ.get('OSIS_DOCUMENT_API_SHARED_SECRET', 'change-this-secret')
 # The request upload rate limit for a user, see https://www.django-rest-framework.org/api-guide/throttling/#setting-the-throttling-policy
 OSIS_DOCUMENT_UPLOAD_LIMIT = '10/minute'
+# A token max age (in seconds) after which it may be no longer be used for viewing/modifying the corresponding upload
+OSIS_DOCUMENT_TOKEN_MAX_AGE = 60 * 15
+# A temporary upload max age (in seconds) after which it may be deleted by the celery task
+OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE = 60 * 15
 # When used on multiple servers, set the domains on which raw files may be displayed (for Content Security Policy)
 OSIS_DOCUMENT_DOMAIN_LIST = [
     '127.0.0.1:8001',
