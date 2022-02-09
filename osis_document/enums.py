@@ -23,8 +23,35 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from base.models.utils.utils import ChoiceEnum
+from enum import Enum
+from typing import Dict
+
 from django.utils.translation import gettext_lazy as _
+
+
+class ChoiceEnum(Enum):
+    @classmethod
+    def all(cls):
+        return list(cls)
+
+    @classmethod
+    def choices(cls):
+        return tuple((x.name, x.value) for x in cls)
+
+    @classmethod
+    def get_value(cls, key):
+        return getattr(cls, key, key).value if hasattr(cls, key) else key
+
+    @classmethod
+    def get_names(cls):
+        return [x.name for x in cls]
+
+    @classmethod
+    def get_values(cls):
+        return [x.value for x in cls]
+
+    def __deepcopy__(self, memodict: Dict = None) -> 'ChoiceEnum':
+        return self
 
 
 class FileStatus(ChoiceEnum):
