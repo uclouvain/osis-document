@@ -36,6 +36,7 @@ from osis_document.enums import FileStatus
 from osis_document.models import Token, Upload
 from osis_document.tests.document_test.models import TestDocument
 from osis_document.tests.factories import WriteTokenFactory
+from osis_document.utils import confirm_upload
 
 
 @override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
@@ -72,7 +73,11 @@ class FieldTestCase(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
 
     @patch('osis_document.api.utils.get_remote_metadata')
-    def test_model_form_submit(self, get_remote_metadata):
+    @patch('osis_document.api.utils.confirm_remote_upload')
+    def test_model_form_submit(self, confirm_remote_upload, get_remote_metadata):
+        # For the sake of simplicity, let's say a remote confirm is local
+        confirm_remote_upload.side_effect = lambda token, upload_to, **_: confirm_upload(token, upload_to)
+
         get_remote_metadata.return_value = {
             "size": 1024,
             "mimetype": "image/jpeg",
@@ -127,9 +132,21 @@ class FieldTestCase(TestCase):
         self.assertIsNotNone(instance)
         self.assertEqual(len(instance.documents), 1)
 
-    def test_create_from_uuid_saving(self):
+    @patch('osis_document.api.utils.get_remote_metadata')
+    def test_create_from_uuid_saving(self, get_remote_metadata):
+        get_remote_metadata.return_value = {
+            "size": 1024,
+            "mimetype": "image/jpeg",
+            "name": "test.jpg",
+            "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
+        }
+
         instance = TestDocument(documents=[WriteTokenFactory().token])
-        instance.save()
+        with patch('osis_document.api.utils.confirm_remote_upload') as confirm_remote_upload:
+            # For the sake of simplicity, let's say a remote confirm is local
+            confirm_remote_upload.side_effect = lambda token, upload_to, **_: confirm_upload(token, upload_to)
+            instance.save()
+
         self.assertEqual(len(instance.documents), 1)
         self.assertIsInstance(instance.documents[0], uuid.UUID)
 
