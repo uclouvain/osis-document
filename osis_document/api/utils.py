@@ -80,13 +80,14 @@ def confirm_remote_upload(token, upload_to=None, related_model=None, related_mod
         data['related_model'] = related_model
 
     # Create the request
-    req = request.Request(url, method='POST', data=data)
+    req = request.Request(url, method='POST', data=json.dumps(data).encode('utf8'))
     req.add_header('X-Api-Key', settings.OSIS_DOCUMENT_API_SHARED_SECRET)
+    req.add_header('Content-Type', "application/json")
     try:
         with request.urlopen(req) as f:
             return json.loads(f.read().decode('utf-8')).get('uuid')
     except HTTPError as e:
-        raise UploadConfirmationException(e.filename, e.code, e.msg, e.headers, e.fp)
+        raise UploadConfirmationException(e.filename, e.code, e.reason, e.headers, e.fp)
 
 
 class CorsAllowOriginMixin(APIView):

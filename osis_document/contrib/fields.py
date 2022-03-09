@@ -28,7 +28,7 @@ from django.contrib.postgres.validators import ArrayMinLengthValidator
 from django.db import models
 
 from osis_document.contrib.forms import FileUploadField
-from osis_document.utils import confirm_upload
+from osis_document.utils import generate_filename
 
 
 class FileField(ArrayField):
@@ -66,10 +66,20 @@ class FileField(ArrayField):
         })
 
     def pre_save(self, model_instance, add):
-        # Convert all writing tokens to UUIDs by confirming their upload, leaving existing uuids
+        # Convert all writing tokens to UUIDs by remotely confirming their upload, leaving existing uuids
         value = [
-            confirm_upload(token, self.upload_to, model_instance) if isinstance(token, str) else token
+            self._confirm_upload(model_instance, token) if isinstance(token, str) else token
             for token in (getattr(model_instance, self.attname) or [])
         ]
         setattr(model_instance, self.attname, value)
         return value
+
+    def _confirm_upload(self, model_instance, token):
+        from osis_document.api.utils import confirm_remote_upload, get_remote_metadata
+
+        # Get the current filename by interrogating API
+        filename = get_remote_metadata(token)['name']
+        return confirm_remote_upload(
+            token=token,
+            upload_to=generate_filename(model_instance, filename, self.upload_to),
+        )
