@@ -23,6 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from os.path import dirname
+
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.validators import ArrayMinLengthValidator
 from django.db import models
@@ -81,5 +83,5 @@ class FileField(ArrayField):
         filename = get_remote_metadata(token)['name']
         return confirm_remote_upload(
             token=token,
-            upload_to=generate_filename(model_instance, filename, self.upload_to),
+            upload_to=dirname(generate_filename(model_instance, filename, self.upload_to)),
         )

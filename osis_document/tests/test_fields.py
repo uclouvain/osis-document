@@ -36,6 +36,7 @@ from osis_document.enums import FileStatus
 from osis_document.models import Token, Upload
 from osis_document.tests.document_test.models import TestDocument
 from osis_document.tests.factories import WriteTokenFactory
+from osis_document.tests.test_api_utils import to_json_bytes
 from osis_document.utils import confirm_upload
 
 
@@ -114,6 +115,27 @@ class FieldTestCase(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         document = form.save()
         self.assertEqual(len(document.documents), 0)
+
+    @patch('osis_document.api.utils.get_remote_metadata')
+    def test_model_form_confirms_remotely_with_correct_path(self, get_remote_metadata):
+        get_remote_metadata.return_value = {"name": "test.jpg"}
+        ModelForm = modelform_factory(TestDocument, fields='__all__')
+
+        token = WriteTokenFactory()
+        form = ModelForm({'documents_0': token.token})
+        self.assertTrue(form.is_valid(), form.errors)
+
+        with patch('urllib.request') as request_mock:
+            request_mock.urlopen.return_value.__enter__.return_value.read.return_value = to_json_bytes(
+                {"uuid": "bbc1ba15-42d2-48e9-9884-7631417bb1e1"}
+            )
+            form.save()
+        expected_url = f'http://dummyurl.com/document/confirm-upload/{token.token}'
+        request_mock.Request.assert_called_with(
+            expected_url,
+            method='POST',
+            data=to_json_bytes({'upload_to': 'path'}),
+        )
 
     def test_update_or_create(self):
         doc_pk = TestDocument.objects.create(documents=[WriteTokenFactory().upload_id]).pk
