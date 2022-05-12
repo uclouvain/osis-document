@@ -36,11 +36,13 @@ from osis_document.enums import FileStatus
 from osis_document.models import Token, Upload
 from osis_document.tests.document_test.models import TestDocument
 from osis_document.tests.factories import WriteTokenFactory
-from osis_document.tests.test_api_utils import to_json_bytes
 from osis_document.utils import confirm_upload
 
 
-@override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+@override_settings(
+    OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/',
+    OSIS_DOCUMENT_API_SHARED_SECRET='very-secret',
+)
 class FieldTestCase(TestCase):
     @patch('osis_document.api.utils.get_remote_metadata')
     def test_model_form_validation(self, get_remote_metadata):
@@ -50,14 +52,10 @@ class FieldTestCase(TestCase):
         form = ModelForm({})
         self.assertTrue(form.is_valid())
 
-        form = ModelForm({
-            'documents_0': [],
-        })
+        form = ModelForm({'documents_0': []})
         self.assertFalse(form.is_valid())
 
-        form = ModelForm({
-            'documents_0': 'something',
-        })
+        form = ModelForm({'documents_0': 'something'})
         self.assertFalse(form.is_valid())
         self.assertIn(_("File upload is either non-existent or has expired"), form.errors['documents'][0])
 
@@ -68,9 +66,7 @@ class FieldTestCase(TestCase):
             "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
         }
         token = WriteTokenFactory()
-        form = ModelForm({
-            'documents_0': token.token,
-        })
+        form = ModelForm({'documents_0': token.token})
         self.assertTrue(form.is_valid(), form.errors)
 
     @patch('osis_document.api.utils.get_remote_metadata')
@@ -88,9 +84,7 @@ class FieldTestCase(TestCase):
         ModelForm = modelform_factory(TestDocument, fields='__all__')
 
         token = WriteTokenFactory()
-        form = ModelForm({
-            'documents_0': token.token,
-        })
+        form = ModelForm({'documents_0': token.token})
         self.assertTrue(form.is_valid(), form.errors)
 
         # 4 queries (one for loading obj, one for upload state, one for deleting token, one for saving obj)
@@ -103,9 +97,7 @@ class FieldTestCase(TestCase):
         self.assertEqual(token.upload.status, FileStatus.UPLOADED.name)
 
         token = WriteTokenFactory(upload=Upload.objects.first())
-        form = ModelForm({
-            'documents_0': token.token,
-        })
+        form = ModelForm({'documents_0': token.token})
         # 3 queries (one for loading obj, one for deleting token, one for saving obj)
         with self.assertNumQueries(3):
             document = form.save()
@@ -125,17 +117,11 @@ class FieldTestCase(TestCase):
         form = ModelForm({'documents_0': token.token})
         self.assertTrue(form.is_valid(), form.errors)
 
-        with patch('urllib.request') as request_mock:
-            request_mock.urlopen.return_value.__enter__.return_value.read.return_value = to_json_bytes(
-                {"uuid": "bbc1ba15-42d2-48e9-9884-7631417bb1e1"}
-            )
+        with patch('requests.post') as request_mock:
+            request_mock.return_value.json.return_value = {"uuid": "bbc1ba15-42d2-48e9-9884-7631417bb1e1"}
             form.save()
         expected_url = f'http://dummyurl.com/document/confirm-upload/{token.token}'
-        request_mock.Request.assert_called_with(
-            expected_url,
-            method='POST',
-            data=to_json_bytes({'upload_to': 'path'}),
-        )
+        request_mock.assert_called_with(expected_url, json={'upload_to': 'path'}, headers={'X-Api-Key': 'very-secret'})
 
     def test_update_or_create(self):
         doc_pk = TestDocument.objects.create(documents=[WriteTokenFactory().upload_id]).pk

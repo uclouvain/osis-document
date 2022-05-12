@@ -23,46 +23,41 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-
-import json
 from typing import Union
-from urllib.error import HTTPError
 from urllib.parse import urlparse
 
 from django.conf import settings
+from requests import HTTPError
 from rest_framework.views import APIView
-
-from osis_document.exceptions import UploadConfirmationException
 
 
 def get_remote_metadata(token: str) -> Union[dict, None]:
-    from urllib import request
+    import requests
     url = "{}metadata/{}".format(settings.OSIS_DOCUMENT_BASE_URL, token)
     try:
-        with request.urlopen(url) as f:
-            return json.loads(f.read().decode('utf-8'))
+        return requests.get(url).json()
     except HTTPError:
         return None
 
 
 def get_remote_token(uuid, write_token=False):
-    from urllib import request
+    import requests
     url = "{base_url}{token_type}-token/{uuid}".format(
         base_url=settings.OSIS_DOCUMENT_BASE_URL,
         token_type='write' if write_token else 'read',
         uuid=uuid,
     )
-    req = request.Request(url, method='POST')
-    req.add_header('X-Api-Key', settings.OSIS_DOCUMENT_API_SHARED_SECRET)
     try:
-        with request.urlopen(req) as f:
-            return json.loads(f.read().decode('utf-8')).get('token')
+        response = requests.post(url, headers={
+            'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET,
+        })
+        return response.json().get('token')
     except HTTPError:
         return None
 
 
 def confirm_remote_upload(token, upload_to=None, related_model=None, related_model_instance=None):
-    from urllib import request
+    import requests
     url = "{}confirm-upload/{}".format(settings.OSIS_DOCUMENT_BASE_URL, token)
     data = {}
     # Add facultative params
@@ -79,15 +74,11 @@ def confirm_remote_upload(token, upload_to=None, related_model=None, related_mod
             }
         data['related_model'] = related_model
 
-    # Create the request
-    req = request.Request(url, method='POST', data=json.dumps(data).encode('utf8'))
-    req.add_header('X-Api-Key', settings.OSIS_DOCUMENT_API_SHARED_SECRET)
-    req.add_header('Content-Type', "application/json")
-    try:
-        with request.urlopen(req) as f:
-            return json.loads(f.read().decode('utf-8')).get('uuid')
-    except HTTPError as e:
-        raise UploadConfirmationException(e.filename, e.code, e.reason, e.headers, e.fp)
+    # Do the request
+    response = requests.post(url, json=data, headers={
+        'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET,
+    })
+    return response.json().get('uuid')
 
 
 class CorsAllowOriginMixin(APIView):
