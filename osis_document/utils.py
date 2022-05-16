@@ -45,9 +45,7 @@ from osis_document.models import Token, Upload
 
 def confirm_upload(token, upload_to, model_instance=None) -> UUID:
     """Verify local token existence and expiration"""
-    token = Token.objects.writing_not_expired().filter(
-        token=token,
-    ).select_related('upload').first()
+    token = Token.objects.writing_not_expired().filter(token=token).select_related('upload').first()
     if not token:
         raise FieldError(_("Token non-existent or expired"))
 
@@ -117,7 +115,7 @@ def get_token(uuid, **kwargs):
     return Token.objects.create(
         upload_id=uuid,
         token=signing.dumps(str(uuid)),
-        **kwargs
+        **kwargs,
     ).token
 
 
@@ -141,13 +139,13 @@ def calculate_md5(file):
 
 
 def save_raw_upload(file, name, mimetype, **metadata):
-    """Save a file into an Upload object with given parameters."""
+    """Save a file into a local Upload object with given parameters."""
 
     md5 = calculate_md5(file)
     upload = Upload.objects.create(
         mimetype=mimetype,
         size=sys.getsizeof(file),
-        metadata={"md5": md5, **metadata},
+        metadata={"md5": md5, 'name': name, **metadata},
     )
     upload.file.save(
         content=ContentFile(file),
@@ -160,3 +158,15 @@ def save_raw_upload(file, name, mimetype, **metadata):
         token=signing.dumps(str(upload.uuid)),
     )
     return token
+
+
+def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
+    """Save a raw file by sending it over the network."""
+    import requests
+
+    url = "{}request-upload".format(settings.OSIS_DOCUMENT_BASE_URL)
+    data = {'file': (name, content, mimetype)}
+
+    # Create the request
+    response = requests.post(url, files=data)
+    return response.json().get('token')

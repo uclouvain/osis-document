@@ -23,18 +23,12 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-import json
 from unittest.mock import Mock, patch
-from urllib.error import HTTPError
 
 from django.test import TestCase, override_settings
+from requests import HTTPError
 
 from osis_document.api.utils import confirm_remote_upload, get_remote_metadata, get_remote_token
-from osis_document.exceptions import UploadConfirmationException
-
-
-def to_json_bytes(value):
-    return json.dumps(value).encode("utf8")
 
 
 @override_settings(
@@ -43,53 +37,41 @@ def to_json_bytes(value):
 )
 class RemoteUtilsTestCase(TestCase):
     def test_get_remote_token_bad_uuid(self):
-        with patch('urllib.request') as request_mock:
-            request_mock.urlopen.return_value.__enter__.side_effect = HTTPError('', 404, '', {}, None)
+        with patch('requests.post') as request_mock:
+            request_mock.side_effect = HTTPError
             self.assertIsNone(get_remote_token('bbc1ba15-42d2-48e9-9884-7631417bb1e1'))
 
     def test_get_remote_token(self):
-        with patch('urllib.request') as request_mock:
-            request_mock.urlopen.return_value.__enter__.return_value.read.return_value = to_json_bytes(
-                {"token": "something"}
-            )
+        with patch('requests.post') as request_mock:
+            request_mock.return_value.json.return_value = {"token": "something"}
             self.assertEqual(get_remote_token('bbc1ba15-42d2-48e9-9884-7631417bb1e1'), "something")
 
     def test_get_remote_metadata_bad_token(self):
-        with patch('urllib.request') as request_mock:
-            request_mock.urlopen.return_value.__enter__.side_effect = HTTPError('', 404, '', {}, None)
+        with patch('requests.get') as request_mock:
+            request_mock.side_effect = HTTPError
             self.assertIsNone(get_remote_metadata('some_token'))
 
     def test_get_remote_metadata(self):
-        with patch('urllib.request') as request_mock:
-            request_mock.urlopen.return_value.__enter__.return_value.read.return_value = to_json_bytes({"foo": "bar"})
+        with patch('requests.get') as request_mock:
+            request_mock.return_value.json.return_value = {"foo": "bar"}
             self.assertEqual(get_remote_metadata('some_token'), {"foo": "bar"})
 
-    def test_confirm_remote_upload_bad_token(self):
-        with patch('urllib.request') as request_mock:
-            request_mock.urlopen.return_value.__enter__.side_effect = HTTPError('', 404, '', {}, None)
-            with self.assertRaises(UploadConfirmationException):
-                confirm_remote_upload('some_token')
-
     def test_confirm_remote_upload(self):
-        with patch('urllib.request') as request_mock:
-            request_mock.urlopen.return_value.__enter__.return_value.read.return_value = to_json_bytes(
-                {"uuid": "bbc1ba15-42d2-48e9-9884-7631417bb1e1"}
-            )
+        with patch('requests.post') as request_mock:
+            request_mock.return_value.json.return_value = {"uuid": "bbc1ba15-42d2-48e9-9884-7631417bb1e1"}
             self.assertEqual(confirm_remote_upload('some_token'), 'bbc1ba15-42d2-48e9-9884-7631417bb1e1')
             expected_url = 'http://dummyurl.com/document/confirm-upload/some_token'
-            request_mock.Request.assert_called_with(expected_url, method='POST', data=b'{}')
+            request_mock.assert_called_with(expected_url, json={}, headers={'X-Api-Key': 'very-secret'})
 
     def test_confirm_remote_upload_with_upload_to(self):
-        with patch('urllib.request') as request_mock:
-            request_mock.urlopen.return_value.__enter__.return_value.read.return_value = to_json_bytes(
-                {"uuid": "bbc1ba15-42d2-48e9-9884-7631417bb1e1"}
-            )
+        with patch('requests.post') as request_mock:
+            request_mock.return_value.json.return_value = {"uuid": "bbc1ba15-42d2-48e9-9884-7631417bb1e1"}
             self.assertEqual(confirm_remote_upload('some_token', 'path/'), 'bbc1ba15-42d2-48e9-9884-7631417bb1e1')
             expected_url = 'http://dummyurl.com/document/confirm-upload/some_token'
-            request_mock.Request.assert_called_with(
+            request_mock.assert_called_with(
                 expected_url,
-                method='POST',
-                data=b'{"upload_to": "path/"}',
+                json={"upload_to": "path/"},
+                headers={'X-Api-Key': 'very-secret'},
             )
 
     def test_confirm_remote_upload_with_related_model(self):
@@ -99,10 +81,8 @@ class RemoteUtilsTestCase(TestCase):
             'field': 'field_name',
             'instance_filter_fields': ['id'],
         }
-        with patch('urllib.request') as request_mock:
-            request_mock.urlopen.return_value.__enter__.return_value.read.return_value = to_json_bytes(
-                {"uuid": "bbc1ba15-42d2-48e9-9884-7631417bb1e1"}
-            )
+        with patch('requests.post') as request_mock:
+            request_mock.return_value.json.return_value = {"uuid": "bbc1ba15-42d2-48e9-9884-7631417bb1e1"}
             self.assertEqual(
                 confirm_remote_upload(
                     token='some_token',
@@ -111,10 +91,10 @@ class RemoteUtilsTestCase(TestCase):
                 'bbc1ba15-42d2-48e9-9884-7631417bb1e1',
             )
             expected_url = 'http://dummyurl.com/document/confirm-upload/some_token'
-            request_mock.Request.assert_called_with(
+            request_mock.assert_called_with(
                 expected_url,
-                method='POST',
-                data=to_json_bytes({'related_model': related_model}),
+                json={'related_model': related_model},
+                headers={'X-Api-Key': 'very-secret'},
             )
 
     def test_confirm_remote_upload_with_related_model_and_instance(self):
@@ -125,10 +105,8 @@ class RemoteUtilsTestCase(TestCase):
             'instance_filter_fields': ['id'],
         }
         fake_instance = Mock(id=10)
-        with patch('urllib.request') as request_mock:
-            request_mock.urlopen.return_value.__enter__.return_value.read.return_value = to_json_bytes(
-                {"uuid": "bbc1ba15-42d2-48e9-9884-7631417bb1e1"}
-            )
+        with patch('requests.post') as request_mock:
+            request_mock.return_value.json.return_value = {"uuid": "bbc1ba15-42d2-48e9-9884-7631417bb1e1"}
             self.assertEqual(
                 confirm_remote_upload(
                     token='some_token',
@@ -138,17 +116,15 @@ class RemoteUtilsTestCase(TestCase):
                 'bbc1ba15-42d2-48e9-9884-7631417bb1e1',
             )
             expected_url = 'http://dummyurl.com/document/confirm-upload/some_token'
-            request_mock.Request.assert_called_with(
+            request_mock.assert_called_with(
                 expected_url,
-                method='POST',
-                data=to_json_bytes(
-                    {
-                        'related_model': {
-                            'app': 'app_name',
-                            'model': 'model_name',
-                            'field': 'field_name',
-                            'instance_filters': {'id': 10},
-                        },
-                    }
-                ),
+                json={
+                    'related_model': {
+                        'app': 'app_name',
+                        'model': 'model_name',
+                        'field': 'field_name',
+                        'instance_filters': {'id': 10},
+                    },
+                },
+                headers={'X-Api-Key': 'very-secret'},
             )

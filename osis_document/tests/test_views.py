@@ -333,13 +333,13 @@ class FileViewTestCase(TestCase):
         response = self.client.get(resolve_url('raw-file', token=token.token))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header('Content-Security-Policy'))
-        self.assertFalse(response.has_header('Content-Disposition'))
+        self.assertNotIn('attachment', response['Content-Disposition'])
 
     def test_get_file_as_attachement(self):
         token = ReadTokenFactory()
         response = self.client.get(resolve_url('raw-file', token=token.token) + '?dl=1')
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.has_header('Content-Disposition'))
+        self.assertIn('attachment', response['Content-Disposition'])
 
     def test_get_file_bad_md5(self):
         token = ReadTokenFactory(upload__metadata={'md5': 'badvalue'})

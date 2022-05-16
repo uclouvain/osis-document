@@ -6,8 +6,9 @@
 
 `OSIS Document` requires
 
-- Django 2.2+
+- Django 3.2+
 - Django REST Framework 3.12+
+- Requests 2+
 
 
 # How to install ?
@@ -35,9 +36,9 @@ Add `osis_document` to `INSTALLED_APPS` and configure the base url:
 import os
 
 INSTALLED_APPS = (
-    ...
+    ...,
     'osis_document',
-    ...
+    ...,
 )
 
 # The primary server full url

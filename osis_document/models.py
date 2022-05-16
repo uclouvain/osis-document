@@ -27,7 +27,6 @@ import uuid
 from datetime import timedelta
 
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models.functions import Now
 from django.utils.translation import gettext_lazy as _
@@ -74,7 +73,7 @@ class Upload(models.Model):
         choices=FileStatus.choices(),
         default=FileStatus.REQUESTED.name,
     )
-    metadata = JSONField(
+    metadata = models.JSONField(
         verbose_name=_("Metadata"),
         default=dict,
     )
@@ -83,6 +82,9 @@ class Upload(models.Model):
 
     class Meta:
         verbose_name = _("Upload")
+
+    def __str__(self):
+        return "Upload '{}'".format(self.file.name)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         assert self.metadata.get('md5')
@@ -130,3 +132,9 @@ class Token(models.Model):
     )
 
     objects = TokenManager()
+
+    def __str__(self):
+        return self.token
+
+    def __repr__(self):
+        return '{self.access} token for {self.upload}'.format(self=self)
