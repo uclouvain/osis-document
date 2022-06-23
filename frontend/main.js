@@ -28,45 +28,54 @@ import { i18n } from './i18n';
 import Uploader from './Uploader';
 import Visualizer from './Visualizer';
 
-document.querySelectorAll('.document-uploader').forEach((elem) => {
-  const props = { ...elem.dataset };
-  if (typeof props.limit !== 'undefined') {
-    props.limit = Number.parseInt(props.limit);
-  }
-  if (typeof props.maxSize !== 'undefined') {
-    props.maxSize = Number.parseInt(props.maxSize);
-  }
-  if (typeof props.minFiles !== 'undefined') {
-    props.minFiles = Number.parseInt(props.minFiles);
-  }
-  if (typeof props.maxFiles !== 'undefined') {
-    props.maxFiles = Number.parseInt(props.maxFiles);
-  }
-  if (typeof props.mimetypes !== 'undefined') {
-    props.mimetypes = props.mimetypes.split(',');
-  }
-  if (typeof props.values !== 'undefined') {
-    props.values = props.values.split(',');
-  }
-  if (typeof props.automaticUpload !== 'undefined') {
-    props.automaticUpload = props.automaticUpload === "true";
-  }
-  if (typeof props.editableFilename !== 'undefined') {
-    props.editableFilename = props.editableFilename === "true";
-  }
-  new Vue({
-    render: (h) => h(Uploader, { props }),
-    i18n,
-  }).$mount(elem);
-});
+function initDocumentComponents() {
+  document.querySelectorAll('.document-uploader').forEach((elem) => {
+    const props = { ...elem.dataset };
+    if (typeof props.limit !== 'undefined') {
+      props.limit = Number.parseInt(props.limit);
+    }
+    if (typeof props.maxSize !== 'undefined') {
+      props.maxSize = Number.parseInt(props.maxSize);
+    }
+    if (typeof props.minFiles !== 'undefined') {
+      props.minFiles = Number.parseInt(props.minFiles);
+    }
+    if (typeof props.maxFiles !== 'undefined') {
+      props.maxFiles = Number.parseInt(props.maxFiles);
+    }
+    if (typeof props.mimetypes !== 'undefined') {
+      props.mimetypes = props.mimetypes.split(',');
+    }
+    if (typeof props.values !== 'undefined') {
+      props.values = props.values.split(',');
+    }
+    if (typeof props.automaticUpload !== 'undefined') {
+      props.automaticUpload = props.automaticUpload === 'true';
+    }
+    if (typeof props.editableFilename !== 'undefined') {
+      props.editableFilename = props.editableFilename === 'true';
+    }
+    new Vue({
+      render: (h) => h(Uploader, { props }),
+      i18n,
+    }).$mount(elem);
+  });
 
-document.querySelectorAll('.document-visualizer').forEach((elem) => {
-  const props = { ...elem.dataset };
-  if (typeof props.values !== 'undefined') {
-    props.values = props.values.split(',');
-  }
-  new Vue({
-    render: (h) => h(Visualizer, { props }),
-    i18n,
-  }).$mount(elem);
-});
+  document.querySelectorAll('.document-visualizer').forEach((elem) => {
+    const props = { ...elem.dataset };
+    if (typeof props.values !== 'undefined') {
+      props.values = props.values.split(',');
+    }
+    new Vue({
+      render: (h) => h(Visualizer, { props }),
+      i18n,
+    }).$mount(elem);
+  });
+}
+
+// Initialize at first load
+initDocumentComponents();
+
+// Initialize later if nodes are added dynamically
+const observer = new MutationObserver(initDocumentComponents);
+observer.observe(document, { childList: true, subtree: true });
