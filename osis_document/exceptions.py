@@ -26,6 +26,6 @@
 from django.utils.translation import gettext_lazy as _
 
 
-class Md5Mismatch(ValueError):
+class HashMismatch(ValueError):
     def __init__(self, *args: object) -> None:
-        super().__init__(_("MD5 check failed"))
+        super().__init__(_("Hash check failed"))

@@ -37,7 +37,7 @@ from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api.permissions import APIKeyPermission
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.models import Upload
-from osis_document.utils import calculate_md5, confirm_upload, get_token
+from osis_document.utils import calculate_hash, confirm_upload, get_token
 
 
 class RequestUploadSchema(DetailedAutoSchema):  # pragma: no cover
@@ -96,18 +96,17 @@ class RequestUploadView(CorsAllowOriginMixin, APIView):
         # Check that the sent data is ok
         form = modelform_factory(Upload, fields=['file'])(self.request.POST, self.request.FILES)
         if form.is_valid():
-            # Process file: calculate md5 and save it to db
+            # Process file: calculate hash and save it to db
             file = self.request.FILES['file']
-            md5 = calculate_md5(file)
             instance = Upload(
                 file=file,
                 mimetype=file.content_type,
                 size=file.size,
-                metadata={'md5': md5, 'name': file.name},
+                metadata={'hash': calculate_hash(file), 'name': file.name},
             )
             instance.save()
 
-            # Create a write token to allow persistance
+            # Create a writing token to allow persistance
             return Response({'token': get_token(instance.uuid)}, status.HTTP_201_CREATED)
         return Response({'error': form.errors}, status.HTTP_400_BAD_REQUEST)
 

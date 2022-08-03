@@ -32,7 +32,7 @@ from django.core.exceptions import FieldError
 from django.test import TestCase, override_settings
 
 from osis_document.enums import FileStatus
-from osis_document.exceptions import Md5Mismatch
+from osis_document.exceptions import HashMismatch
 from osis_document.models import Upload
 from osis_document.tests.factories import PdfUploadFactory, WriteTokenFactory
 from osis_document.utils import confirm_upload, generate_filename, get_metadata, is_uuid, save_raw_upload
@@ -45,16 +45,16 @@ class MetadataTestCase(TestCase):
         metadata = get_metadata(token.token)
         self.assertEqual(metadata['size'], 1024)
         self.assertEqual(metadata['mimetype'], 'application/pdf')
-        self.assertEqual(metadata['md5'], '5eb63bbbe01eeed093cb22bb8f5acdc3')
+        self.assertEqual(metadata['hash'], 'b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9')
         self.assertIn('url', metadata)
 
         with mock.patch('django.utils.timezone.now', return_value=datetime(1990, 1, 1)):
             old_token = WriteTokenFactory(upload=token.upload)
             self.assertIsNone(get_metadata(old_token.token))
 
-    def test_bad_md5(self):
-        token = WriteTokenFactory(upload__metadata={'md5': 'badvalue'})
-        with self.assertRaises(Md5Mismatch):
+    def test_bad_hash(self):
+        token = WriteTokenFactory(upload__metadata={'hash': 'badvalue'})
+        with self.assertRaises(HashMismatch):
             get_metadata(token.token)
 
 
@@ -69,7 +69,7 @@ class RawUploadTestCase(TestCase):
         metadata = get_metadata(token.token)
         self.assertEqual(metadata['size'], 48)
         self.assertEqual(metadata['mimetype'], 'text/plain')
-        self.assertEqual(metadata['md5'], 'ebf9d9524ad7f702a2c3a75f060024f1')
+        self.assertEqual(metadata['hash'], '7e744d381e086dad1c2acb5596b89af8dad49f2c82fe3f390c3e0c142c6f665c')
 
 
 class IsUuidTestCase(TestCase):

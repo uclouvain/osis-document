@@ -69,10 +69,10 @@ class RawFileView(CorsAllowOriginMixin, APIView):
                 'error': _("Resource not found")
             }, status.HTTP_404_NOT_FOUND)
         with upload.file.open() as file:
-            md5 = hashlib.md5(file.read()).hexdigest()
-        if upload.metadata.get('md5') != md5:
+            hash = hashlib.sha256(file.read()).hexdigest()
+        if upload.metadata.get('hash') != hash:
             return Response({
-                'error': _("MD5 checksum mismatch")
+                'error': _("Hash checksum mismatch")
             }, status.HTTP_409_CONFLICT)
         # TODO handle internal nginx redirect based on a setting
         kwargs = {}

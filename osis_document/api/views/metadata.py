@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 
 from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
-from osis_document.exceptions import Md5Mismatch
+from osis_document.exceptions import HashMismatch
 from osis_document.api import serializers
 from osis_document.models import Token
 from osis_document.utils import get_metadata
@@ -42,9 +42,9 @@ class MetadataView(CorsAllowOriginMixin, APIView):
     def get(self, *args, **kwargs):
         try:
             metadata = get_metadata(self.kwargs['token'])
-        except Md5Mismatch:
+        except HashMismatch:
             return Response({
-                'error': _("MD5 checksum mismatch")
+                'error': _("Hash checksum mismatch")
             }, status.HTTP_409_CONFLICT)
         if not metadata:
             return Response({

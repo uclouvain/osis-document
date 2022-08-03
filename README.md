@@ -171,7 +171,7 @@ Available metadata info:
 - `size`: The size of the file in bytes
 - `mimetype`: The MIME type as per detected by python-magic
 - `uploaded_at`: The datetime the file was uploaded at
-- `md5`: The md5 checksum of the file
+- `hash`: The sh256 hash of the file
 - `url`: The file url to get the file
 
 
