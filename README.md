@@ -55,6 +55,8 @@ OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE = 60 * 15
 OSIS_DOCUMENT_DOMAIN_LIST = [
     '127.0.0.1:8001',
 ]
+# To configure which extensions are allowed by default for any upload
+OSIS_DOCUMENT_ALLOWED_EXTENSIONS = ['pdf', 'txt', 'docx', 'doc', 'odt', 'png', 'jpg']
 ```
 
 OSIS-Document is aimed at being run on multiple servers, so on your primary server, add it to your `urls.py` 
