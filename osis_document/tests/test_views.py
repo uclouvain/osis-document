@@ -268,7 +268,7 @@ class MetadataViewTestCase(APITestCase):
         self.assertEqual(response.status_code, 200)
         metadata = response.json()
         self.assertIn('mimetype', metadata)
-        self.assertIn('md5', metadata)
+        self.assertIn('hash', metadata)
         self.assertIn('name', metadata)
         self.assertIn('uploaded_at', metadata)
 
@@ -276,8 +276,8 @@ class MetadataViewTestCase(APITestCase):
         response = self.client.get(resolve_url('get-metadata', token='token'))
         self.assertEqual(response.status_code, 404)
 
-    def test_bad_md5(self):
-        token = ReadTokenFactory(upload__metadata={'md5': 'badvalue'})
+    def test_bad_hash(self):
+        token = ReadTokenFactory(upload__metadata={'hash': 'badvalue'})
         response = self.client.get(resolve_url('get-metadata', token=token.token))
         self.assertEqual(response.status_code, 409)
 
@@ -341,8 +341,8 @@ class FileViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('attachment', response['Content-Disposition'])
 
-    def test_get_file_bad_md5(self):
-        token = ReadTokenFactory(upload__metadata={'md5': 'badvalue'})
+    def test_get_file_bad_hash(self):
+        token = ReadTokenFactory(upload__metadata={'hash': 'badvalue'})
         response = self.client.get(resolve_url('raw-file', token=token.token))
         self.assertEqual(response.status_code, 409)
 

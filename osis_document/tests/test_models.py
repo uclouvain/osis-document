@@ -30,12 +30,12 @@ from osis_document.models import Upload
 
 
 class UploadTestCase(TestCase):
-    def test_assert_md5(self):
+    def test_assert_hash(self):
         with self.assertRaises(AssertionError):
             Upload.objects.create(size=1024)
         Upload.objects.create(
             size=1024,
             metadata={
-                'md5': 'something',
+                'hash': 'something',
             },
         )

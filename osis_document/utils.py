@@ -39,7 +39,7 @@ from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
 
 from osis_document.enums import FileStatus
-from osis_document.exceptions import Md5Mismatch
+from osis_document.exceptions import HashMismatch
 from osis_document.models import Token, Upload
 
 
@@ -98,9 +98,9 @@ def get_metadata(token: str):
     if not upload:
         return None
     with upload.file.open() as file:
-        md5 = hashlib.md5(file.read()).hexdigest()
-    if upload.metadata.get('md5') != md5:
-        raise Md5Mismatch()
+        hash = hashlib.sha256(file.read()).hexdigest()
+    if upload.metadata.get('hash') != hash:
+        raise HashMismatch()
     return {
         'size': upload.size,
         'mimetype': upload.mimetype,
@@ -128,24 +128,24 @@ def is_uuid(value: Union[str, uuid.UUID]) -> bool:
     return False
 
 
-def calculate_md5(file):
-    hash_md5 = hashlib.md5()
+def calculate_hash(file):
+    hash = hashlib.sha256()
     if isinstance(file, bytes):
-        hash_md5.update(file)
+        hash.update(file)
     else:
         for chunk in file.chunks():
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
+            hash.update(chunk)
+    return hash.hexdigest()
 
 
 def save_raw_upload(file, name, mimetype, **metadata):
     """Save a file into a local Upload object with given parameters."""
 
-    md5 = calculate_md5(file)
+    hash = calculate_hash(file)
     upload = Upload.objects.create(
         mimetype=mimetype,
         size=sys.getsizeof(file),
-        metadata={"md5": md5, 'name': name, **metadata},
+        metadata={"hash": hash, 'name': name, **metadata},
     )
     upload.file.save(
         content=ContentFile(file),

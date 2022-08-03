@@ -87,7 +87,7 @@ class Upload(models.Model):
         return "Upload '{}'".format(self.file.name)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        assert self.metadata.get('md5')
+        assert self.metadata.get('hash')
         super().save(force_insert, force_update, using, update_fields)
 
 

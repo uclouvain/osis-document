@@ -84,11 +84,11 @@ class RotateImageView(CorsAllowOriginMixin, APIView):
 
         upload.file.save(upload.file.name, ContentFile(rotated_photo.getvalue()))
 
-        md5 = hashlib.md5()
+        hash = hashlib.sha256()
         with upload.file.open('rb') as file:
             for chunk in file.chunks():
-                md5.update(chunk)
-        upload.metadata['md5'] = md5.hexdigest()
+                hash.update(chunk)
+        upload.metadata['hash'] = hash.hexdigest()
         upload.save()
 
         # Regenerate new token
