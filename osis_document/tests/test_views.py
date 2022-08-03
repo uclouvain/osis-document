@@ -43,6 +43,12 @@ class RequestUploadViewTestCase(TestCase):
         response = self.client.post(resolve_url('request-upload'), {})
         self.assertEqual(400, response.status_code)
 
+    @override_settings(OSIS_DOCUMENT_ALLOWED_EXTENSIONS=['txt'])
+    def test_request_upload_with_bad_extension(self):
+        file = ContentFile(b'hello world', 'foo.pdf')
+        response = self.client.post(resolve_url('request-upload'), {'file': file})
+        self.assertEqual(400, response.status_code)
+
     def test_upload(self):
         file = ContentFile(b'hello world', 'foo.pdf')
         self.assertFalse(Upload.objects.exists())

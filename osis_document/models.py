@@ -27,6 +27,7 @@ import uuid
 from datetime import timedelta
 
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models.functions import Now
 from django.utils.translation import gettext_lazy as _
@@ -42,6 +43,12 @@ class UploadManager(models.Manager):
         ).first()
 
 
+class OsisDocumentFileExtensionValidator(FileExtensionValidator):
+    def __call__(self, value):
+        self.allowed_extensions = getattr(settings, 'OSIS_DOCUMENT_ALLOWED_EXTENSIONS', None)
+        super().__call__(value)
+
+
 class Upload(models.Model):
     uuid = models.UUIDField(
         verbose_name=_("UUID"),
@@ -51,6 +58,7 @@ class Upload(models.Model):
     file = models.FileField(
         verbose_name=_("File"),
         max_length=255,
+        validators=[OsisDocumentFileExtensionValidator()],
     )
     uploaded_at = models.DateTimeField(
         verbose_name=_("Uploaded at"),
