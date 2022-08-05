@@ -229,6 +229,11 @@ export default {
   },
   methods: {
     getFile: async function () {
+      if (this.value === 'FileInfectedException') {
+        this.error = this.$t('view_entry.file_infected');
+        this.loading = false;
+        return;
+      }
       try {
         const response = await fetch(`${this.baseUrl}metadata/${this.value}`);
         if (response.status === 200) {

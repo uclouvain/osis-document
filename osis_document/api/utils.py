@@ -28,11 +28,15 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 from requests import HTTPError
+from rest_framework import status
 from rest_framework.views import APIView
+
+from osis_document.exceptions import FileInfectedException
 
 
 def get_remote_metadata(token: str) -> Union[dict, None]:
     import requests
+
     url = "{}metadata/{}".format(settings.OSIS_DOCUMENT_BASE_URL, token)
     try:
         return requests.get(url).json()
@@ -42,22 +46,28 @@ def get_remote_metadata(token: str) -> Union[dict, None]:
 
 def get_remote_token(uuid, write_token=False):
     import requests
+
     url = "{base_url}{token_type}-token/{uuid}".format(
         base_url=settings.OSIS_DOCUMENT_BASE_URL,
         token_type='write' if write_token else 'read',
         uuid=uuid,
     )
     try:
-        response = requests.post(url, headers={
-            'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET,
-        })
-        return response.json().get('token')
+        response = requests.post(url, headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET})
+        json = response.json()
+        if (
+            response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+            and json['detail'] == FileInfectedException.default_detail
+        ):
+            return FileInfectedException.__class__.__name__
+        return json.get('token')
     except HTTPError:
         return None
 
 
 def confirm_remote_upload(token, upload_to=None, related_model=None, related_model_instance=None):
     import requests
+
     url = "{}confirm-upload/{}".format(settings.OSIS_DOCUMENT_BASE_URL, token)
     data = {}
     # Add facultative params
@@ -75,9 +85,11 @@ def confirm_remote_upload(token, upload_to=None, related_model=None, related_mod
         data['related_model'] = related_model
 
     # Do the request
-    response = requests.post(url, json=data, headers={
-        'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET,
-    })
+    response = requests.post(
+        url,
+        json=data,
+        headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
+    )
     return response.json().get('uuid')
 
 
@@ -103,7 +115,4 @@ class CorsAllowOriginMixin(APIView):
 
     def origin_found_in_white_lists(self, url):
         origins = [urlparse(o) for o in settings.OSIS_DOCUMENT_DOMAIN_LIST]
-        return any(
-            origin.scheme == url.scheme and origin.netloc == url.netloc
-            for origin in origins
-        )
+        return any(origin.scheme == url.scheme and origin.netloc == url.netloc for origin in origins)

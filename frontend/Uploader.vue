@@ -90,7 +90,7 @@
     </ul>
 
     <input
-        v-for="(token, index) in Object.values(filteredTokens)"
+        v-for="(token, index) in Object.values(cleanedTokens)"
         :key="`${name}_${index}`"
         type="hidden"
         :name="`${name}_${index}`"
@@ -171,14 +171,20 @@ export default {
     };
   },
   computed: {
+    /** Token list without empty tokens */
     filteredTokens: function () {
       return Object.fromEntries(Object.entries(this.tokens).filter(e => !!e[1]));
     },
+    /** Token list without infected files */
+    cleanedTokens: function () {
+      return Object.fromEntries(Object.entries(this.tokens).filter(e => !!e[1] && e[1] !== 'FileInfectedException'));
+    },
+    /** Number of file tokens ready to be submitted */
     nbUploadedFiles: function () {
-      return Object.values(this.filteredTokens).length;
+      return Object.values(this.cleanedTokens).length;
     },
     /**
-     * Custom the drag and drop button label depending on the number of uploaded files and the limits
+     * Customize the drag and drop button label depending on the number of uploaded files and the limits
      * @returns {string} the drag and drop label
      */
     dragNDropLabel: function () {

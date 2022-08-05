@@ -26,10 +26,11 @@
 from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.exceptions import FieldDoesNotExist, FieldError
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from osis_document.models import Token
+from osis_document.models import Token, Upload
 
 
 class RequestUploadResponseSerializer(serializers.Serializer):
@@ -38,6 +39,17 @@ class RequestUploadResponseSerializer(serializers.Serializer):
 
 class ConfirmUploadResponseSerializer(serializers.Serializer):
     uuid = serializers.UUIDField(help_text="The uuid of the persisted file upload")
+
+
+class DeclareFileAsInfectedSerializer(serializers.Serializer):
+    path = serializers.CharField(help_text="The path to the file to declare as infected")
+
+    def validate_path(self, value):
+        # Path must exist on the file system and be part of an upload
+        upload = Upload.objects.filter(file=value).first()
+        if not upload or not upload.file.storage.exists(upload.file.path):
+            raise serializers.ValidationError(_("File does not exist"))
+        return upload
 
 
 class ContentTypeSerializer(serializers.Serializer):
@@ -55,7 +67,7 @@ class ContentTypeSerializer(serializers.Serializer):
     )
     instance_filters = serializers.JSONField(
         help_text="Lookup arguments allowing to filter the model instances to return one single object that will be "
-                  "used to compute the upload directory path (via the 'upload_to' property)",
+        "used to compute the upload directory path (via the 'upload_to' property)",
         required=False,
     )
 

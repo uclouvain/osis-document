@@ -29,6 +29,7 @@ from django.test import TestCase, override_settings
 from requests import HTTPError
 
 from osis_document.api.utils import confirm_remote_upload, get_remote_metadata, get_remote_token
+from osis_document.exceptions import FileInfectedException
 
 
 @override_settings(
@@ -45,6 +46,15 @@ class RemoteUtilsTestCase(TestCase):
         with patch('requests.post') as request_mock:
             request_mock.return_value.json.return_value = {"token": "something"}
             self.assertEqual(get_remote_token('bbc1ba15-42d2-48e9-9884-7631417bb1e1'), "something")
+
+    def test_get_remote_token_infected_file(self):
+        with patch('requests.post') as request_mock:
+            request_mock.return_value.status_code = 500
+            request_mock.return_value.json.return_value = {"detail": FileInfectedException.default_detail}
+            self.assertEqual(
+                get_remote_token('bbc1ba15-42d2-48e9-9884-7631417bb1e1'),
+                FileInfectedException.__class__.__name__,
+            )
 
     def test_get_remote_metadata_bad_token(self):
         with patch('requests.get') as request_mock:

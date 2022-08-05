@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('modified_at', models.DateTimeField(auto_now=True, verbose_name='Modified at')),
                 ('mimetype', models.CharField(max_length=255, verbose_name='MIME Type')),
                 ('size', models.IntegerField(verbose_name='Size (in bytes)')),
-                ('status', models.CharField(choices=[('REQUESTED', 'Requested'), ('UPLOADED', 'Uploaded')], default='REQUESTED', max_length=255, verbose_name='Status')),
+                ('status', models.CharField(choices=[('REQUESTED', 'Requested'), ('UPLOADED', 'Uploaded'), ('INFECTED', 'Infected')], default='REQUESTED', max_length=255, verbose_name='Status')),
                 ('metadata', models.JSONField(default=dict, verbose_name='Metadata')),
             ],
             options={
