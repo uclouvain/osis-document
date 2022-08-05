@@ -35,6 +35,8 @@ from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import APIView
 
 from osis_document.api.utils import CorsAllowOriginMixin
+from osis_document.enums import FileStatus
+from osis_document.exceptions import FileInfectedException
 from osis_document.models import Upload
 
 
@@ -68,6 +70,8 @@ class RawFileView(CorsAllowOriginMixin, APIView):
             return Response({
                 'error': _("Resource not found")
             }, status.HTTP_404_NOT_FOUND)
+        if upload.status == FileStatus.INFECTED.name:
+            raise FileInfectedException
         with upload.file.open() as file:
             hash = hashlib.sha256(file.read()).hexdigest()
         if upload.metadata.get('hash') != hash:

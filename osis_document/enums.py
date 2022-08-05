@@ -57,6 +57,7 @@ class ChoiceEnum(Enum):
 class FileStatus(ChoiceEnum):
     REQUESTED = _('Requested')
     UPLOADED = _('Uploaded')
+    INFECTED = _('Infected')
 
 
 class TokenAccess(ChoiceEnum):

@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2022 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,22 +23,23 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from rest_framework import generics
-from rest_framework.schemas.openapi import AutoSchema
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from osis_document.api import serializers
 from osis_document.api.permissions import APIKeyPermission
-from osis_document.api.utils import CorsAllowOriginMixin
+from osis_document.api.schema import DetailedAutoSchema
 from osis_document.enums import FileStatus
-from osis_document.exceptions import FileInfectedException
-from osis_document.models import Upload
 
 
-class GetTokenSchema(AutoSchema):  # pragma: no cover
+class DeclareFileAsInfectedSchema(DetailedAutoSchema):  # pragma: no cover
+    serializer_mapping = {
+        'POST': (serializers.DeclareFileAsInfectedSerializer, serializers.ConfirmUploadResponseSerializer),
+    }
+
     def get_operation_id(self, path, method):
-        if 'write' in path:
-            return 'getWriteToken'
-        return 'getReadToken'
+        return 'declareFileAsInfected'
 
     def get_operation(self, path, method):
         operation = super().get_operation(path, method)
@@ -46,20 +47,20 @@ class GetTokenSchema(AutoSchema):  # pragma: no cover
         return operation
 
 
-class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
-    """Get a token for an upload"""
-    name = 'get-token'
-    serializer_class = serializers.TokenSerializer
-    queryset = Upload.objects.all()
+class DeclareFileAsInfectedView(APIView):
+    name = 'declare-file-as-infected'
     authentication_classes = []
     permission_classes = [APIKeyPermission]
-    token_access = None
-    schema = GetTokenSchema()
+    schema = DeclareFileAsInfectedSchema()
 
-    def create(self, request, *args, **kwargs):
-        upload = self.get_object()
-        if upload.status == FileStatus.INFECTED.name:
-            raise FileInfectedException
-        request.data['upload_id'] = upload.pk
-        request.data['access'] = self.token_access
-        return super().create(request, *args, **kwargs)
+    def post(self, *args, **kwargs):
+        """Given a server-to-server request, declare the file as infected"""
+        input_serializer_data = serializers.DeclareFileAsInfectedSerializer(data={
+                **self.request.data,
+        })
+        input_serializer_data.is_valid(raise_exception=True)
+        validated_data = input_serializer_data.validated_data
+        upload = validated_data.get('path')
+        upload.status = FileStatus.INFECTED.name
+        upload.save()
+        return Response({'uuid': upload.uuid}, status.HTTP_202_ACCEPTED)

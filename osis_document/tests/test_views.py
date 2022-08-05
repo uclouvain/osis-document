@@ -264,6 +264,11 @@ class GetTokenViewTestCase(APITestCase):
         response = self.client.post(resolve_url('read-token', pk='327b946a-4ee5-48a0-8403-c0b9e5dd84a3'))
         self.assertEqual(response.status_code, 404)
 
+    def test_file_infected(self):
+        upload = PdfUploadFactory(status=FileStatus.INFECTED.name)
+        response = self.client.post(resolve_url('read-token', pk=upload.pk))
+        self.assertEqual(response.status_code, 500)
+
 
 @override_settings(ROOT_URLCONF='osis_document.urls',
                    OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
@@ -355,3 +360,31 @@ class FileViewTestCase(TestCase):
     def test_get_file_bad_token(self):
         response = self.client.get(resolve_url('raw-file', token='token'))
         self.assertEqual(response.status_code, 404)
+
+    def test_get_file_infected(self):
+        token = ReadTokenFactory(upload__status=FileStatus.INFECTED.name)
+        response = self.client.get(resolve_url('raw-file', token=token.token))
+        self.assertEqual(response.status_code, 500)
+
+
+@override_settings(ROOT_URLCONF="osis_document.urls", OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
+class DeclareFileInfectedViewTestCase(APITestCase):
+    def setUp(self):
+        self.client.defaults = {'HTTP_X_API_KEY': 'foobar'}
+        self.infected_file = PdfUploadFactory()
+        self.infected_filepath = str(self.infected_file.file)
+        self.url = resolve_url('declare-file-as-infected')
+
+    def test_protected(self):
+        self.client.defaults = {}
+        response = self.client.post(self.url, {'path': self.infected_filepath})
+        self.assertEqual(403, response.status_code)
+
+    def test_declare_as_infected(self):
+        response = self.client.post(self.url, {'path': self.infected_filepath})
+        self.assertEqual(202, response.status_code)
+        self.assertIn('uuid', response.json())
+
+    def test_confirm_upload_with_unknown_path(self):
+        response = self.client.post(self.url, {'path': 'foobar'})
+        self.assertEqual(400, response.status_code)

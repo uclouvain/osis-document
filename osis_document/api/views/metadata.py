@@ -1,13 +1,12 @@
-from django.utils.translation import gettext_lazy as _
+from django.http import Http404
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from osis_document.api import serializers
 from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
-from osis_document.exceptions import HashMismatch
-from osis_document.api import serializers
 from osis_document.models import Token
 from osis_document.utils import get_metadata
 
@@ -40,16 +39,9 @@ class MetadataView(CorsAllowOriginMixin, APIView):
     schema = MetadataSchema()
 
     def get(self, *args, **kwargs):
-        try:
-            metadata = get_metadata(self.kwargs['token'])
-        except HashMismatch:
-            return Response({
-                'error': _("Hash checksum mismatch")
-            }, status.HTTP_409_CONFLICT)
+        metadata = get_metadata(self.kwargs['token'])
         if not metadata:
-            return Response({
-                'error': _("Resource not found")
-            }, status.HTTP_404_NOT_FOUND)
+            raise Http404
         return Response(metadata)
 
 

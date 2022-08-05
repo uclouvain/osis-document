@@ -32,6 +32,7 @@ app_name = 'osis_document'
 urlpatterns = [
     path('request-upload', views.RequestUploadView.as_view(), name=views.RequestUploadView.name),
     path('confirm-upload/<path:token>', views.ConfirmUploadView.as_view(), name=views.ConfirmUploadView.name),
+    path('declare-file-as-infected', views.DeclareFileAsInfectedView.as_view(), name='declare-file-as-infected'),
     path('read-token/<uuid:pk>', views.GetTokenView.as_view(token_access=TokenAccess.READ.name), name='read-token'),
     path('write-token/<uuid:pk>', views.GetTokenView.as_view(token_access=TokenAccess.WRITE.name), name='write-token'),
     path('metadata/<path:token>', views.MetadataView.as_view(), name=views.MetadataView.name),
