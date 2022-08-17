@@ -36,6 +36,9 @@ from osis_document.models import Token, Upload
 from osis_document.tests.document_test.models import TestDocument
 from osis_document.tests.factories import ImageUploadFactory, PdfUploadFactory, ReadTokenFactory, WriteTokenFactory
 
+SMALLEST_PDF = b"""%PDF-1.
+1 0 obj<</Pages 2 0 R>>endobj 2 0 obj<</Kids[3 0 R]/Count 1>>endobj 3 0 obj<</MediaBox[0 0 612 792]>>endobj trailer<</Root 1 0 R>>"""
+
 
 @override_settings(ROOT_URLCONF='osis_document.urls')
 class RequestUploadViewTestCase(TestCase):
@@ -45,12 +48,17 @@ class RequestUploadViewTestCase(TestCase):
 
     @override_settings(OSIS_DOCUMENT_ALLOWED_EXTENSIONS=['txt'])
     def test_request_upload_with_bad_extension(self):
-        file = ContentFile(b'hello world', 'foo.pdf')
+        file = ContentFile(SMALLEST_PDF, 'foo.pdf')
         response = self.client.post(resolve_url('request-upload'), {'file': file})
         self.assertEqual(400, response.status_code)
 
+    def test_request_upload_with_mime_smuggling(self):
+        file = ContentFile(SMALLEST_PDF, 'foo.doc')
+        response = self.client.post(resolve_url('request-upload'), {'file': file})
+        self.assertEqual(409, response.status_code)
+
     def test_upload(self):
-        file = ContentFile(b'hello world', 'foo.pdf')
+        file = ContentFile(SMALLEST_PDF, 'foo.pdf')
         self.assertFalse(Upload.objects.exists())
 
         response = self.client.post(resolve_url('request-upload'), {'file': file})
@@ -63,7 +71,7 @@ class RequestUploadViewTestCase(TestCase):
 
     @override_settings(OSIS_DOCUMENT_DOMAIN_LIST=['http://dummyurl.com/'])
     def test_cors(self):
-        file = ContentFile(b'hello world', 'foo.pdf')
+        file = ContentFile(SMALLEST_PDF, 'foo.pdf')
         response = self.client.post(resolve_url('request-upload'), {'file': file}, HTTP_ORIGIN="http://dummyurl.com/")
         self.assertTrue(response.has_header("Access-Control-Allow-Origin"))
         response = self.client.post(resolve_url('request-upload'), {'file': file}, HTTP_ORIGIN="http://wrongurl.com/")

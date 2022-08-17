@@ -160,7 +160,13 @@ export default {
           const response = JSON.parse(xhr.responseText);
           self.$emit('set-token', response.token);
         } else {
-          self.error = self.$t('request_error', { error: xhr.statusText });
+          let detail;
+          try {
+            detail = JSON.parse(xhr.responseText).detail;
+          } catch (e) {
+            detail = xhr.statusText;
+          }
+          self.error = self.$t('request_error', { error: detail });
         }
       };
 
