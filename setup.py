@@ -35,4 +35,8 @@ setup(
     license='AGPLv3',
     packages=find_packages(exclude=('osis_document.tests',)),
     include_package_data=True,
+    install_requires=[
+        'requests>=2.20.0,<3.0',
+        'filetype>=1.1.0,<2.0',
+    ]
 )

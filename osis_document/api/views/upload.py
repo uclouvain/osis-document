@@ -23,6 +23,9 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from pathlib import Path
+
+import filetype
 from django.conf import settings
 from django.core.exceptions import FieldError
 from django.forms import modelform_factory
@@ -36,6 +39,7 @@ from osis_document.api import serializers
 from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api.permissions import APIKeyPermission
 from osis_document.api.utils import CorsAllowOriginMixin
+from osis_document.exceptions import MimeMismatch
 from osis_document.models import Upload
 from osis_document.utils import calculate_hash, confirm_upload, get_token
 
@@ -98,6 +102,11 @@ class RequestUploadView(CorsAllowOriginMixin, APIView):
         if form.is_valid():
             # Process file: calculate hash and save it to db
             file = self.request.FILES['file']
+            bytesa = file.file.read(1024)
+            file.file.seek(0)
+            fileguess = filetype.guess(bytesa)
+            if fileguess.mime != file.content_type and Path(file.name).suffix != fileguess.extension:
+                raise MimeMismatch
             instance = Upload(
                 file=file,
                 mimetype=file.content_type,

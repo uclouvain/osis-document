@@ -33,5 +33,10 @@ class HashMismatch(APIException):
     default_detail = _("Hash check failed")
 
 
+class MimeMismatch(APIException):
+    status_code = status.HTTP_409_CONFLICT
+    default_detail = _("MIME type mismatch")
+
+
 class FileInfectedException(APIException):
     default_detail = _("File is flagged as infected")
