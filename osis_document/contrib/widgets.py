@@ -56,6 +56,10 @@ class FileUploadWidget(SplitArrayWidget):
         super().__init__(widget=forms.TextInput, **kwargs)
 
     def value_from_datadict(self, data, files, name):
+        # Support passing data programmatically
+        if name in data and isinstance(data[name], list):
+            return data[name]
+        # Else, when sent from braowser, determine the size of the array to get all values
         return [self.widget.value_from_datadict(data, files, '%s_%s' % (name, index))
                 for index in range(self.get_size(data, name))]
 

@@ -56,6 +56,11 @@ class FormTestCase(TestCase):
         })
         self.assertTrue(form.is_valid(), msg=form.errors)
 
+        form = TestForm({
+            'media': [WriteTokenFactory().token],
+        })
+        self.assertTrue(form.is_valid(), msg=form.errors)
+
     def test_initial_uuid(self):
         class TestForm(forms.Form):
             media = FileUploadField()
@@ -100,6 +105,20 @@ class FormTestCase(TestCase):
             self.assertFalse(form.is_valid(), form.errors)
         error = TokenField.default_error_messages['nonexistent']
         self.assertIn(str(error), form.errors['media'][0])
+
+    def test_data_not_a_list(self):
+        class TestForm(forms.Form):
+            media = FileUploadField()
+
+        form = TestForm({
+            'media': WriteTokenFactory().token,
+        })
+
+        with patch('osis_document.api.utils.get_remote_metadata') as get_remote_metadata:
+            get_remote_metadata.return_value = None
+            self.assertFalse(form.is_valid(), form.errors)
+        error = forms.Field.default_error_messages['required']
+        self.assertEqual(str(error), form.errors['media'][0])
 
     def test_check_file_min_count(self):
         class TestFormMin(forms.Form):
