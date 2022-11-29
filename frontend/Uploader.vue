@@ -24,7 +24,10 @@
   -
   -->
 <template>
-  <div>
+  <div
+      ref="uploader"
+      class="osis-document-uploader"
+  >
     <div
         v-if="maxFiles === 0 || nbUploadedFiles < maxFiles"
         class="dropzone"
@@ -104,6 +107,10 @@ import { humanizedSize } from './utils';
 import UploadEntry from './components/UploadEntry';
 import ViewEntry from './components/ViewEntry';
 import EventBus from './event-bus';
+
+const EVENT_NAMESPACE = 'osisdocument:';
+const ADD_EVENT = 'add';
+const DELETE_EVENT = 'delete';
 
 export default {
   name: 'Uploader',
@@ -194,6 +201,18 @@ export default {
       return this.$tc('uploader.drag_n_drop_label', Math.max(0, this.minFiles - this.nbUploadedFiles), { max });
     },
   },
+  watch: {
+    cleanedTokens: {
+      handler(newTokens, oldTokens) {
+        if (JSON.stringify(oldTokens) !== JSON.stringify(newTokens)) {
+          this.triggerJsEvent(
+              Object.keys(oldTokens).length > Object.keys(newTokens).length ? DELETE_EVENT : ADD_EVENT,
+              { newTokens, oldTokens },
+          );
+        }
+      },
+    },
+  },
   mounted() {
     // Watch for external changes on hidden inputs
     jQuery('> input', this.$el).on('change', (event) => {
@@ -218,13 +237,20 @@ export default {
       });
       this.isDragging = false;
     },
+    triggerJsEvent(type, data) {
+      const fileEvent = new CustomEvent(EVENT_NAMESPACE + type, {
+        bubbles: true,
+        detail: data,
+      });
+      this.$refs.uploader.dispatchEvent(fileEvent);
+    },
   },
 };
 </script>
 
 <style lang="scss">
 .dropzone {
-  border: dashed 3px #2e6da4;
+  border: dashed 2px #8cb0cc;
   border-radius: 5px * 2;
   overflow: hidden;
   transition: all 1s;
