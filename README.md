@@ -6,68 +6,135 @@
 
 `OSIS Document` requires
 
-- Django 2.2+
+- Django 3.2+
 - Django REST Framework 3.12+
-- python-magic 0.4.22+
-- Vue 3 (with teleport)
+- Requests 2+
 
 
 # How to install ?
 
-## Configuring Django
+## For production
 
-Add `osis_document` to `INSTALLED_APPS`:
+```bash
+# From your osis install, with python environment activated
+pip install git+https://github.com/uclouvain/osis-document.git@dev#egg=osis_document
+```
+
+## For development
+
+```bash
+# From your osis install, with python environment activated
+git clone git@github.com:uclouvain/osis-document.git
+pip install -e ./osis-document
+```
+
+## Configuring OSIS Document
+
+Add `osis_document` to `INSTALLED_APPS` and configure the base url:
 
 ```python
+import os
+
 INSTALLED_APPS = (
-    ...
+    ...,
     'osis_document',
-    ...
+    ...,
 )
+
+# The primary server full url
+OSIS_DOCUMENT_BASE_URL = os.environ.get('OSIS_DOCUMENT_BASE_URL', 'https://yourserver.com/osis_document/')
+# The shared secret between servers
+OSIS_DOCUMENT_API_SHARED_SECRET = os.environ.get('OSIS_DOCUMENT_API_SHARED_SECRET', 'change-this-secret')
+# The request upload rate limit for a user, see https://www.django-rest-framework.org/api-guide/throttling/#setting-the-throttling-policy
+OSIS_DOCUMENT_UPLOAD_LIMIT = '10/minute'
+# A token max age (in seconds) after which it may be no longer be used for viewing/modifying the corresponding upload
+OSIS_DOCUMENT_TOKEN_MAX_AGE = 60 * 15
+# A temporary upload max age (in seconds) after which it may be deleted by the celery task
+OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE = 60 * 15
+# When used on multiple servers, set the domains on which raw files may be displayed (for Content Security Policy)
+OSIS_DOCUMENT_DOMAIN_LIST = [
+    '127.0.0.1:8001',
+]
+# To configure which extensions are allowed by default for any upload
+OSIS_DOCUMENT_ALLOWED_EXTENSIONS = ['pdf', 'txt', 'docx', 'doc', 'odt', 'png', 'jpg']
 ```
+
+OSIS-Document is aimed at being run on multiple servers, so on your primary server, add it to your `urls.py` 
+matching what you set in `settings.OSIS_DOCUMENT_BASE_URL`:
+
+```python
+if 'osis_document' in settings.INSTALLED_APPS:
+    urlpatterns += (path('osis_document/', include('osis_document.urls')), )
+```
+
 
 # Using OSIS Document
 
 `osis_document` is used to decouple file upload handling and retrieving from Django forms and apps with an accent on user interface.
 
-## Declaring a file field
+## Declaring a file field on a model
 
 To declare a file field within a Django model :
 
 ```python
-
 from django.db import models
-from osis_document import FileField
+from django.utils.translation import gettext_lazy as _
+from osis_document.contrib import FileField
 
 class MyModel(models.Model):
     files = FileField(
         verbose_name=_("ID card"),
-        max_files=2,
+        max_size=True,  # To restrict file size
+        upload_button_text='',  # To customize dropzone button text
+        upload_text='', # To customize dropzone text
+        min_files=1,  # To require at least 1 file
+        max_files=2,  # To require at most 2 files
         mimetypes=['application/pdf', 'image/png', 'image/jpeg'],
+        can_edit_filename=False,  # To prevent filename editing
+        automatic_upload=False,  # To force displaying upload button
+        upload_to='',  # This attribute provides a way of setting the upload directory
     )
-)
 ```
 
-This `FileField` model field is associated with the form field `FileUploadField` , which can handle file upload on custom forms.
+This `FileField` model field is associated with the form field `FileUploadField`, which can handle file upload on 
+custom forms, even on a secondary server.
 
 ```python
 from django.forms import forms
-from osis_document import FileUploadField
+from osis_document.contrib import FileUploadField
 
 class MyModelForm(forms.Form):
-    files = FileUploadField(
-        verbose_name=_("ID card"),
-        max_files=2,
-        mimetypes=['application/pdf', 'image/png', 'image/jpeg'],
-    )
+    files = FileUploadField()
 
     def save(self):
-        uuids = self.files.persist(self.cleaned_data['files'])
+        uuids = self.fields['files'].persist(self.cleaned_data['files'])
 ```
 
-Note 1: it is very important to call the persists method on the field upon saving, it return the uuid of the files (it is your job to store these uuids).
+Note 1: it is very important to call the persists method on the field upon saving, it returns the uuid of the files (it is your job to store these uuids).
 
 Note 2: you can pick examples of MIME types from [this list](<https://developer.mozilla.org/fr/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types>).
+
+
+### Specify the upload directory
+
+You can specify the upload directory through the `upload_to` property.
+
+When you use the `FileField` model field, the `upload_to` property can either be a string or a function:
+- if it is a string, it is prepended to the file name. It may contain strftime() formatting, which will be replaced by the date/time of the file upload.
+- if it is a function, it will be called to obtain the upload path, including the file name. This callable must accept two arguments:
+  - the current instance of the model where the file field is defined;
+  - the file name that was originally given to the file.
+
+When you use the `FileUploadField` form field, you can specify the `upload_to` property as a string that will be prepended to the file name.
+However, if you want to reuse the `upload_to` property defined in the related `FileField` model field, you need to specify the `related_model` property in the `FileUploadField` form field with the three following properties to identify the related model field:
+- `field`: the name of the model field;
+- `model`: the name of the model containing the previous field;
+- `app`: the name of the application containing the previous model.
+
+In addition, if the `upload_to` property is a function based on some instance attributes, you must also:
+- add a 4th property to the `related_model` property:
+  - `instance_filter_fields`: a list of field names that uniquely identify an instance (such as `["uuid"]`).
+- Pass the model instance as a parameter to the `persist` function. The fields specified in the `instance_filter_fields` property must be accessible via this instance.
 
 ## Rendering an uploaded file in a template
 
@@ -92,13 +159,12 @@ See next section on what information is available in the metadata.
 
 ## Getting info about an uploaded file
 
-To get raw info or download url given a file uuid:
+To get raw info or download url given a file token:
 
 ```python
-from osis_document import get_metadata, get_download_url
+from osis_document.api.utils import get_remote_metadata
  
-metadata = get_metadata(uuid)
-download_url = get_download_url(uuid)
+metadata = get_remote_metadata(token)
 ```
 
 Available metadata info:
@@ -107,3 +173,37 @@ Available metadata info:
 - `size`: The size of the file in bytes
 - `mimetype`: The MIME type as per detected by python-magic
 - `uploaded_at`: The datetime the file was uploaded at
+- `hash`: The sh256 hash of the file
+- `url`: The file url to get the file
+
+
+# Contributing to OSIS-Document
+
+## Frontend
+
+To contribute to the frontend part of this module, install `npm` > 6 (included in [https://nodejs.org/en/download/](nodejs)), and run:
+```console
+cd osis_document
+npm clean-install
+npm run build
+```
+
+Commands available:
+ - `npm run build` builds the frontend component to `osis_document/static/osis_document`
+ - `npm run watch` builds the frontend component to `osis_document/static/osis_document` and watch for file changes (warning: this not a hot-reload, you have to refresh your page)
+ - `npm run storybook` serve user stories page for development
+ - `npm run lint` checks Javascript syntax
+ - `npm run test` launch tests
+ - `npm run coverage` launch tests with coverage
+
+## OpenAPI schema generation
+
+To ease generation, use the provided generator:
+```console
+./manage.py generateschema --urlconf=osis_document.urls --generator_class osis_document.api.schema.OsisDocumentSchemaGenerator --file osis_document/schema.yml
+```
+
+# Communication between servers
+
+To communicate between two servers (e.g., with SDK-based code), requests are sent with the header `X-Api-Key`
+containing the shared secret set in the server using the setting `OSIS_DOCUMENT_API_SHARED_SECRET`, so make sure it set. 

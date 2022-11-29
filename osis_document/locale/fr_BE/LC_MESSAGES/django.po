@@ -1,0 +1,120 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-08-17 15:06+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Access type"
+msgstr "Type d'accès"
+
+msgid "Bad file upload mimetype"
+msgstr "Type MIME du fichier uploadé incorrect"
+
+msgid "Created at"
+msgstr "Créé le"
+
+msgid "Documents"
+msgstr "Documents"
+
+msgid "Expires at"
+msgstr "Expire le"
+
+msgid "File"
+msgstr "Fichier"
+
+msgid "File does not exist"
+msgstr "Le fichier n'existe pas"
+
+msgid "File is flagged as infected"
+msgstr "Le fichier est marquécomme infecté"
+
+msgid "File is not an image"
+msgstr "Le fichier n'est pas une image"
+
+msgid "File upload is either non-existent or has expired"
+msgstr "Le fichier n'existe pas ou a expiré"
+
+msgid "File upload is too large"
+msgstr "Le fichier transféré est trop lourd"
+
+msgid "Hash check failed"
+msgstr "Erreur de vérification de hashage"
+
+msgid "Hash checksum mismatch"
+msgstr "Le contrôle du hash a échoué"
+
+msgid "Infected"
+msgstr "Infecté"
+
+msgid "MIME Type"
+msgstr "Type MIME"
+
+msgid "MIME type mismatch"
+msgstr "Le format et l'extension du fichier ne correspondent pas"
+
+msgid "Metadata"
+msgstr "Métadonnées"
+
+msgid "Missing OSIS_DOCUMENT_BASE_URL setting"
+msgstr "Paramètre OSIS_DOCUMENT_BASE_URL non renseigné"
+
+msgid "Modified at"
+msgstr "Modifié le"
+
+msgid "Read"
+msgstr "Lecture"
+
+msgid "Requested"
+msgstr "Requêté"
+
+msgid "Resource not found"
+msgstr "Ressource non trouvée"
+
+msgid "Size"
+msgstr "Taille"
+
+msgid "Size (in bytes)"
+msgstr "Taille (en octets)"
+
+msgid "Status"
+msgstr "Statut"
+
+msgid "Token"
+msgstr "Token"
+
+msgid "Token non-existent or expired"
+msgstr "Token non-existant ou expiré"
+
+msgid "Too few files uploaded"
+msgstr "Trop peu de fichiers transférés"
+
+msgid "Too many files uploaded"
+msgstr "Trop de fichiers transférés"
+
+msgid "UUID"
+msgstr "UUID"
+
+msgid "Upload"
+msgstr "Transfert"
+
+msgid "Uploaded"
+msgstr "Transféré"
+
+msgid "Uploaded at"
+msgstr "Transféré le"
+
+msgid "Write"
+msgstr "Ecriture"
