@@ -176,6 +176,37 @@ Available metadata info:
 - `hash`: The sh256 hash of the file
 - `url`: The file url to get the file
 
+## Listening javascript events
+
+Some javascript events are triggered by the `Uploader` component:
+
+- `osisdocument:add` when a file has been uploaded.
+- `osisdocument:delete` when a file has been removed.
+
+The triggered event contains the tokens related to the uploader before the action (`event.detail.oldTokens`) and
+after it (`event.detail.newTokens`) following this format:
+```json
+{
+  "detail": {
+     "oldTokens": {"1": "first_token", "2": "second_token"},
+     "newTokens": {"1": "first_token", "2": "second_token", "3": "third_token"}
+  }
+}
+```
+
+Javascript example to listen these events:
+
+```javascript
+const uploader = document.getElementsByClassName('osis-document-uploader')[0];
+
+uploader.addEventListener('osisdocument:add', event => {
+    console.log('old tokens', event.detail.oldTokens);
+    console.log('new tokens', event.detail.newTokens);
+}, false);
+```
+
+Note that the `Uploader` component has the `osis-document-uploader` class.
+
 
 # Contributing to OSIS-Document
 

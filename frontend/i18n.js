@@ -34,14 +34,14 @@ const messages = {
     uploader: {
       drag_n_drop_label: 'Drag and drop file(s) here {max} | Please drag and drop here at least one additional file {max} | Please drag and drop here at least {count} additional files {max}',
       max_drag_n_drop_label: ' | (up to one) | (up to {count})',
-      add_file_label: 'or click to add',
+      add_file_label: 'or click here',
       max_size_label: '(max size {size})',
       trigger_upload: 'Upload',
     },
     upload_entry: {
       completion: '{progress}% uploaded',
       too_large: 'File is too large',
-      wrong_type: 'File is wrong type',
+      wrong_type: 'The file must have the following type: "{types}" | The file must have one of the following types: "{types}"',
     },
     view_entry: {
       rotate_left: 'Rotate image left',
@@ -59,14 +59,14 @@ const messages = {
     uploader: {
       drag_n_drop_label: 'Glissez-déposez ici vos fichiers {max} | Glissez-déposez ici au-moins un fichier supplémentaire {max} | Glissez-déposez ici au-moins {count} fichiers supplémentaires {max}',
       max_drag_n_drop_label: ' | (un seul maximum) | (au maximum {count})',
-      add_file_label: 'ou cliquez pour en ajouter',
+      add_file_label: 'ou cliquez-ici',
       max_size_label: '(taille maximum {size})',
       trigger_upload: 'Transférer',
     },
     upload_entry: {
       completion: '{progress}% transférés',
       too_large: 'Le fichier est trop lourd',
-      wrong_type: 'Le fichier est du mauvais type',
+      wrong_type: 'Le fichier doit être du type "{types}" | Le fichier doit être d\'un des types suivants : "{types}"',
     },
     view_entry: {
       rotate_left: "Faire pivoter l'image à gauche",
