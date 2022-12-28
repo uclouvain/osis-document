@@ -130,6 +130,19 @@
         </button>
       </div>
     </div>
+    <div
+        v-else-if="error"
+        class="media-right text-right"
+    >
+      <button
+          v-if="isEditable"
+          class="btn btn-danger"
+          type="button"
+          @click="$emit('delete')"
+      >
+        <span class="glyphicon glyphicon-trash" />
+      </button>
+    </div>
     <ViewingModal
         v-if="isViewableDocument"
         :id="formattedValue"

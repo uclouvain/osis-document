@@ -63,6 +63,7 @@ class FileUploadField(SplitArrayField):
     default_error_messages = {
         'max_files': _("Too many files uploaded"),
         'min_files': _("Too few files uploaded"),
+        'invalid_token': _("Invalid token"),
     }
 
     def __init__(self, **kwargs):
@@ -98,7 +99,18 @@ class FileUploadField(SplitArrayField):
             raise forms.ValidationError(self.error_messages['max_files'])
         if self.min_files and len(value) < self.min_files:
             raise forms.ValidationError(self.error_messages['min_files'])
-        return super().clean(value)
+
+        # Check token is still valid
+        from osis_document.api.utils import get_remote_metadata
+
+        value = super().clean(value)
+        if value:
+            for token in value:
+                metadata = get_remote_metadata(token)
+                if not metadata:
+                    raise forms.ValidationError(self.error_messages['invalid_token'])
+
+        return value
 
     def persist(self, values, related_model_instance=None):
         from osis_document.api.utils import confirm_remote_upload

@@ -39,7 +39,10 @@ def get_remote_metadata(token: str) -> Union[dict, None]:
 
     url = "{}metadata/{}".format(settings.OSIS_DOCUMENT_BASE_URL, token)
     try:
-        return requests.get(url).json()
+        response = requests.get(url)
+        if response.status_code is not status.HTTP_200_OK:
+            return None
+        return response.json()
     except HTTPError:
         return None
 
