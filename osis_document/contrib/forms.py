@@ -28,7 +28,7 @@ from django import forms
 from django.contrib.postgres.forms import SplitArrayField
 from django.utils.translation import gettext_lazy as _
 
-from osis_document.contrib.widgets import FileUploadWidget
+from osis_document.contrib.widgets import FileUploadWidget, HiddenFileWidget
 from osis_document.utils import is_uuid
 
 
@@ -60,6 +60,8 @@ class TokenField(forms.CharField):
 
 
 class FileUploadField(SplitArrayField):
+    hidden_widget = HiddenFileWidget
+
     default_error_messages = {
         'max_files': _("Too many files uploaded"),
         'min_files': _("Too few files uploaded"),
@@ -90,6 +92,7 @@ class FileUploadField(SplitArrayField):
             mimetypes=self.mimetypes,
         )
         kwargs.setdefault('base_field', base_field)
+        kwargs.setdefault('initial', [])
         # We need at least an integer for SplitArrayField
         kwargs['size'] = self.min_files or 0
         super().__init__(**kwargs)
@@ -99,6 +102,10 @@ class FileUploadField(SplitArrayField):
             raise forms.ValidationError(self.error_messages['max_files'])
         if self.min_files and len(value) < self.min_files:
             raise forms.ValidationError(self.error_messages['min_files'])
+
+        if self.disabled:
+            # We need to convert the uuids coming from the initial data to writing tokens
+            value = self.prepare_value(value)
 
         # Check token is still valid
         from osis_document.api.utils import get_remote_metadata
