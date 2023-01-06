@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import uuid
 from unittest.mock import Mock, patch
 
 from django import forms
@@ -210,3 +211,24 @@ class FormTestCase(TestCase):
             confirm_remote_upload.return_value = {"uuid": "something"}
             confirmed_ids = form.fields['media'].persist(form.cleaned_data['media'], mock_instance)
             self.assertListEqual(confirmed_ids, [{"uuid": "something"}])
+
+    def test_check_disabled_field(self):
+        class TestForm(forms.Form):
+            media = FileUploadField(disabled=True, required=False)
+
+        # Without initial data: [] -> []
+        form = TestForm(data={
+            'media_0': WriteTokenFactory().token,
+        })
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data.get('media'), [])
+
+        # With initial data: [uuid] -> [token]
+        form = TestForm(data={
+            'media_0': WriteTokenFactory().token,
+        },
+            initial={'media': [str(uuid.uuid4())]}
+        )
+
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data.get('media'), ['a:token'])
