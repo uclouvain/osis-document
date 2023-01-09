@@ -105,9 +105,24 @@ describe('file is displayed', () => {
     expect(wrapper.vm.error).toBeTruthy();
   });
 
+  it('should show file infected error', async () => {
+    const wrapper = mount(ViewEntry, {
+      propsData: {
+        value: 'FileInfectedException',
+        id: '2',
+        baseUrl: '/',
+      },
+      mocks: {
+        $t: k => k,
+      },
+    });
+    await Vue.nextTick(); // wait for request
+    expect(wrapper.vm.error).toBeTruthy();
+  });
+
   it('should show other errors', async () => {
     const wrapper = await setUp();
-    fetchMock.post('/change-metadata/dummytoken', { throws : new Error("Network fail") });
+    fetchMock.post('/change-metadata/dummytoken', { throws: new Error('Network fail') });
     await wrapper.find('.input-group-btn button').trigger('click');
     await Vue.nextTick(); // wait for request
     expect(wrapper.vm.file.name).not.toBe('new name.odt');

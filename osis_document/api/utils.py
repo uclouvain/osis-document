@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2023 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -31,10 +31,11 @@ from requests import HTTPError
 from rest_framework import status
 from rest_framework.views import APIView
 
-from osis_document.exceptions import FileInfectedException
+from osis_document.exceptions import FileInfectedException, UploadInvalidException
 
 
 def get_remote_metadata(token: str) -> Union[dict, None]:
+    """Given a token, return the remote metadata."""
     import requests
 
     url = "{}metadata/{}".format(settings.OSIS_DOCUMENT_BASE_URL, token)
@@ -48,6 +49,7 @@ def get_remote_metadata(token: str) -> Union[dict, None]:
 
 
 def get_remote_token(uuid, write_token=False):
+    """Given an uuid, return a writing or reading remote token."""
     import requests
 
     url = "{base_url}{token_type}-token/{uuid}".format(
@@ -57,6 +59,8 @@ def get_remote_token(uuid, write_token=False):
     )
     try:
         response = requests.post(url, headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET})
+        if response.status_code == status.HTTP_404_NOT_FOUND:
+            return UploadInvalidException.__class__.__name__
         json = response.json()
         if (
             response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
