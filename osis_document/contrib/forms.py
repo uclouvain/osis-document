@@ -1,26 +1,26 @@
 # ##############################################################################
 #
-#    OSIS stands for Open Student Information System. It's an application
-#    designed to manage the core business of higher education institutions,
-#    such as universities, faculties, institutes and professional schools.
-#    The core business involves the administration of students, teachers,
-#    courses, programs and so on.
+#  OSIS stands for Open Student Information System. It's an application
+#  designed to manage the core business of higher education institutions,
+#  such as universities, faculties, institutes and professional schools.
+#  The core business involves the administration of students, teachers,
+#  courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#  Copyright (C) 2015-2023 Université catholique de Louvain (http://www.uclouvain.be)
 #
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
 #
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-#    A copy of this license - GNU General Public License - is available
-#    at the root of the source code of this program.  If not,
-#    see http://www.gnu.org/licenses/.
+#  A copy of this license - GNU General Public License - is available
+#  at the root of the source code of this program.  If not,
+#  see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
 
@@ -30,6 +30,7 @@ from django.utils.translation import gettext_lazy as _
 
 from osis_document.contrib.widgets import FileUploadWidget, HiddenFileWidget
 from osis_document.utils import is_uuid
+from osis_document.validators import TokenValidator
 
 
 class TokenField(forms.CharField):
@@ -96,6 +97,7 @@ class FileUploadField(SplitArrayField):
         # We need at least an integer for SplitArrayField
         kwargs['size'] = self.min_files or 0
         super().__init__(**kwargs)
+        self.default_validators = [*self.default_validators, TokenValidator(self.error_messages['invalid_token'])]
 
     def clean(self, value):
         if self.max_files and len(value) > self.max_files:
@@ -107,19 +109,10 @@ class FileUploadField(SplitArrayField):
             # We need to convert the uuids coming from the initial data to writing tokens
             value = self.prepare_value(value)
 
-        # Check token is still valid
-        from osis_document.api.utils import get_remote_metadata
-
-        value = super().clean(value)
-        if value:
-            for token in value:
-                metadata = get_remote_metadata(token)
-                if not metadata:
-                    raise forms.ValidationError(self.error_messages['invalid_token'])
-
-        return value
+        return super().clean(value)
 
     def persist(self, values, related_model_instance=None):
+        """Call the remote API to persist the uploaded files."""
         from osis_document.api.utils import confirm_remote_upload
         return [
             confirm_remote_upload(
