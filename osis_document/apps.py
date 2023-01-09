@@ -26,6 +26,7 @@
 from django.apps import AppConfig
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from rest_framework.serializers import ModelSerializer
 
 
 class OsisDocumentConfig(AppConfig):
@@ -33,5 +34,10 @@ class OsisDocumentConfig(AppConfig):
     verbose_name = _("Documents")
 
     def ready(self):
+        from osis_document.contrib import FileField, FileFieldSerializer
+
         settings.OSIS_DOCUMENT_TOKEN_MAX_AGE = getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
         settings.OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE = getattr(settings, 'OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE', 60 * 15)
+
+        # Add FileFieldSerializer the default_serializer_mapping
+        ModelSerializer.serializer_field_mapping[FileField] = FileFieldSerializer

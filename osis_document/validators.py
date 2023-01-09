@@ -23,15 +23,24 @@
 #  see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
-from osis_document.contrib.fields import FileField
-from osis_document.contrib.forms import FileUploadField
-from osis_document.contrib.serializers import FileField as FileFieldSerializer
-from osis_document.contrib.widgets import FileUploadWidget
+from osis_document.utils import is_uuid
 
-__all__ = [
-    'FileField',
-    'FileUploadField',
-    'FileUploadWidget',
-    'FileFieldSerializer',
-]
+
+class TokenValidator:
+    """Validate a token remotely."""
+    def __init__(self, message=None):
+        super().__init__()
+        self.message = message or _("Invalid token")
+
+    def __call__(self, value):
+        from osis_document.api.utils import get_remote_metadata
+
+        if not value:
+            return
+
+        for token in value:
+            if not is_uuid(token) and not get_remote_metadata(token):
+                raise ValidationError(self.message)
