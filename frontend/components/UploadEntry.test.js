@@ -42,6 +42,7 @@ it('should mount', () => {
     },
     mocks: {
       $t: k => k,
+      $tc: k => k,
     },
   });
   expect(wrapper.text()).toContain('image/png');
@@ -59,6 +60,7 @@ it('should display error', async () => {
     },
     mocks: {
       $t: k => k,
+      $tc: k => k,
     },
   });
   await Vue.nextTick();
@@ -77,6 +79,7 @@ it('should display error', async () => {
     },
     mocks: {
       $t: k => k,
+      $tc: k => k,
     },
   });
   await Vue.nextTick();
@@ -110,6 +113,7 @@ it('should upload', async () => {
     },
     mocks: {
       $t: k => k,
+      $tc: k => k,
     },
     destroyed () {
       server.remove();

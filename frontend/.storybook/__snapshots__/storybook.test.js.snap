@@ -1,7 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Storyshots Uploader Basic 1`] = `
-<div>
+<div
+  class="osis-document-uploader"
+>
   <div
     class="dropzone"
   >
@@ -21,7 +23,7 @@ exports[`Storyshots Uploader Basic 1`] = `
         class="glyphicon glyphicon-plus"
       />
       
-      or click to add
+      or click here
     
     </button>
      
@@ -43,6 +45,7 @@ exports[`Storyshots Uploader Basic 1`] = `
 
 exports[`Storyshots Uploader Editable Image 1`] = `
 <div
+  class="osis-document-uploader"
   metadata="[object Object]"
 >
   <div
@@ -64,7 +67,7 @@ exports[`Storyshots Uploader Editable Image 1`] = `
         class="glyphicon glyphicon-plus"
       />
       
-      or click to add
+      or click here
     
     </button>
      
@@ -125,6 +128,7 @@ exports[`Storyshots Uploader Editable Image 1`] = `
 
 exports[`Storyshots Uploader Limited 1`] = `
 <div
+  class="osis-document-uploader"
   mimetypes="image/png,image/jpeg"
 >
   <div
@@ -146,7 +150,7 @@ exports[`Storyshots Uploader Limited 1`] = `
         class="glyphicon glyphicon-plus"
       />
       
-      or click to add
+      or click here
     
     </button>
      
@@ -171,7 +175,9 @@ exports[`Storyshots Uploader Limited 1`] = `
 `;
 
 exports[`Storyshots Uploader Manual Trigger 1`] = `
-<div>
+<div
+  class="osis-document-uploader"
+>
   <div
     class="dropzone"
   >
@@ -191,7 +197,7 @@ exports[`Storyshots Uploader Manual Trigger 1`] = `
         class="glyphicon glyphicon-plus"
       />
       
-      or click to add
+      or click here
     
     </button>
      
@@ -212,7 +218,9 @@ exports[`Storyshots Uploader Manual Trigger 1`] = `
 `;
 
 exports[`Storyshots Uploader With Existing Value 1`] = `
-<div>
+<div
+  class="osis-document-uploader"
+>
   <div
     class="dropzone"
   >
@@ -232,7 +240,7 @@ exports[`Storyshots Uploader With Existing Value 1`] = `
         class="glyphicon glyphicon-plus"
       />
       
-      or click to add
+      or click here
     
     </button>
      
