@@ -193,14 +193,22 @@ export default {
       return Object.values(this.cleanedTokens).length;
     },
     /**
-     * Customize the drag and drop button label depending on the number of uploaded files and the limits
+     * Customize the drag and drop button label depending on the limits
      * @returns {string} the drag and drop label
      */
     dragNDropLabel: function () {
-      // Get a sub label depending on the maximum number of files
-      const max = this.$tc('uploader.max_drag_n_drop_label', Math.max(0, this.maxFiles - this.nbUploadedFiles));
-      // Custom the label depending on the minimum and maximum numbers of files
-      return this.$tc('uploader.drag_n_drop_label', Math.max(0, this.minFiles - this.nbUploadedFiles), { max });
+      if (this.minFiles) {
+        if (this.minFiles === this.maxFiles) {
+          return this.$tc('uploader.specific_nb_drag_n_drop_label', this.minFiles);
+        } else if (this.maxFiles) {
+          return this.$t('uploader.min_max_drag_n_drop_label', {min: this.minFiles, max: this.maxFiles});
+        } else {
+          return this.$tc('uploader.min_drag_n_drop_label', this.minFiles);
+        }
+      } else if (this.maxFiles) {
+        return this.$tc('uploader.max_drag_n_drop_label', this.maxFiles);
+      }
+      return this.$t('uploader.drag_n_drop_label');
     },
   },
   watch: {

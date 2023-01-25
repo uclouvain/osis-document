@@ -32,8 +32,11 @@ Vue.use(VueI18n);
 const messages = {
   en: {
     uploader: {
-      drag_n_drop_label: 'Drag and drop file(s) here {max} | Please drag and drop here at least one additional file {max} | Please drag and drop here at least {count} additional files {max}',
-      max_drag_n_drop_label: ' | (up to one) | (up to {count})',
+      specific_nb_drag_n_drop_label: ' | Drag and drop one file here | Drag and drop {count} files here',
+      min_max_drag_n_drop_label: 'Drag and drop between {min} and {max} files here',
+      min_drag_n_drop_label: ' | Drag and drop at least one file here | Drag and drop at least {count} files here',
+      max_drag_n_drop_label: ' | Drag and drop your file here | Drag and drop your files here (maximum {count})',
+      drag_n_drop_label: 'Drag and drop your files here',
       add_file_label: 'or click here',
       max_size_label: '(max size {size})',
       trigger_upload: 'Upload',
@@ -57,8 +60,11 @@ const messages = {
   },
   'fr-be': {
     uploader: {
-      drag_n_drop_label: 'Glissez-déposez ici vos fichiers {max} | Glissez-déposez ici au-moins un fichier supplémentaire {max} | Glissez-déposez ici au-moins {count} fichiers supplémentaires {max}',
-      max_drag_n_drop_label: ' | (un seul maximum) | (au maximum {count})',
+      specific_nb_drag_n_drop_label: ' | Glissez-déposez ici un fichier | Glissez-déposez ici {count} fichiers',
+      min_max_drag_n_drop_label: 'Glissez-déposez ici entre {min} et {max} fichiers',
+      min_drag_n_drop_label: ' | Glissez-déposez ici au-moins un fichier | Glissez-déposez ici au-moins {count} fichiers',
+      max_drag_n_drop_label: ' | Glissez-déposez ici votre fichier | Glissez-déposez ici vos fichiers (maximum {count})',
+      drag_n_drop_label: 'Glissez-déposez ici vos fichiers',
       add_file_label: 'ou cliquez-ici',
       max_size_label: '(taille maximum {size})',
       trigger_upload: 'Transférer',
