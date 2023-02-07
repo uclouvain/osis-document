@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: OSIS Document Service
-  version: 1.0.2
+  version: 1.0.3
   description: A set of API endpoints that allow you to get information about uploads
 paths:
   /metadata/{token}:
@@ -131,6 +131,33 @@ paths:
       - confirm-upload
       security:
       - ApiKeyAuth: []
+  /declare-file-as-infected:
+    post:
+      operationId: declareFileAsInfected
+      description: Given a server-to-server request, declare the file as infected
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclareFileAsInfected'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmUploadResponse'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - declare-file-as-infected
+      security:
+      - ApiKeyAuth: []
   /read-token/{uuid}:
     post:
       operationId: getReadToken
@@ -195,6 +222,80 @@ paths:
           $ref: '#/components/responses/NotFound'
       tags:
       - write-token
+      security:
+      - ApiKeyAuth: []
+  /read-tokens:
+    post:
+      operationId: getReadTokenList
+      description: Get tokens for several uploads
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            type: array
+            items:
+              type: string
+              format: uuid
+              description: The uuid of the persisted file upload
+      responses:
+        '201':
+          description: The tokens of several uploads
+          content:
+            application/json:
+              type: object
+              properties:
+                type: string
+              additionalProperties:
+                oneOf:
+                - $ref: '#/components/schemas/Token'
+                - $ref: '#/components/schemas/ErrorWithStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - read-tokens
+      security:
+      - ApiKeyAuth: []
+  /metadata:
+    post:
+      operationId: getSeveralMetadata
+      description: Get metadata of uploads whose tokens are specified
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            type: array
+            items:
+              type: string
+              description: The file token
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: {}
+          description: ''
+        '200':
+          description: The metadata of several uploads
+          content:
+            application/json:
+              type: object
+              properties:
+                type: string
+              additionalProperties:
+                oneOf:
+                - $ref: '#/components/schemas/Metadata'
+                - $ref: '#/components/schemas/ErrorWithStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - metadata
       security:
       - ApiKeyAuth: []
   /change-metadata/{token}:
@@ -330,6 +431,14 @@ components:
         upload_to:
           type: string
           description: This attribute provides a way of setting the upload directory
+    DeclareFileAsInfected:
+      type: object
+      properties:
+        path:
+          type: string
+          description: The path to the file to declare as infected
+      required:
+      - path
     Token:
       type: object
       properties:
@@ -378,6 +487,16 @@ components:
       properties:
         error:
           type: string
+    ErrorWithStatus:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
   securitySchemes:
     ApiKeyAuth:
       type: apiKey

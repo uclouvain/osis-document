@@ -63,3 +63,18 @@ class FileStatus(ChoiceEnum):
 class TokenAccess(ChoiceEnum):
     READ = _('Read')
     WRITE = _('Write')
+
+
+class DocumentError(ChoiceEnum):
+    INFECTED = _('File is flagged as infected')
+    HASH_MISMATCH = _('Hash check failed')
+    MIME_MISMATCH = _('MIME type mismatch')
+    TOKEN_NOT_FOUND = _('Token not found')
+    UPLOAD_NOT_FOUND = _('Upload not found')
+
+    @classmethod
+    def get_dict_error(cls, key):
+        return {
+            'code': key,
+            'message': cls.get_value(key),
+        }
