@@ -28,7 +28,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils.timezone import now
 
-from backoffice.celery import app
+from document.celery import app
 from osis_document.enums import FileStatus
 from osis_document.models import Upload, Token
 
