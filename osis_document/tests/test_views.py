@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import uuid
 from unittest import mock
 
 from django.core.files.base import ContentFile
@@ -31,7 +32,7 @@ from django.test import TestCase, override_settings
 from django.utils.datetime_safe import datetime
 from rest_framework.test import APITestCase
 
-from osis_document.enums import FileStatus, TokenAccess
+from osis_document.enums import FileStatus, TokenAccess, DocumentError
 from osis_document.models import Token, Upload
 from osis_document.tests.document_test.models import TestDocument
 from osis_document.tests.factories import ImageUploadFactory, PdfUploadFactory, ReadTokenFactory, WriteTokenFactory
@@ -278,6 +279,46 @@ class GetTokenViewTestCase(APITestCase):
         self.assertEqual(response.status_code, 500)
 
 
+@override_settings(ROOT_URLCONF="osis_document.urls", OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
+class GetTokenListViewTestCase(APITestCase):
+    def setUp(self):
+        self.client.defaults = {'HTTP_X_API_KEY': 'foobar'}
+
+    def test_protected(self):
+        self.client.defaults = {}
+        uploads_uuids = [str(PdfUploadFactory().pk)]
+        response = self.client.post(resolve_url('read-tokens'), data=uploads_uuids)
+        self.assertEqual(response.status_code, 403)
+
+    def test_read_tokens(self):
+        uploads_uuids = [str(PdfUploadFactory().pk)]
+        response = self.client.post(resolve_url('read-tokens'), data=uploads_uuids)
+        self.assertEqual(response.status_code, 201)
+        tokens = response.json()
+        self.assertEqual(len(tokens), 1)
+        self.assertEqual(tokens[uploads_uuids[0]]['access'], TokenAccess.READ.name)
+
+    def test_read_tokens_with_upload_not_found(self):
+        uploads_uuids = [str(uuid.uuid4())]
+        response = self.client.post(resolve_url('read-tokens'), data=uploads_uuids)
+        self.assertEqual(response.status_code, 201)
+        tokens = response.json()
+        self.assertEqual(len(tokens), 1)
+        self.assertTrue('error' in tokens[uploads_uuids[0]])
+        self.assertEqual(tokens[uploads_uuids[0]]['error']['code'], DocumentError.UPLOAD_NOT_FOUND.name)
+        self.assertEqual(tokens[uploads_uuids[0]]['error']['message'], DocumentError.UPLOAD_NOT_FOUND.value)
+
+    def test_read_tokens_with_infected_file(self):
+        uploads_uuids = [str(PdfUploadFactory(status=FileStatus.INFECTED.name).pk)]
+        response = self.client.post(resolve_url('read-tokens'), data=uploads_uuids)
+        self.assertEqual(response.status_code, 201)
+        tokens = response.json()
+        self.assertEqual(len(tokens), 1)
+        self.assertTrue('error' in tokens[uploads_uuids[0]])
+        self.assertEqual(tokens[uploads_uuids[0]]['error']['code'], DocumentError.INFECTED.name)
+        self.assertEqual(tokens[uploads_uuids[0]]['error']['message'], DocumentError.INFECTED.value)
+
+
 @override_settings(ROOT_URLCONF='osis_document.urls',
                    OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class MetadataViewTestCase(APITestCase):
@@ -314,6 +355,30 @@ class MetadataViewTestCase(APITestCase):
         upload = token.upload
         upload.refresh_from_db()
         self.assertEqual(upload.metadata['name'], 'foobar')
+
+
+@override_settings(ROOT_URLCONF='osis_document.urls', OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+class MetadataListViewTestCase(APITestCase):
+    def test_get_metadata(self):
+        tokens = [ReadTokenFactory().token]
+        response = self.client.post(resolve_url('get-several-metadata'), data=tokens)
+        self.assertEqual(response.status_code, 200)
+        metadata = response.json()
+        self.assertEqual(len(metadata), 1)
+        self.assertIn('mimetype', metadata[tokens[0]])
+        self.assertIn('hash', metadata[tokens[0]])
+        self.assertIn('name', metadata[tokens[0]])
+        self.assertIn('uploaded_at', metadata[tokens[0]])
+
+    def test_get_file_bad_token(self):
+        tokens = ['bad-token']
+        response = self.client.post(resolve_url('get-several-metadata'), data=tokens)
+        self.assertEqual(response.status_code, 200)
+        metadata = response.json()
+        self.assertEqual(len(metadata), 1)
+        self.assertIn('error', metadata[tokens[0]])
+        self.assertEqual(metadata[tokens[0]]['error']['code'], DocumentError.TOKEN_NOT_FOUND.name)
+        self.assertEqual(metadata[tokens[0]]['error']['message'], DocumentError.TOKEN_NOT_FOUND.value)
 
 
 @override_settings(ROOT_URLCONF='osis_document.urls',

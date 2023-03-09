@@ -23,18 +23,20 @@
 #  see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-
+from django.db.models.functions import Now
 from django.http import Http404
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import APIView
 
 from osis_document.api import serializers
 from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
+from osis_document.enums import DocumentError
 from osis_document.models import Token
-from osis_document.utils import get_metadata
+from osis_document.utils import get_metadata, get_upload_metadata
 
 
 class MetadataSchema(DetailedAutoSchema):  # pragma: no cover
@@ -49,16 +51,17 @@ class MetadataSchema(DetailedAutoSchema):  # pragma: no cover
             "content": {
                 "application/json": {
                     "schema": {
-                        "$ref": "#/components/schemas/Error"
+                        "$ref": "#/components/schemas/Error",
                     }
                 }
-            }
+            },
         }
         return responses
 
 
 class MetadataView(CorsAllowOriginMixin, APIView):
     """Get metadata for an upload given a token"""
+
     name = 'get-metadata'
     authentication_classes = []
     permission_classes = []
@@ -68,6 +71,77 @@ class MetadataView(CorsAllowOriginMixin, APIView):
         metadata = get_metadata(self.kwargs['token'])
         if not metadata:
             raise Http404
+        return Response(metadata)
+
+
+class MetadataListSchema(AutoSchema):  # pragma: no cover
+    def get_operation_id(self, path, method):
+        return 'getSeveralMetadata'
+
+    def get_request_body(self, path, method):
+        self.request_media_types = self.map_parsers(path, method)
+        return {
+            'content': {
+                ct: {
+                    'type': 'array',
+                    'items': {
+                        'type': 'string',
+                        'description': 'The file token',
+                    },
+                }
+                for ct in self.request_media_types
+            }
+        }
+
+    def get_responses(self, path, method):
+        responses = super().get_responses(path, method)
+        responses['200'] = {
+            'description': 'The metadata of several uploads',
+            'content': {
+                'application/json': {
+                    'type': 'object',
+                    'properties': {
+                        'type': 'string',
+                    },
+                    'additionalProperties': {
+                        'oneOf': [
+                            {'$ref': '#/components/schemas/Metadata'},
+                            {'$ref': '#/components/schemas/ErrorWithStatus'},
+                        ],
+                    },
+                },
+            },
+        }
+        return responses
+
+    def get_operation(self, path, method):
+        operation = super().get_operation(path, method)
+        operation['security'] = [{"ApiKeyAuth": []}]
+        return operation
+
+
+class MetadataListView(CorsAllowOriginMixin, APIView):
+    """Get metadata of uploads whose tokens are specified"""
+
+    name = 'get-several-metadata'
+    authentication_classes = []
+    permission_classes = []
+    schema = MetadataListSchema()
+
+    def post(self, *args, **kwargs):
+        metadata = {
+            token: {'error': DocumentError.get_dict_error(DocumentError.TOKEN_NOT_FOUND.name)}
+            for token in self.request.data
+        }
+
+        tokens = Token.objects.filter(
+            token__in=self.request.data,
+            expires_at__gt=Now(),
+        ).select_related('upload')
+
+        for token in tokens:
+            metadata[token.token] = get_upload_metadata(token=token.token, upload=token.upload)
+
         return Response(metadata)
 
 
@@ -87,6 +161,7 @@ class ChangeMetadataSchema(DetailedAutoSchema):  # pragma: no cover
 
 class ChangeMetadataView(CorsAllowOriginMixin, APIView):
     """Change metadata from a writing token"""
+
     name = 'change-metadata'
     authentication_classes = []
     permission_classes = []

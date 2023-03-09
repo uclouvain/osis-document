@@ -24,20 +24,22 @@
 #
 # ##############################################################################
 
-from .metadata import MetadataView, ChangeMetadataView
+from .metadata import MetadataView, ChangeMetadataView, MetadataListView
 from .raw_file import RawFileView
 from .rotate import RotateImageView
 from .security import DeclareFileAsInfectedView
-from .token import GetTokenView
+from .token import GetTokenView, GetTokenListView
 from .upload import ConfirmUploadView, RequestUploadView
 
 __all__ = [
     "RawFileView",
     "MetadataView",
+    "MetadataListView",
     "ChangeMetadataView",
     "ConfirmUploadView",
     "RequestUploadView",
     "GetTokenView",
+    "GetTokenListView",
     "RotateImageView",
     "DeclareFileAsInfectedView",
 ]
