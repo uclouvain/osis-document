@@ -24,29 +24,31 @@
  *
  */
 
-import Visualizer from './Visualizer';
+import DocumentVisualizer from './DocumentVisualizer.vue';
+import type {MockResponse} from 'fetch-mock';
 import fetchMock from 'fetch-mock';
-import { i18n } from './i18n';
+import type {Meta, StoryFn} from "@storybook/vue3";
 
-const VisualizerTemplate = (args, { argTypes }) => {
+const VisualizerTemplate: StoryFn<typeof DocumentVisualizer & { response: MockResponse }> = ({response, ...args}) => {
   fetchMock.restore();
-  if (args.metadata) {
-    fetchMock.get('*', args.metadata);
+  if (response) {
+    fetchMock.get('*', response);
   }
   return {
-    components: { Visualizer },
-    props: Object.keys(argTypes),
-    template: '<Visualizer v-bind="$props" base-url="/" />',
-    i18n,
+    components: {DocumentVisualizer},
+    setup() {
+      return {args};
+    },
+    template: '<DocumentVisualizer base-url="/" :values="[]" v-bind="args" />',
   };
 };
 
-export const empty = VisualizerTemplate.bind({});
+export const Empty = VisualizerTemplate.bind({});
 
-export const basic = VisualizerTemplate.bind({});
-basic.args  = {
+export const Basic = VisualizerTemplate.bind({});
+Basic.args = {
   values: ['77d4b8f6-ee55-4c40-b118-e9fffd796198'],
-  metadata: {
+  response: {
     mimetype: 'application/vnd.oasis.opendocument.text',
     size: 82381,
     url: './placeholder.odt',
@@ -54,10 +56,10 @@ basic.args  = {
   },
 };
 
-export const pdf = VisualizerTemplate.bind({});
-pdf.args  = {
+export const PDF = VisualizerTemplate.bind({});
+PDF.args = {
   values: ['77d4b8f6-ee55-4c40-b118-e9fffd796198'],
-  metadata: {
+  response: {
     mimetype: 'application/pdf',
     size: 82381,
     url: './placeholder.pdf',
@@ -65,10 +67,10 @@ pdf.args  = {
   },
 };
 
-export const image = VisualizerTemplate.bind({});
-image.args  = {
+export const Image = VisualizerTemplate.bind({});
+Image.args = {
   values: ['77d4b8f6-ee55-4c40-b118-e9fffd796198'],
-  metadata: {
+  response: {
     mimetype: 'image/jpeg',
     size: 38329,
     url: './placeholder.jpeg',
@@ -76,19 +78,20 @@ image.args  = {
   },
 };
 
-export const loading = VisualizerTemplate.bind({});
-loading.args  = {
+export const Loading = VisualizerTemplate.bind({});
+Loading.args = {
   values: ['77d4b8f6-ee55-4c40-b118-e9fffd796198'],
-  metadata: new Promise(res => setTimeout(() => res(200), 2000000)),
+  response: new Promise(res => setTimeout(() => res(200), 2000000)),
 };
 
-export const notFound = VisualizerTemplate.bind({});
-notFound.args  = {
+export const NotFound = VisualizerTemplate.bind({});
+NotFound.args = {
   values: ['77d4b8f6-ee55-4c40-b118-e9fffd796198'],
-  metadata: 404,
+  response: 404,
 };
 
 
 export default {
-  title: 'Visualizer',
-};
+  title: 'DocumentVisualizer',
+  component: DocumentVisualizer,
+} as Meta<typeof DocumentVisualizer>;

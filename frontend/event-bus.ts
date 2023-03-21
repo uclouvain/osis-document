@@ -23,14 +23,10 @@
  *   see http://www.gnu.org/licenses/.
  *
  */
-import { i18n } from './i18n';
 
-export function humanizedSize (size) {
-  const units = i18n.t("units");
-  let i = 0;
-  while (size >= 1024) {
-    size /= 1024;
-    ++i;
-  }
-  return size.toFixed(2) + ' ' + units[i];
-}
+import {TinyEmitter} from 'tiny-emitter';
+
+const EventBus = new TinyEmitter();
+
+export default EventBus;
+

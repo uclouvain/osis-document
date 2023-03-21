@@ -11,21 +11,23 @@
   </ul>
 </template>
 
-<script>
-import ViewEntry from './components/ViewEntry';
+<script lang="ts">
+import ViewEntry from './components/ViewEntry.vue';
+import {defineComponent} from 'vue';
+import type {PropType} from 'vue';
 
-export default {
-  name: 'Visualizer',
-  components: { ViewEntry },
+export default defineComponent({
+  name: 'DocumentVisualizer',
+  components: {ViewEntry},
   props: {
     baseUrl: {
       type: String,
       required: true,
     },
     values: {
-      type: Array,
-      default: () => [],
+      type: Array as PropType<string[]>,
+      required: true,
     },
   },
-};
+});
 </script>

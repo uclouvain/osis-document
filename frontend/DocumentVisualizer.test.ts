@@ -24,9 +24,18 @@
  *
  */
 
-import Vue from 'vue';
+import {mount} from '@vue/test-utils';
+import DocumentVisualizer from './DocumentVisualizer.vue';
+import {expect, it} from "vitest";
 
-const EventBus = new Vue();
 
-export default EventBus;
+it('should mount', () => {
+  const wrapper = mount(DocumentVisualizer, {
+    props: {
+      baseUrl: '/',
+      values: ['0123456798'],
+    },
+  });
+  expect(wrapper.html()).toMatchSnapshot();
+});
 
