@@ -24,13 +24,15 @@
  *
  */
 
-import Uploader from './Uploader';
-import { newServer } from 'mock-xmlhttprequest';
-import { i18n } from './i18n';
+import DocumentUploader from './DocumentUploader.vue';
+import {newServer} from 'mock-xmlhttprequest';
 import fetchMock from 'fetch-mock';
+import type {MockResponse} from 'fetch-mock';
+import type {Meta, StoryFn} from "@storybook/vue3";
+import type {FileUpload} from "./interfaces";
 
 // XMLHttpRequest mock
-const goodServer = newServer({
+const mockXhrServer = newServer({
   post: ['/request-upload', function (xhr) {
     xhr.uploadProgress(4096);
     setTimeout(() => {
@@ -38,70 +40,62 @@ const goodServer = newServer({
     }, 1000);
     setTimeout(() => {
       xhr.respond(
-        200,
-        { 'Content-Type': 'application/json' },
-        '{"token": "12e68184-5cba-4b27-9988-609a6cc3be63"}',
+          200,
+          {'Content-Type': 'application/json'},
+          '{"token": "12e68184-5cba-4b27-9988-609a6cc3be63"}',
       );
     }, 2000);
   }],
 });
 
-const UploadingServerTemplate = (args, { argTypes }) => {
-  goodServer.install();
-  const documentMetadata = args.metadata || {
+const UploadingServerTemplate: StoryFn<typeof DocumentUploader & { metadata: FileUpload | MockResponse, changed: MockResponse }> = (
+    {metadata, changed, ...args},
+) => {
+  mockXhrServer.install();
+  const documentMetadata = metadata || {
     mimetype: 'application/vnd.oasis.opendocument.text',
     size: 82381,
     url: './placeholder.odt',
     name: 'test document.odt',
   };
   fetchMock
-    .restore()
-    .get('/metadata/12e68184-5cba-4b27-9988-609a6cc3be63', documentMetadata)
-    .post('/change-metadata/12e68184-5cba-4b27-9988-609a6cc3be63', 200);
-  if (process.env.NODE_ENV === 'test') {
-    // Mock jQuery for snapshots tests
-    window.jQuery = jest.fn(() => ({
-      modal: () => {},
-      on: () => {},
-    }));
-  }
+      .restore()
+      .get('/metadata/12e68184-5cba-4b27-9988-609a6cc3be63', documentMetadata)
+      .post('/change-metadata/12e68184-5cba-4b27-9988-609a6cc3be63', changed || 200);
+
   return ({
-    components: { Uploader },
-    props: Object.keys(argTypes),
-    template: '<Uploader v-bind="$props" />',
-    i18n,
+    components: {DocumentUploader},
+    setup() {
+      return {args};
+    },
+    template: '<DocumentUploader v-bind="args" base-url="/" name="media" />',
   });
 };
 
-export const basic = UploadingServerTemplate.bind({});
-basic.args = {
-  baseUrl: '/',
-  name: 'media',
-};
+export const Basic = UploadingServerTemplate.bind({});
 
-export const limited = UploadingServerTemplate.bind({});
-limited.args = {
-  ...basic.args,
+export const Limited = UploadingServerTemplate.bind({});
+Limited.args = {
+  ...Basic.args,
   maxSize: 100 * 1024,
-  mimeTypes: ['image/png', 'image/jpeg'],
-  limit: 1,
+  mimetypes: ['image/png', 'image/jpeg'],
 };
 
-export const manualTrigger = UploadingServerTemplate.bind({});
-manualTrigger.args = {
-  ...basic.args,
+export const ManualTrigger = UploadingServerTemplate.bind({});
+ManualTrigger.args = {
+  ...Basic.args,
   automaticUpload: false,
 };
 
-export const withExistingValue = UploadingServerTemplate.bind({});
-withExistingValue.args = {
-  ...basic.args,
+export const WithExistingValue = UploadingServerTemplate.bind({});
+WithExistingValue.args = {
+  ...Basic.args,
   values: ['12e68184-5cba-4b27-9988-609a6cc3be63'],
 };
 
-export const editableImage = UploadingServerTemplate.bind({});
-editableImage.args = {
-  ...basic.args,
+export const EditableImage = UploadingServerTemplate.bind({});
+EditableImage.args = {
+  ...Basic.args,
   values: ['12e68184-5cba-4b27-9988-609a6cc3be63'],
   metadata: {
     mimetype: 'image/jpeg',
@@ -111,6 +105,13 @@ editableImage.args = {
   },
 };
 
-export default {
-  title: 'Uploader',
+export const EditableImageWithError = UploadingServerTemplate.bind({});
+EditableImageWithError.args = {
+  ...EditableImage.args,
+  changed: 400,
 };
+
+export default {
+  title: 'DocumentUploader',
+  component: DocumentUploader,
+} as Meta<typeof DocumentUploader>;

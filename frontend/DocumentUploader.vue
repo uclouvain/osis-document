@@ -30,7 +30,7 @@
   >
     <div
         v-if="maxFiles === 0 || nbUploadedFiles < maxFiles"
-        class="dropzone"
+        class="dropzone form-group"
         :class="{hovering: isDragging}"
         @dragenter="isDragging = true"
     >
@@ -38,7 +38,7 @@
           ref="fileInput"
           type="file"
           multiple
-          :accept="mimetypes ? mimetypes.join(',') : null"
+          :accept="mimetypes.length ? mimetypes.join(',') : undefined"
           @dragleave="isDragging = false"
           @change="onFilePicked"
       >
@@ -46,7 +46,7 @@
       <button
           class="btn btn-default"
           type="button"
-          @click="$refs.fileInput.click()"
+          @click="($refs.fileInput as HTMLInputElement).click()"
       >
         <span class="glyphicon glyphicon-plus" />
         {{ uploadButtonText || $t('uploader.add_file_label') }}
@@ -56,7 +56,10 @@
       </span>
     </div>
 
-    <ul class="media-list">
+    <ul
+        v-if="fileList"
+        class="media-list"
+    >
       <UploadEntry
           v-for="(file, index) in fileList"
           :key="index"
@@ -65,18 +68,22 @@
           :max-size="maxSize"
           :mimetypes="mimetypes"
           :automatic="automaticUpload"
-          @delete="$delete(fileList, index); $delete(tokens, index);"
-          @set-token="$set(tokens, index, $event); $delete(fileList, index);"
+          @delete="delete fileList[index]; delete tokens[index];"
+          @set-token="tokens[index] = $event; delete fileList[index];"
       />
     </ul>
-    <button
+    <div
         v-if="!automaticUpload && Object.values(fileList).length"
-        class="btn btn-default pull-right"
-        type="button"
-        @click="triggerUpload"
+        class="text-right form-group"
     >
-      {{ $t('uploader.trigger_upload') }}
-    </button>
+      <button
+          class="btn btn-default "
+          type="button"
+          @click="triggerUpload"
+      >
+        {{ $t('uploader.trigger_upload') }}
+      </button>
+    </div>
 
     <ul class="media-list">
       <ViewEntry
@@ -87,8 +94,8 @@
           :base-url="baseUrl"
           :editable="true"
           :editable-filename="editableFilename"
-          @delete="$delete(tokens, index);"
-          @update-token="$set(tokens, index, $event);"
+          @delete="delete tokens[index]"
+          @update-token="tokens[index] = $event"
       />
     </ul>
 
@@ -102,19 +109,20 @@
   </div>
 </template>
 
-<script>
-import { humanizedSize } from './utils';
-import UploadEntry from './components/UploadEntry';
-import ViewEntry from './components/ViewEntry';
+<script lang="ts">
+import {humanizedSize} from './utils';
+import UploadEntry from './components/UploadEntry.vue';
+import ViewEntry from './components/ViewEntry.vue';
 import EventBus from './event-bus';
+import {defineComponent} from 'vue';
 
 const EVENT_NAMESPACE = 'osisdocument:';
 const ADD_EVENT = 'add';
 const DELETE_EVENT = 'delete';
 
-export default {
-  name: 'Uploader',
-  components: { UploadEntry, ViewEntry },
+export default defineComponent({
+  name: 'DocumentUploader',
+  components: {UploadEntry, ViewEntry},
   props: {
     name: {
       type: String,
@@ -133,10 +141,6 @@ export default {
       default: null,
     },
     maxSize: {
-      type: Number,
-      default: 0,
-    },
-    limit: {
       type: Number,
       default: 0,
     },
@@ -165,22 +169,22 @@ export default {
       default: 0,
     },
   },
-  data () {
+  data() {
     let indexGenerated = 0;
     return {
       isDragging: false,
-      fileList: {},
+      fileList: {} as Record<number, File>,
       tokens: Object.fromEntries(this.values.map(f => {
         indexGenerated++;
         return [indexGenerated, f];
-      })),
+      })) as Record<number, string | null>,
       indexGenerated,
     };
   },
   computed: {
     /** Token list without empty tokens */
     filteredTokens: function () {
-      return Object.fromEntries(Object.entries(this.tokens).filter(e => !!e[1]));
+      return Object.fromEntries(Object.entries(this.tokens).filter(e => !!e[1])) as Record<number, string>;
     },
     /** Token list without infected or invalid files */
     cleanedTokens: function () {
@@ -213,49 +217,44 @@ export default {
   },
   watch: {
     cleanedTokens: {
-      handler(newTokens, oldTokens) {
+      handler(newTokens: Record<number, string>, oldTokens: Record<number, string>) {
         if (JSON.stringify(oldTokens) !== JSON.stringify(newTokens)) {
-          this.triggerJsEvent(
-              Object.keys(oldTokens).length > Object.keys(newTokens).length ? DELETE_EVENT : ADD_EVENT,
-              { newTokens, oldTokens },
-          );
+          const eventType = Object.keys(oldTokens).length > Object.keys(newTokens).length ? DELETE_EVENT : ADD_EVENT;
+          const fileEvent = new CustomEvent(EVENT_NAMESPACE + eventType, {
+            bubbles: true,
+            detail: {newTokens, oldTokens},
+          });
+          (this.$refs.uploader as HTMLDivElement).dispatchEvent(fileEvent);
         }
       },
     },
   },
   mounted() {
     // Watch for external changes on hidden inputs
-    jQuery('> input', this.$el).on('change', (event) => {
+    jQuery('> input', (this.$el as HTMLDivElement)).on('change', (event) => {
       const $input = jQuery(event.target);
       if (!$input.val()) {
         // If an input is emptied, remove all
-        Object.entries(this.tokens).map(e => this.$delete(this.tokens, e[0]));
+        this.tokens = {};
       }
     });
   },
   methods: {
     humanizedSize,
     triggerUpload() {
-      EventBus.$emit('upload');
+      EventBus.emit('upload');
     },
-    onFilePicked (e) {
-      const files = e.target.files;
-      Array.from(files).forEach(file => {
+    onFilePicked(e: Event) {
+      const files = (e.target as HTMLInputElement).files;
+      files && Array.from(files).forEach(file => {
         this.indexGenerated++;
-        this.$set(this.fileList, this.indexGenerated, file);
-        this.$set(this.tokens, this.indexGenerated, null);
+        this.fileList[this.indexGenerated] = file;
+        this.tokens[this.indexGenerated] = null;
       });
       this.isDragging = false;
     },
-    triggerJsEvent(type, data) {
-      const fileEvent = new CustomEvent(EVENT_NAMESPACE + type, {
-        bubbles: true,
-        detail: data,
-      });
-      this.$refs.uploader.dispatchEvent(fileEvent);
-    },
   },
-};
+});
 </script>
 
 <style lang="scss">

@@ -23,13 +23,27 @@
  *   see http://www.gnu.org/licenses/.
  *
  */
+import {i18n} from './i18n';
 
-import initStoryshots from '@storybook/addon-storyshots';
+export function humanizedSize(size: number): string {
+  let i = 0;
+  while (size >= 1024) {
+    size /= 1024;
+    ++i;
+  }
+  const unit = i18n.global.t(`units[${i}]`);
+  return `${size.toFixed(2)} ${unit}`;
+}
 
-jest.mock('../utils.js', () => ({
-  humanizedSize: () => '0o',
-}));
 
-initStoryshots({
-  configPath: 'frontend/.storybook',
-});
+export async function doRequest(url: string, params?: object): Promise<unknown> {
+  const response = await fetch(url, {
+    headers: {'Content-Type': 'application/json'},
+    ...params,
+  });
+  if (response.status >= 200 && response.status < 300) {
+    return response.json();
+  } else {
+    throw new Error(response.statusText);
+  }
+}
