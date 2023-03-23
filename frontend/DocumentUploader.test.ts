@@ -220,7 +220,8 @@ it('should trigger events', async () => {
       values: ['0123456789'],
     },
   });
-  const spy = vi.spyOn(wrapper.get('.osis-document-uploader').element, 'dispatchEvent');
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const spy = vi.spyOn(wrapper.vm.$el, 'dispatchEvent');
 
   // setData does a deep merge, so we can't use it
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
