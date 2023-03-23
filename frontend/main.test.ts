@@ -41,7 +41,7 @@ vi.mock('./DocumentUploader.vue', () => ({
 const spy = vi.spyOn(exports, 'createApp').mockImplementation(createApp);
 
 test('mount simple visualizer', async () => {
-  document.body.innerHTML = `<div class="document-visualizer" data-base-url="/api" data-values="foo,bar"></div>`;
+  document.body.innerHTML = `<div class="osis-document-visualizer" data-base-url="/api" data-values="foo,bar"></div>`;
 
   // Executes main file
   await import('./main');
@@ -55,7 +55,7 @@ test('mount simple visualizer', async () => {
 
 test('mount visualizer without values', async () => {
   spy.mockClear();
-  document.body.innerHTML = `<div class="document-visualizer" data-base-url="/api"></div>`;
+  document.body.innerHTML = `<div class="osis-document-visualizer" data-base-url="/api"></div>`;
 
   // Executes main file
   await import('./main');
@@ -69,7 +69,7 @@ test('mount visualizer without values', async () => {
 
 test('mount simple uploader', async () => {
   spy.mockClear();
-  document.body.innerHTML = `<div class="document-uploader" data-base-url="/api"></div>`;
+  document.body.innerHTML = `<div class="osis-document-uploader" data-base-url="/api"></div>`;
 
   // Executes main file
   await import('./main');
@@ -82,7 +82,7 @@ test('mount simple uploader', async () => {
 
 test('mount uploader with conversions', async () => {
   spy.mockClear();
-  document.body.innerHTML = `<div class="document-uploader"
+  document.body.innerHTML = `<div class="osis-document-uploader"
     data-base-url="/api"
     data-values="foo,bar"
     data-max-size="1024"

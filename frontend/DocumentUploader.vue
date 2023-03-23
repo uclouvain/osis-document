@@ -25,88 +25,83 @@
   -->
 <template>
   <div
-      ref="uploader"
-      class="osis-document-uploader"
+      v-if="maxFiles === 0 || nbUploadedFiles < maxFiles"
+      class="dropzone form-group"
+      :class="{hovering: isDragging}"
+      @dragenter="isDragging = true"
   >
-    <div
-        v-if="maxFiles === 0 || nbUploadedFiles < maxFiles"
-        class="dropzone form-group"
-        :class="{hovering: isDragging}"
-        @dragenter="isDragging = true"
-    >
-      <input
-          ref="fileInput"
-          type="file"
-          multiple
-          :accept="mimetypes.length ? mimetypes.join(',') : undefined"
-          @dragleave="isDragging = false"
-          @change="onFilePicked"
-      >
-      {{ uploadText || dragNDropLabel }}
-      <button
-          class="btn btn-default"
-          type="button"
-          @click="($refs.fileInput as HTMLInputElement).click()"
-      >
-        <span class="glyphicon glyphicon-plus" />
-        {{ uploadButtonText || $t('uploader.add_file_label') }}
-      </button>
-      <span v-if="maxSize">
-        {{ $t('uploader.max_size_label', { size: humanizedSize(maxSize) }) }}
-      </span>
-    </div>
-
-    <ul
-        v-if="fileList"
-        class="media-list"
-    >
-      <UploadEntry
-          v-for="(file, index) in fileList"
-          :key="index"
-          :file="file"
-          :base-url="baseUrl"
-          :max-size="maxSize"
-          :mimetypes="mimetypes"
-          :automatic="automaticUpload"
-          @delete="delete fileList[index]; delete tokens[index];"
-          @set-token="tokens[index] = $event; delete fileList[index];"
-      />
-    </ul>
-    <div
-        v-if="!automaticUpload && Object.values(fileList).length"
-        class="text-right form-group"
-    >
-      <button
-          class="btn btn-default "
-          type="button"
-          @click="triggerUpload"
-      >
-        {{ $t('uploader.trigger_upload') }}
-      </button>
-    </div>
-
-    <ul class="media-list">
-      <ViewEntry
-          v-for="(token, index) in filteredTokens"
-          :id="`${name}-${index}`"
-          :key="index"
-          :value="token"
-          :base-url="baseUrl"
-          :editable="true"
-          :editable-filename="editableFilename"
-          @delete="delete tokens[index]"
-          @update-token="tokens[index] = $event"
-      />
-    </ul>
-
     <input
-        v-for="(token, index) in Object.values(cleanedTokens)"
-        :key="`${name}_${index}`"
-        type="hidden"
-        :name="`${name}_${index}`"
-        :value="token"
+        ref="fileInput"
+        type="file"
+        multiple
+        :accept="mimetypes.length ? mimetypes.join(',') : undefined"
+        @dragleave="isDragging = false"
+        @change="onFilePicked"
     >
+    {{ uploadText || dragNDropLabel }}
+    <button
+        class="btn btn-default"
+        type="button"
+        @click="($refs.fileInput as HTMLInputElement).click()"
+    >
+      <span class="glyphicon glyphicon-plus" />
+      {{ uploadButtonText || $t('uploader.add_file_label') }}
+    </button>
+    <span v-if="maxSize">
+      {{ $t('uploader.max_size_label', { size: humanizedSize(maxSize) }) }}
+    </span>
   </div>
+
+  <ul
+      v-if="fileList"
+      class="media-list"
+  >
+    <UploadEntry
+        v-for="(file, index) in fileList"
+        :key="index"
+        :file="file"
+        :base-url="baseUrl"
+        :max-size="maxSize"
+        :mimetypes="mimetypes"
+        :automatic="automaticUpload"
+        @delete="delete fileList[index]; delete tokens[index];"
+        @set-token="tokens[index] = $event; delete fileList[index];"
+    />
+  </ul>
+  <div
+      v-if="!automaticUpload && Object.values(fileList).length"
+      class="text-right form-group"
+  >
+    <button
+        class="btn btn-default "
+        type="button"
+        @click="triggerUpload"
+    >
+      {{ $t('uploader.trigger_upload') }}
+    </button>
+  </div>
+
+  <ul class="media-list">
+    <ViewEntry
+        v-for="(token, index) in filteredTokens"
+        :id="`${name}-${index}`"
+        :key="index"
+        :value="token"
+        :base-url="baseUrl"
+        :editable="true"
+        :editable-filename="editableFilename"
+        @delete="delete tokens[index]"
+        @update-token="tokens[index] = $event"
+    />
+  </ul>
+
+  <input
+      v-for="(token, index) in Object.values(cleanedTokens)"
+      :key="`${name}_${index}`"
+      type="hidden"
+      :name="`${name}_${index}`"
+      :value="token"
+  >
 </template>
 
 <script lang="ts">
@@ -224,7 +219,7 @@ export default defineComponent({
             bubbles: true,
             detail: {newTokens, oldTokens},
           });
-          (this.$refs.uploader as HTMLDivElement).dispatchEvent(fileEvent);
+          (this.$el as HTMLDivElement).dispatchEvent(fileEvent);
         }
       },
     },

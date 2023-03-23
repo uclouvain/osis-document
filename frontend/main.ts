@@ -47,7 +47,7 @@ interface VisualizerProps extends Record<string, unknown> {
 }
 
 function initDocumentComponents() {
-  document.querySelectorAll<HTMLElement>('.document-uploader:not([data-v-app])').forEach((elem) => {
+  document.querySelectorAll<HTMLElement>('.osis-document-uploader:not([data-v-app])').forEach((elem) => {
     const props: UploaderProps = {baseUrl: "", ...elem.dataset};
     if (typeof elem.dataset.maxSize !== 'undefined') {
       props.maxSize = Number.parseInt(elem.dataset.maxSize);
@@ -73,7 +73,7 @@ function initDocumentComponents() {
     createApp(Uploader, props).use(i18n).mount(elem);
   });
 
-  document.querySelectorAll<HTMLElement>('.document-visualizer:not([data-v-app])').forEach((elem) => {
+  document.querySelectorAll<HTMLElement>('.osis-document-visualizer:not([data-v-app])').forEach((elem) => {
     const props: VisualizerProps = {baseUrl: "", values: [], ...elem.dataset};
     if (typeof elem.dataset.values !== 'undefined') {
       props.values = elem.dataset.values.split(',');
