@@ -1,11 +1,16 @@
 /// <reference types="vitest" />
 import {defineConfig} from 'vite';
 import vue from '@vitejs/plugin-vue';
+import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
+import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
+    VueI18nPlugin({
+      include: [path.resolve(__dirname, './frontend/locales/**')],
+    }),
   ],
   mode: 'production',
   define: {
@@ -20,7 +25,7 @@ export default defineConfig({
     },
     rollupOptions: {
       // make sure to externalize deps that shouldn't be bundled into library
-      external: ['vue', 'vue-i18n','@vue/runtime-dom'],
+      external: ['vue', 'vue-i18n', '@vue/runtime-dom'],
       output: {
         // Provide global variables to use in the UMD build for externalized deps
         globals: {
@@ -45,6 +50,7 @@ export default defineConfig({
       statements: 100,
       include: ['frontend'],
       exclude: [
+        "frontend/locales/",
         "frontend/node_modules/",
         "frontend/.storybook",
         "frontend/**/*.stories.{ts,js}",
