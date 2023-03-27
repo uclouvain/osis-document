@@ -102,7 +102,7 @@ class RequestUploadView(CorsAllowOriginMixin, APIView):
         if form.is_valid():
             # Process file: calculate hash and save it to db
             file = self.request.FILES['file']
-            bytesa = file.file.read(1024)
+            bytesa = file.file.read(4096)
             file.file.seek(0)
             fileguess = filetype.guess(bytesa)
             if fileguess.mime != file.content_type and Path(file.name).suffix != fileguess.extension:

@@ -24,9 +24,10 @@
 #
 # ##############################################################################
 import uuid
+from pathlib import Path
 from unittest import mock
 
-from django.core.files.base import ContentFile
+from django.core.files.base import ContentFile, File
 from django.shortcuts import resolve_url
 from django.test import TestCase, override_settings
 from django.utils.datetime_safe import datetime
@@ -58,6 +59,12 @@ class RequestUploadViewTestCase(TestCase):
         file = ContentFile(SMALLEST_PDF, 'foo.doc')
         response = self.client.post(resolve_url('request-upload'), {'file': file})
         self.assertEqual(409, response.status_code)
+
+    def test_request_upload_with_docx(self):
+        with (Path(__file__).parent / 'test.docx').open('rb') as f:
+            file = File(f, 'test.docx')
+            response = self.client.post(resolve_url('request-upload'), {'file': file})
+        self.assertEqual(201, response.status_code)
 
     def test_upload(self):
         file = ContentFile(SMALLEST_PDF, 'foo.pdf')
@@ -374,7 +381,6 @@ class MetadataListViewTestCase(QueriesAssertionsMixin, APITestCase):
             self.assertIn('hash', metadata[token])
             self.assertIn('name', metadata[token])
             self.assertIn('uploaded_at', metadata[token])
-
 
     def test_get_file_bad_token(self):
         tokens = ['bad-token']
