@@ -24,9 +24,14 @@
  *
  */
 
-import Vue from 'vue';
+import {createI18n} from 'vue-i18n';
+import fr from "./locales/fr";
+import en from "./locales/en";
 
-const EventBus = new Vue();
-
-export default EventBus;
-
+export const i18n = createI18n({
+  locale: document.documentElement.lang || 'en',
+  messages: {
+    en,
+    fr,
+  },
+});

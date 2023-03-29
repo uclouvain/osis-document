@@ -30,7 +30,31 @@ from django import forms
 from django.conf import settings
 from django.contrib.postgres.forms import SplitArrayWidget
 from django.core.exceptions import ImproperlyConfigured
+from django.forms import MultipleHiddenInput
 from django.utils.translation import gettext_lazy as _
+
+
+class HiddenFileWidget(MultipleHiddenInput):
+    template_name = 'osis_document/hidden_widget.html'
+
+    def __init__(self, display_visualizer=False, **kwargs):
+        super().__init__(**kwargs)
+        self.display_visualizer = display_visualizer
+
+        if self.display_visualizer:
+            # Reset the input type value (instead of 'hidden') to display the label in the form
+            self.input_type = None
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+
+        if not getattr(settings, 'OSIS_DOCUMENT_BASE_URL', None):
+            raise ImproperlyConfigured(_("Missing OSIS_DOCUMENT_BASE_URL setting"))
+
+        context['base_url'] = settings.OSIS_DOCUMENT_BASE_URL
+        context['display_visualizer'] = self.display_visualizer
+
+        return context
 
 
 class FileUploadWidget(SplitArrayWidget):

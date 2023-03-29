@@ -153,6 +153,12 @@ class RotateImageResponseSerializer(serializers.Serializer):
     token = serializers.CharField(help_text="A fresh writing token for the rotated file")
 
 
+class TokenListSerializer(serializers.ListSerializer):
+    def create(self, validated_data):
+        tokens = [Token(**(self.child.complete_new_validated_data(token))) for token in validated_data]
+        return Token.objects.bulk_create(tokens)
+
+
 class TokenSerializer(serializers.ModelSerializer):
     token = serializers.CharField(read_only=True)
     upload_id = serializers.UUIDField(required=True)
@@ -165,7 +171,13 @@ class TokenSerializer(serializers.ModelSerializer):
             'access',
             'expires_at',
         ]
+        list_serializer_class = TokenListSerializer
+
+    @staticmethod
+    def complete_new_validated_data(validated_data):
+        validated_data['token'] = signing.dumps(str(validated_data['upload_id']))
+        return validated_data
 
     def create(self, validated_data):
-        validated_data['token'] = signing.dumps(str(validated_data['upload_id']))
+        validated_data = self.complete_new_validated_data(validated_data)
         return super().create(validated_data)

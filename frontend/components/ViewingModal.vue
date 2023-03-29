@@ -63,7 +63,7 @@
               class="img-responsive"
               style="transition: 500ms; transform-origin: top center; margin: 0 auto;"
               :style="imageStyle"
-              @load="imageLoaded($event.target)"
+              @load="imageLoaded($event.target as HTMLImageElement)"
           >
           <div
               v-else
@@ -107,10 +107,7 @@
                   :disabled="!isRotated"
                   @click="saveRotation"
               >
-                <i
-                    class="fas"
-                    :class="saved ? 'fa-check' : 'fa-save'"
-                />
+                <i :class="`fas fa-${saved ? 'check' : 'save'}`" />
                 {{ $t('view_entry.save') }}
               </button>
               <span
@@ -136,8 +133,13 @@
   </div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import {defineComponent, nextTick} from 'vue';
+import type {PropType} from 'vue';
+import type {FileUpload, TokenReponse} from '../interfaces';
+import {doRequest} from "../utils";
+
+export default defineComponent({
   name: 'ViewingModal',
   props: {
     baseUrl: {
@@ -153,7 +155,7 @@ export default {
       required: true,
     },
     file: {
-      type: Object,
+      type: Object as PropType<FileUpload>,
       required: true,
     },
     isEditable: {
@@ -165,13 +167,18 @@ export default {
       default: false,
     },
   },
+  emits: {
+    updateToken(token: string) {
+      return token.length > 0;
+    },
+  },
   data: function () {
     return {
       // Image rotation set by user
       rotation: 0,
       // Original image dimensions (filled once loaded)
-      originalHeight: null,
-      originalWidth: null,
+      originalHeight: null as number | null,
+      originalWidth: null as number | null,
       // Programmatically controlled dimensions for modal
       modalHeight: 'auto',
       modalWidth: 'auto',
@@ -191,10 +198,11 @@ export default {
         transform += ` translate(0, -100%)`;
       }
       // When image is portrait, constraint the rotated image height (which is width) to modal width
-      const height = (this.isQuarterRotated && this.$refs.modal.clientWidth < this.originalHeight)
-          ? (this.$refs.modal.clientWidth - 30) + 'px'
+      const modal = this.$refs.modal as HTMLDivElement;
+      const height = (this.originalHeight && this.isQuarterRotated && modal.clientWidth < this.originalHeight)
+          ? `${modal.clientWidth - 30}px`
           : 'auto';
-      return { transform, height };
+      return {transform, height};
     },
     isRotated: function () {
       return this.rotation % 360;
@@ -211,11 +219,11 @@ export default {
   watch: {
     rotation: 'changeModalHeight',
   },
-  mounted () {
+  mounted() {
     // The modal may be loaded hidden, thus the image has no dimensions, use bootstrap event
     jQuery(this.$el).on('shown.bs.modal', () => {
       if (!this.originalHeight) {
-        this.imageLoaded(this.$refs.img);
+        void this.imageLoaded(this.$refs.img as HTMLImageElement);
       }
       this.changeModalHeight();
     });
@@ -223,49 +231,41 @@ export default {
       jQuery(this.$el).modal('show');
     }
   },
-  beforeDestroy () {
+  beforeUnmount() {
     jQuery(this.$el).modal('hide');
   },
   methods: {
-    imageLoaded: function (img) {
-      if (this.isImage) {
-        // The image is loaded, better wait for for next rendering tick
-        this.$nextTick(() => {
-          this.originalHeight = img.clientHeight;
-          this.originalWidth = img.clientWidth;
-          this.changeModalHeight();
-        });
-      }
+    imageLoaded: async function (img: HTMLImageElement) {
+      // The image is loaded, better wait for next rendering tick
+      await nextTick();
+      this.originalHeight = img.clientHeight;
+      this.originalWidth = img.clientWidth;
+      this.changeModalHeight();
     },
     changeModalHeight: function () {
-      if (!this.originalWidth) return 'auto';  // Image is not yet loaded
-      if (this.isQuarterRotated && this.$refs.modal.clientWidth < this.originalHeight) {
+      if (!this.originalWidth || !this.originalHeight) return 'auto';  // Image is not yet loaded
+      const modal = this.$refs.modal as HTMLDivElement;
+      if (this.isQuarterRotated && modal.clientWidth < this.originalHeight) {
         // Handle case when image is too tall for width (portrait)
-        this.modalHeight = this.$refs.modal.clientWidth * this.originalWidth / this.originalHeight + 30 + 'px';
+        this.modalHeight = `${modal.clientWidth * this.originalWidth / this.originalHeight + 30}px`;
       } else {
-        this.modalHeight = (this.isQuarterRotated ? this.originalWidth : this.originalHeight) + 30 + 'px';
+        this.modalHeight = `${(this.isQuarterRotated ? this.originalWidth : this.originalHeight) + 30}px`;
       }
     },
     saveRotation: async function () {
       try {
-        const response = await fetch(`${this.baseUrl}rotate-image/${this.value}`, {
+        const data = await doRequest(`${this.baseUrl}rotate-image/${this.value}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rotate: this.rotation }),
-        });
-        if (response.status === 200) {
-          this.saved = true;
-          this.rotation = 0;
-          const data = await response.json();
-          this.$emit('update-token', data.token);
-          this.error = '';
-        } else {
-          this.error = response.statusText;
-        }
+          body: JSON.stringify({rotate: this.rotation}),
+        }) as TokenReponse;
+        this.saved = true;
+        this.rotation = 0;
+        this.$emit('updateToken', data.token);
+        this.error = '';
       } catch (e) {
-        this.error = e;
+        this.error = (e as Error).message;
       }
     },
   },
-};
+});
 </script>

@@ -93,14 +93,7 @@ def generate_filename(instance, filename, upload_to):
     return filename
 
 
-def get_metadata(token: str):
-    upload = Upload.objects.from_token(token)
-    if not upload:
-        return None
-    with upload.file.open() as file:
-        hash = hashlib.sha256(file.read()).hexdigest()
-    if upload.metadata.get('hash') != hash:
-        raise HashMismatch()
+def get_upload_metadata(token: str, upload: Upload):
     return {
         'size': upload.size,
         'mimetype': upload.mimetype,
@@ -109,6 +102,17 @@ def get_metadata(token: str):
         'uploaded_at': upload.uploaded_at,
         **upload.metadata,
     }
+
+
+def get_metadata(token: str):
+    upload = Upload.objects.from_token(token)
+    if not upload:
+        return None
+    with upload.file.open() as file:
+        hash = hashlib.sha256(file.read()).hexdigest()
+    if upload.metadata.get('hash') != hash:
+        raise HashMismatch()
+    return get_upload_metadata(token, upload)
 
 
 def get_token(uuid, **kwargs):

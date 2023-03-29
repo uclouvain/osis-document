@@ -24,10 +24,11 @@
  *
  */
 
-import { humanizedSize } from './utils.js';
+import { humanizedSize } from './utils';
+import {expect, it} from "vitest";
 
 it('should display correct size', () => {
-  expect(humanizedSize(124)).toEqual('124.00 B');
+  expect(humanizedSize(124)).toBe('124.00 B');
   expect(humanizedSize(1024)).toEqual('1.00 KB');
   expect(humanizedSize(4250 * 1024)).toEqual('4.15 MB');
 });

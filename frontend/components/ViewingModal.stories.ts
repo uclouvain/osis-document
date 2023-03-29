@@ -24,58 +24,53 @@
  *
  */
 
-import { i18n } from '../i18n';
 import fetchMock from 'fetch-mock';
-import ViewingModal from './ViewingModal';
+import ViewingModal from './ViewingModal.vue';
+import type {Meta, StoryFn} from "@storybook/vue3";
 
-const ModalImageTemplate = (args, { argTypes }) => {
+const ModalImageTemplate: StoryFn<typeof ViewingModal> = (args) => {
   fetchMock.restore()
-    .post('/change-metadata/12e68184-5cba-4b27-9988-609a6cc3be63', 200)
-    .post('/rotate-image/12e68184-5cba-4b27-9988-609a6cc3be63', 200);
-  if (process.env.NODE_ENV === 'test') {
-    // Mock jQuery for snapshots tests
-    window.jQuery = jest.fn(() => ({
-      modal: () => {},
-      on: () => {},
-    }));
-  }
+      .post('/change-metadata/12e68184-5cba-4b27-9988-609a6cc3be63', 200)
+      .post('/rotate-image/12e68184-5cba-4b27-9988-609a6cc3be63', 200);
+
   return ({
-    components: { ViewingModal },
-    props: Object.keys(argTypes),
-    template: '<ViewingModal v-bind="$props" />',
-    destroyed () {
+    components: {ViewingModal},
+    setup() {
+      return {args};
+    },
+    template: '<ViewingModal v-bind="args" base-url="/" />',
+    unmounted() {
       fetchMock.restore();
     },
-    i18n,
   });
 };
 
-export const landscape = ModalImageTemplate.bind({});
-landscape.args = {
-  baseUrl: '/',
+export const Landscape = ModalImageTemplate.bind({});
+Landscape.args = {
   name: 'media',
   id: '1',
   file: {
     mimetype: 'image/jpeg',
     size: 82381,
-    url: './placeholder.jpeg',
+    url: 'placeholder.jpeg',
     name: 'test image',
   },
   value: '12e68184-5cba-4b27-9988-609a6cc3be63',
   openOnMount: true,
 };
 
-export const portrait = ModalImageTemplate.bind({});
-portrait.args = {
-  ...landscape.args,
+export const Portrait = ModalImageTemplate.bind({});
+Portrait.args = {
+  ...Landscape.args,
   file: {
     mimetype: 'image/jpeg',
     size: 82381,
-    url: './portrait.jpeg',
+    url: 'portrait.jpeg',
     name: 'test image',
   },
 };
 
 export default {
   title: 'ViewingModal',
-};
+  component: ViewingModal,
+} as Meta<typeof ViewingModal>;

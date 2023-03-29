@@ -59,7 +59,7 @@ class TemplateTagsTestCase(TestCase):
             '{% document_visualizer values %}'
         ).render(context)
         self.assertNotIn(str(stub_uuid), rendered)
-        self.assertIn('class="document-visualizer"', rendered)
+        self.assertIn('class="osis-document-visualizer"', rendered)
         self.assertIn('http://dummyurl.com/', rendered)
 
     def test_other_tags(self):

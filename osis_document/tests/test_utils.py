@@ -42,6 +42,7 @@ from osis_document.utils import confirm_upload, generate_filename, get_metadata,
 class MetadataTestCase(TestCase):
     def test_with_token(self):
         token = WriteTokenFactory()
+        self.assertEqual(str(token), token.token)
         metadata = get_metadata(token.token)
         self.assertEqual(metadata['size'], 1024)
         self.assertEqual(metadata['mimetype'], 'application/pdf')

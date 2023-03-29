@@ -26,22 +26,12 @@
 
 <template>
   <li class="media">
+    <!-- progress bar -->
     <div
-        v-if="isImage"
-        class="media-left"
+        v-if="loading"
+        class="media-body"
     >
-      <img
-          class="media-object img-thumbnail"
-          :src="file.url"
-          :alt="file.name"
-          width="80"
-      >
-    </div>
-    <div class="media-body">
-      <div
-          v-if="loading"
-          class="progress"
-      >
+      <div class="progress">
         <div
             class="progress-bar progress-bar-striped active"
             role="progressbar"
@@ -53,105 +43,127 @@
           <span class="sr-only">{{ $t('view_entry.loading') }}</span>
         </div>
       </div>
-      <span
-          v-else-if="error"
-          class="text-danger"
-      >
-        {{ $t('error', { error }) }}
-      </span>
-      <h4
-          v-else
-          class="media-heading"
-      >
-        <div
-            v-if="isEditable && editableFilename"
-            class="input-group"
-        >
-          <input
-              v-model="name"
-              type="text"
-              class="form-control"
-              @input="saved = false"
-          >
-          <span
-              v-if="extension"
-              class="input-group-addon"
-          >
-            {{ extension }}
-          </span>
-          <span class="input-group-btn">
-            <button
-                type="button"
-                :disabled="originalName === fullName"
-                class="btn btn-default"
-                @click="saveName"
-            >
-              <i
-                  class="fas"
-                  :class="saved ? 'fa-check' : 'fa-save'"
-              />
-            </button>
-          </span>
-        </div>
-        <div v-else>
-          {{ file.name }}
-        </div>
-        <small><span class="text-nowrap">{{ humanizedSize }}</span> ({{ file.mimetype }})</small>
-      </h4>
     </div>
-    <div
-        v-if="file"
-        class="media-right text-right"
-        :style="{'min-width': isViewableDocument ? '9.5em' : '7em'}"
-    >
-      <div class="btn-group">
-        <a
-            v-if="isViewableDocument"
-            class="btn btn-default"
-            data-toggle="modal"
-            :data-target="`#modal-${formattedValue}`"
-        >
-          <span class="glyphicon glyphicon-eye-open" />
-        </a>
-        <a
-            class="btn btn-default"
-            target="_blank"
-            :href="`${file.url}?dl=1`"
-        >
-          <span class="glyphicon glyphicon-download-alt" />
-        </a>
+    <!-- error -->
+    <template v-else-if="error">
+      <div class="media-body">
+        <span class="text-danger">{{ $t('error', { error }) }}</span>
+      </div>
+      <div class="media-right text-right">
         <button
             v-if="isEditable"
             class="btn btn-danger"
             type="button"
             @click="$emit('delete')"
         >
-          <span class="glyphicon glyphicon-trash" />
+          <span class="fas fa-trash-alt" />
         </button>
       </div>
-    </div>
-    <ViewingModal
-        v-if="isViewableDocument"
-        :id="formattedValue"
-        :file="file"
-        :is-editable="isEditable"
-        :value="value"
-        :base-url="baseUrl"
-        @update-token="$emit('update-token', $event)"
-    />
+    </template>
+    <!-- thumbnail -->
+    <template v-else-if="file">
+      <div
+          v-if="isImage"
+          class="media-left"
+      >
+        <img
+            class="media-object img-thumbnail"
+            :src="file.url"
+            :alt="file.name"
+            width="80"
+        >
+      </div>
+      <div class="media-body">
+        <h4 class="media-heading">
+          <div
+              v-if="isEditable && editableFilename"
+              class="input-group"
+          >
+            <input
+                v-model="name"
+                type="text"
+                class="form-control"
+                @input="saved = false"
+            >
+            <span
+                v-if="extension"
+                class="input-group-addon"
+            >
+              {{ extension }}
+            </span>
+            <span class="input-group-btn">
+              <button
+                  type="button"
+                  :disabled="file.name === fullName"
+                  class="btn btn-default"
+                  @click="saveName"
+              >
+                <i :class="`fas fa-${saved ? 'check' : 'save'}`" />
+              </button>
+            </span>
+          </div>
+          <div v-else>
+            {{ file.name }}
+          </div>
+          <small><span class="text-nowrap">{{ humanizedSize(file.size) }}</span> ({{ file.mimetype }})</small>
+        </h4>
+      </div>
+      <!-- actions -->
+      <div
+          class="media-right text-right"
+          :style="{'min-width': isViewableDocument ? '9.5em' : '7em'}"
+      >
+        <div class="btn-group">
+          <a
+              v-if="isViewableDocument"
+              class="btn btn-default"
+              data-toggle="modal"
+              :data-target="`#modal-${formattedValue}`"
+          >
+            <span class="fas fa-eye" />
+          </a>
+          <a
+              class="btn btn-default"
+              target="_blank"
+              :href="`${file.url}?dl=1`"
+          >
+            <span class="fas fa-download" />
+          </a>
+          <button
+              v-if="isEditable"
+              class="btn btn-danger"
+              type="button"
+              @click="$emit('delete')"
+          >
+            <span class="fas fa-trash-alt" />
+          </button>
+        </div>
+      </div>
+      <ViewingModal
+          v-if="isViewableDocument"
+          :id="formattedValue"
+          :file="file"
+          :is-editable="isEditable"
+          :value="value"
+          :base-url="baseUrl"
+          @update-token="$emit('updateToken', $event)"
+      />
+    </template>
   </li>
 </template>
 
-<script>
+<script lang="ts">
 /**
  * This component's goal is to view an uploaded file and edit it
  */
-import { humanizedSize } from '../utils';
-import ViewingModal from './ViewingModal';
+import {doRequest, humanizedSize} from '../utils';
+import ViewingModal from './ViewingModal.vue';
+import {defineComponent} from 'vue';
+import type {FileUpload} from "../interfaces";
 
-export default {
+export default defineComponent({
   name: 'ViewEntry',
-  components: { ViewingModal },
+  components: {ViewingModal},
   props: {
     value: {
       type: String,
@@ -174,9 +186,17 @@ export default {
       default: true,
     },
   },
-  data () {
+  emits: {
+    updateToken(token: string) {
+      return token.length > 0;
+    },
+    delete() {
+      return true;
+    },
+  },
+  data() {
     return {
-      file: null,
+      file: null as FileUpload | null,
       loading: true,
       error: '',
       name: '',
@@ -186,30 +206,21 @@ export default {
   },
   computed: {
     isImage: function () {
-      return !!this.file && this.file.mimetype.split('/')[0] === 'image';
+      return this.file?.mimetype.split('/')[0] === 'image';
     },
     isViewableDocument: function () {
-      if (!this.file) {
-        return false;
-      }
-      const mimetype = this.file.mimetype;
+      const mimetype = (this.file as FileUpload).mimetype;
       return mimetype.split('/')[0] === 'image' || mimetype === 'application/pdf';
     },
-    humanizedSize: function () {
-      return humanizedSize(this.file.size);
-    },
-    originalName: function () {
-      return this.file.name;
-    },
-    formattedValue: function ()  {
-      return this.value.replaceAll(':', '-');
+    formattedValue: function () {
+      return this.value.replace(/:/g, '-');
     },
     fullName: {
       // The full name is composed of the file name and extension (if specified)
       get() {
         return `${this.name}${this.extension}`;
       },
-      set: function(newValue) {
+      set: function (newValue: string) {
         const splitName = /^(.+)(\.[^.]+)$/.exec(newValue);
         if (splitName?.length === 3) {
           this.name = splitName[1];
@@ -224,46 +235,36 @@ export default {
   watch: {
     value: 'getFile',
   },
-  mounted () {
-    this.getFile();
+  mounted() {
+    void this.getFile();
   },
   methods: {
+    humanizedSize,
     getFile: async function () {
       if (this.value === 'FileInfectedException') {
         this.error = this.$t('view_entry.file_infected');
-        this.loading = false;
-        return;
-      }
-      try {
-        const response = await fetch(`${this.baseUrl}metadata/${this.value}`);
-        if (response.status === 200) {
-          this.file = await response.json();
+      } else {
+        try {
+          this.file = await doRequest(`${this.baseUrl}metadata/${this.value}`) as FileUpload;
           this.fullName = this.file.name;
-        } else {
-          this.error = response.statusText;
+        } catch (e) {
+          this.error = (e as Error).message;
         }
-      } catch (e) {
-        this.error = e;
       }
       this.loading = false;
     },
     saveName: async function () {
       try {
-        const response = await fetch(`${this.baseUrl}change-metadata/${this.value}`, {
+        await doRequest(`${this.baseUrl}change-metadata/${this.value}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: this.fullName }),
+          body: JSON.stringify({name: this.fullName}),
         });
-        if (response.status === 200) {
-          this.saved = true;
-          this.file.name = this.fullName;
-        } else {
-          this.error = response.statusText;
-        }
+        this.saved = true;
+        (this.file as FileUpload).name = this.fullName;
       } catch (e) {
-        this.error = e;
+        this.error = (e as Error).message;
       }
     },
   },
-};
+});
 </script>

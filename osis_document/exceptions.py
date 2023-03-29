@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2023 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -27,16 +27,22 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 from rest_framework.exceptions import APIException
 
+from osis_document.enums import DocumentError
+
 
 class HashMismatch(APIException):
     status_code = status.HTTP_409_CONFLICT
-    default_detail = _("Hash check failed")
+    default_detail = DocumentError.HASH_MISMATCH.value
 
 
 class MimeMismatch(APIException):
     status_code = status.HTTP_409_CONFLICT
-    default_detail = _("MIME type mismatch")
+    default_detail = DocumentError.MIME_MISMATCH.value
 
 
 class FileInfectedException(APIException):
-    default_detail = _("File is flagged as infected")
+    default_detail = DocumentError.INFECTED.value
+
+
+class UploadInvalidException(APIException):
+    default_detail = _("Invalid upload UUID")

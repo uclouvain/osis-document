@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2023 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from typing import Union
+from typing import Union, List, Dict
 from urllib.parse import urlparse
 
 from django.conf import settings
@@ -31,20 +31,57 @@ from requests import HTTPError
 from rest_framework import status
 from rest_framework.views import APIView
 
-from osis_document.exceptions import FileInfectedException
+from osis_document.exceptions import FileInfectedException, UploadInvalidException
 
 
 def get_remote_metadata(token: str) -> Union[dict, None]:
+    """Given a token, return the remote metadata."""
     import requests
 
     url = "{}metadata/{}".format(settings.OSIS_DOCUMENT_BASE_URL, token)
     try:
-        return requests.get(url).json()
+        response = requests.get(url)
+        if response.status_code is not status.HTTP_200_OK:
+            return None
+        return response.json()
+    except HTTPError:
+        return None
+
+
+def get_several_remote_metadata(tokens: List[str]) -> Dict[str, dict]:
+    """Given a list of tokens, return a dictionary associating each token to upload metadata."""
+    import requests
+
+    url = "{}metadata".format(settings.OSIS_DOCUMENT_BASE_URL)
+    try:
+        response = requests.post(
+            url,
+            json=tokens,
+            headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
+        )
+
+        if response.status_code == status.HTTP_200_OK:
+            return response.json()
+    except HTTPError:
+        pass
+    return {}
+
+
+def get_raw_content_remotely(token: str):
+    """Given a token, return the file raw."""
+    import requests
+
+    try:
+        response = requests.get(f"{settings.OSIS_DOCUMENT_BASE_URL}file/{token}")
+        if response.status_code is not status.HTTP_200_OK:
+            return None
+        return response.content
     except HTTPError:
         return None
 
 
 def get_remote_token(uuid, write_token=False):
+    """Given an uuid, return a writing or reading remote token."""
     import requests
 
     url = "{base_url}{token_type}-token/{uuid}".format(
@@ -54,6 +91,8 @@ def get_remote_token(uuid, write_token=False):
     )
     try:
         response = requests.post(url, headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET})
+        if response.status_code == status.HTTP_404_NOT_FOUND:
+            return UploadInvalidException.__class__.__name__
         json = response.json()
         if (
             response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -63,6 +102,24 @@ def get_remote_token(uuid, write_token=False):
         return json.get('token')
     except HTTPError:
         return None
+
+
+def get_remote_tokens(uuids: List[str]) -> Dict[str, str]:
+    """Given a list of uuids, return a dictionary associating each uuid to a reading token."""
+    import requests
+
+    url = "{base_url}read-tokens".format(base_url=settings.OSIS_DOCUMENT_BASE_URL)
+    try:
+        response = requests.post(
+            url,
+            json=uuids,
+            headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
+        )
+        if response.status_code == status.HTTP_201_CREATED:
+            return {uuid: item.get('token') for uuid, item in response.json().items() if 'error' not in item}
+    except HTTPError:
+        pass
+    return {}
 
 
 def confirm_remote_upload(token, upload_to=None, related_model=None, related_model_instance=None):

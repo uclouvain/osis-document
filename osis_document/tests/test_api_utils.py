@@ -29,7 +29,7 @@ from django.test import TestCase, override_settings
 from requests import HTTPError
 
 from osis_document.api.utils import confirm_remote_upload, get_remote_metadata, get_remote_token
-from osis_document.exceptions import FileInfectedException
+from osis_document.exceptions import FileInfectedException, UploadInvalidException
 
 
 @override_settings(
@@ -56,13 +56,27 @@ class RemoteUtilsTestCase(TestCase):
                 FileInfectedException.__class__.__name__,
             )
 
+    def test_get_remote_token_not_found(self):
+        with patch('requests.post') as request_mock:
+            request_mock.return_value.status_code = 404
+            self.assertEqual(
+                get_remote_token('bbc1ba15-42d2-48e9-9884-7631417bb1e1'),
+                UploadInvalidException.__class__.__name__,
+            )
+
     def test_get_remote_metadata_bad_token(self):
         with patch('requests.get') as request_mock:
             request_mock.side_effect = HTTPError
             self.assertIsNone(get_remote_metadata('some_token'))
 
+    def test_get_remote_metadata_not_found(self):
+        with patch('requests.get') as request_mock:
+            request_mock.return_value.status_code = 404
+            self.assertIsNone(get_remote_metadata('some_token'))
+
     def test_get_remote_metadata(self):
         with patch('requests.get') as request_mock:
+            request_mock.return_value.status_code = 200
             request_mock.return_value.json.return_value = {"foo": "bar"}
             self.assertEqual(get_remote_metadata('some_token'), {"foo": "bar"})
 

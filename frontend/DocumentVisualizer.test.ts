@@ -23,25 +23,19 @@
  *   see http://www.gnu.org/licenses/.
  *
  */
-module.exports = {
-  outputDir: "osis_document/static/osis_document",
-  configureWebpack(config) {
-    // Removes demo.html
-    config.plugins.some((plugin, index) => {
-      return plugin.options?.filename === 'demo.html' ? config.plugins.splice(index, 1) : false;
-    });
-    return {
-      devServer: {
-        overlay: true,
-      },
-      externals: {
-        'vue-i18n': 'VueI18n',
-      },
-    };
-  },
-  filenameHashing: false,
-  chainWebpack: config => {
-    config.plugins.delete('preload');
-    config.plugins.delete('prefetch');
-  },
-};
+
+import {mount} from '@vue/test-utils';
+import DocumentVisualizer from './DocumentVisualizer.vue';
+import {expect, it} from "vitest";
+
+
+it('should mount', () => {
+  const wrapper = mount(DocumentVisualizer, {
+    props: {
+      baseUrl: '/',
+      values: ['0123456798'],
+    },
+  });
+  expect(wrapper.html()).toMatchSnapshot();
+});
+
