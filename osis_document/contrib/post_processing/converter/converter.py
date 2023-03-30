@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from osis_document.models import Upload, PostProcessing
 
 
-class Converteur(ABC):
+class Converter(ABC):
 
     @abstractmethod
     def convert(self, upload_object: Upload) -> PostProcessing:

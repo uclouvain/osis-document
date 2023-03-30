@@ -4,16 +4,16 @@ from xdrlib import ConversionError
 
 from PIL import Image
 from django.core.files import File
-
-from backoffice.settings.base import OSIS_UPLOAD_FOLDER
-from osis_document.contrib.post_processing.converteur.converteur import Converteur
+from osis_document.contrib.post_processing.converteur.converteur import Converter
 from osis_document.enums import PostProcessingType
 from osis_document.exceptions import FormatInvalidException
 from osis_document.models import Upload, PostProcessing
 from osis_document.utils import calculate_hash
 
+from backoffice.settings.base import OSIS_UPLOAD_FOLDER
 
-class ConverteurImageToPdf(Converteur):
+
+class ConverterImageToPdf(Converter):
 
     def convert(self, upload_object: Upload) -> PostProcessing:
         if upload_object.mimetype not in self.get_supported_format():

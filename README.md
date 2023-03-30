@@ -218,13 +218,13 @@ Allowed Format : `Docx`, `Doc`, `Odt`, `txt`, `JPG`, and `PNG`
 
 ```python
 from osis_document.contrib.post_processing.converteur.context import Context
-from osis_document.contrib.post_processing.converteur.converteur_image_to_pdf import ConverteurImageToPdf
+from osis_document.contrib.post_processing.converteur.converteur_image_to_pdf import ConverterImageToPdf
 
-context = Context(converteur=ConverteurImageToPdf(), upload_object=Upload.objects.get(uuid=""))
+context = Context(converteur=ConverterImageToPdf(), upload_object=Upload.objects.get(uuid=""))
 context.make_conversion()
 ```
-To convert a text file into a pdf use `ConverteurTextDocumentToPdf`
-instead of ConverteurImageToPdf
+To convert a text file into a pdf use `ConverterTextDocumentToPdf`
+instead of ConverterImageToPdf
 
 ## Files merge in PDF
 In order to use the pdf merging `OSIS_UPLOAD_FOLDER` must be defined in
