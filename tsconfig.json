@@ -20,7 +20,7 @@
     ],
     "skipLibCheck": true,
     "noEmit": true,
-    "allowJs": true
+    "allowJs": true,
   },
   "include": [
     "frontend/**/*.ts",
@@ -33,5 +33,5 @@
     {
       "path": "./tsconfig.vite.json"
     }
-  ],
+  ]
 }

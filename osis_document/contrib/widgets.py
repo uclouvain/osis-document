@@ -64,7 +64,7 @@ class FileUploadWidget(SplitArrayWidget):
         css = {
             'all': ('osis_document/osis-document.css',)
         }
-        js = ('osis_document/osis-document.umd.js',)
+        js = ('osis_document/osis-document.umd.min.js',)
 
     def __init__(self, **kwargs):
         self.automatic_upload = kwargs.pop('automatic_upload', True)
