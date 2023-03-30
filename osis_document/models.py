@@ -32,7 +32,7 @@ from django.db import models
 from django.db.models.functions import Now
 from django.utils.translation import gettext_lazy as _
 
-from .enums import FileStatus, TokenAccess
+from .enums import FileStatus, TokenAccess, PostProcessingType
 
 
 class UploadManager(models.Manager):
@@ -146,3 +146,30 @@ class Token(models.Model):
 
     def __repr__(self):
         return '{self.access} token for {self.upload}'.format(self=self)
+
+
+class PostProcessing(models.Model):
+    uuid = models.UUIDField(
+        verbose_name=_("UUID"),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    input_files = models.ManyToManyField(
+        to='osis_document.Upload',
+        verbose_name=_("Input"),
+        related_name='input_files'
+    )
+    output_files = models.ManyToManyField(
+        to='osis_document.Upload',
+        verbose_name=_("Output"),
+        related_name='output_files'
+    )
+    created_at = models.DateTimeField(
+        verbose_name=_("Created at"),
+        auto_now_add=True,
+    )
+    type = models.CharField(
+        max_length=255,
+        choices=PostProcessingType.choices(),
+        blank=False
+    )

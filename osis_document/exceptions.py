@@ -46,3 +46,11 @@ class FileInfectedException(APIException):
 
 class UploadInvalidException(APIException):
     default_detail = _("Invalid upload UUID")
+
+
+class FormatInvalidException(APIException):
+    default_detail = _("Invalid file format")
+
+
+class ConversionError(APIException):
+    default_detail = _("Error during file conversion to pdf")

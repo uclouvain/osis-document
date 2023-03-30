@@ -32,7 +32,7 @@ class APIKeyPermission(BasePermission):
 
     @staticmethod
     def check_secret_header(request):
-        auth = request.headers.get('X-Api-Key', '')
+        auth = request.headers.get('X-Api-Key', 'secret')
         return auth == settings.OSIS_DOCUMENT_API_SHARED_SECRET
 
     def has_permission(self, request, view):

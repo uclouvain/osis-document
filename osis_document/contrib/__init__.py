@@ -26,6 +26,8 @@
 
 from osis_document.contrib.fields import FileField
 from osis_document.contrib.forms import FileUploadField
+from osis_document.contrib.post_processing.merge_file_to_pdf import merge_files_to_one_pdf
+from osis_document.contrib.post_processing.to_pdf_convertor import convert_file_to_pdf
 from osis_document.contrib.serializers import FileField as FileFieldSerializer
 from osis_document.contrib.widgets import FileUploadWidget
 
@@ -34,4 +36,6 @@ __all__ = [
     'FileUploadField',
     'FileUploadWidget',
     'FileFieldSerializer',
+    'merge_files_to_one_pdf',
+    'convert_file_to_pdf'
 ]

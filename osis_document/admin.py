@@ -28,7 +28,7 @@ from django.template.defaultfilters import filesizeformat
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from osis_document.models import Token, Upload
+from osis_document.models import Token, Upload, PostProcessing
 
 
 class UploadAdmin(admin.ModelAdmin):
@@ -74,5 +74,18 @@ class TokenAdmin(admin.ModelAdmin):
     ]
 
 
+class PostProcessingAdmin(admin.ModelAdmin):
+    list_display = [
+        'uuid',
+        'created_at',
+        'type',
+    ]
+    date_hierarchy = 'created_at'
+    list_filter = [
+        'type',
+    ]
+
+
 admin.site.register(Upload, UploadAdmin)
 admin.site.register(Token, TokenAdmin)
+admin.site.register(PostProcessing, PostProcessingAdmin)

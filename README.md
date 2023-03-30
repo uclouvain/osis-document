@@ -207,6 +207,39 @@ uploader.addEventListener('osisdocument:add', event => {
 
 Note that the `Uploader` component has the `osis-document-uploader` class.
 
+## File format conversion
+
+In order to use the file conversion `OSIS_UPLOAD_FOLDER` must be defined
+in the `.env` file that shows the whole path to the folder of the
+downloaded files in  OSIS-Document
+
+### Converter use
+Allowed Format : `Docx`, `Doc`, `Odt`, `txt`, `JPG`, and `PNG`
+
+```python
+from osis_document.contrib.post_processing.converteur.context import Context
+from osis_document.contrib.post_processing.converteur.converteur_image_to_pdf import ConverteurImageToPdf
+
+context = Context(converteur=ConverteurImageToPdf(), upload_object=Upload.objects.get(uuid=""))
+context.make_conversion()
+```
+To convert a text file into a pdf use `ConverteurTextDocumentToPdf`
+instead of ConverteurImageToPdf
+
+## Files merge in PDF
+In order to use the pdf merging `OSIS_UPLOAD_FOLDER` must be defined in
+the `.env` file  that shows the whole path to the folder of the
+downloaded files in  OSIS-Document and LibreOffice must be installed on
+the computer.
+
+If the files are not in the PDF format the correct conversion class must
+be used before merging.
+
+```python
+from osis_document.contrib.post_processing.merge_file_to_pdf import merge_files_to_one_pdf
+
+merge_files_to_one_pdf(liste_uuid_files=[], output_file_name='output.pdf')
+```
 
 # Contributing to OSIS-Document
 
