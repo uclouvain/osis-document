@@ -29,7 +29,7 @@ import hashlib
 import posixpath
 import sys
 import uuid
-from typing import Union
+from typing import Union, List, Dict
 from uuid import UUID
 
 from django.conf import settings
@@ -37,7 +37,7 @@ from django.core import signing
 from django.core.exceptions import FieldError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
-
+from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
 from osis_document.enums import FileStatus
 from osis_document.exceptions import HashMismatch
 from osis_document.models import Token, Upload
@@ -174,3 +174,30 @@ def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
     # Create the request
     response = requests.post(url, files=data)
     return response.json().get('token')
+
+
+def post_processing(uuid_list: List, post_process_type: List) -> Dict:
+    post_processing_return = {}
+    from osis_document.contrib.post_processing.converter.context import Context
+    from osis_document.contrib.post_processing.converter.converter_text_document_to_pdf import \
+        ConverterTextDocumentToPdf
+    from osis_document.contrib.post_processing.converter.converter_image_to_pdf import ConverterImageToPdf
+    from osis_document.contrib.post_processing.merge_file_to_pdf import merge_files_to_one_pdf
+    list_uuid_post_processing_convert = []
+    if PostProcessingEnums.CONVERT.name in post_process_type:
+        for uuid_file in uuid_list:
+            file = Upload.objects.get(uuid=uuid_file)
+            if file.mimetype in ConverterImageToPdf.get_supported_format():
+                context = Context(converter=ConverterImageToPdf(), upload_object=file)
+
+            elif file.mimetype in ConverterTextDocumentToPdf.get_supported_format():
+                context = Context(converter=ConverterTextDocumentToPdf(), upload_object=file)
+            list_uuid_post_processing_convert.append(context.make_conversion())
+        post_processing_return["convert_to_pdf"] = list_uuid_post_processing_convert
+    if PostProcessingEnums.MERGE.name in post_process_type:
+        if PostProcessingEnums.CONVERT.name in post_process_type:
+            post_processing_return["merge_pdf"] = merge_files_to_one_pdf(
+                liste_uuid_files=list_uuid_post_processing_convert)
+        else:
+            post_processing_return["merge_pdf"] = merge_files_to_one_pdf(liste_uuid_files=uuid_list)
+    return post_processing_return

@@ -27,11 +27,10 @@ from typing import Union, List, Dict
 from urllib.parse import urlparse
 
 from django.conf import settings
+from osis_document.exceptions import FileInfectedException, UploadInvalidException
 from requests import HTTPError
 from rest_framework import status
 from rest_framework.views import APIView
-
-from osis_document.exceptions import FileInfectedException, UploadInvalidException
 
 
 def get_remote_metadata(token: str) -> Union[dict, None]:
@@ -95,8 +94,8 @@ def get_remote_token(uuid, write_token=False):
             return UploadInvalidException.__class__.__name__
         json = response.json()
         if (
-            response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-            and json['detail'] == FileInfectedException.default_detail
+                response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+                and json['detail'] == FileInfectedException.default_detail
         ):
             return FileInfectedException.__class__.__name__
         return json.get('token')
@@ -142,6 +141,19 @@ def confirm_remote_upload(token, upload_to=None, related_model=None, related_mod
         data['related_model'] = related_model
 
     # Do the request
+    response = requests.post(
+        url,
+        json=data,
+        headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
+    )
+    return response.json().get('uuid')
+
+
+def post_processing(uuid_list: List, post_processing_type: List):
+    # Juste faire la requête qui va être utilisée par OSIS, pas le traitement fait par OSIS-Document
+    import requests
+    url = "{}request-post-processing".format(settings.OSIS_DOCUMENT_BASE_URL)
+    data = {'post_process_type': post_processing_type, 'files_uuid': uuid_list}
     response = requests.post(
         url,
         json=data,

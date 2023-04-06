@@ -1,28 +1,28 @@
-from osis_document.contrib.post_processing.converteur.converteur import Converteur
+from osis_document.contrib.post_processing.converter.converter import Converter
 from osis_document.models import Upload
 
 
 class Context:
 
-    def __init__(self, converteur: Converteur, upload_object: Upload) -> None:
+    def __init__(self, converter: Converter, upload_object: Upload) -> None:
         self._upload_object = upload_object
-        self._converteur = converteur
+        self._converter = converter
 
     @property
-    def converteur(self) -> Converteur:
-        return self._converteur
+    def converter(self) -> Converter:
+        return self._converter
 
     @property
     def upload_object(self) -> Upload:
         return self._upload_object
 
-    @converteur.setter
-    def converteur(self, converteur: Converteur) -> None:
-        self._converteur = converteur
+    @converter.setter
+    def converter(self, converter: Converter) -> None:
+        self._converter = converter
 
     @upload_object.setter
     def upload_object(self, upload_object: Upload) -> None:
         self._upload_object = upload_object
 
     def make_conversion(self) -> None:
-        self._converteur.convert(upload_object=self._upload_object)
+        self._converter.convert(upload_object=self._upload_object)

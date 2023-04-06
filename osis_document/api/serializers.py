@@ -27,10 +27,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.utils.translation import gettext_lazy as _
+from osis_document.models import Token, Upload
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-
-from osis_document.models import Token, Upload
 
 
 class RequestUploadResponseSerializer(serializers.Serializer):
@@ -67,7 +66,7 @@ class ContentTypeSerializer(serializers.Serializer):
     )
     instance_filters = serializers.JSONField(
         help_text="Lookup arguments allowing to filter the model instances to return one single object that will be "
-        "used to compute the upload directory path (via the 'upload_to' property)",
+                  "used to compute the upload directory path (via the 'upload_to' property)",
         required=False,
     )
 
@@ -181,3 +180,10 @@ class TokenSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data = self.complete_new_validated_data(validated_data)
         return super().create(validated_data)
+
+
+class PostProcessing(serializers.Serializer):
+    files_uuid = serializers.ListField(help_text="A list of files UUID",
+                                       required=True, )
+    post_process_type = serializers.ListField(help_text="A list of actions to perform on the files",
+                                              required=True, )
