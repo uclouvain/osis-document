@@ -1,3 +1,29 @@
+# ##############################################################################
+#
+#    OSIS stands for Open Student Information System. It's an application
+#    designed to manage the core business of higher education institutions,
+#    such as universities, faculties, institutes and professional schools.
+#    The core business involves the administration of students, teachers,
+#    courses, programs and so on.
+#
+#    Copyright (C) 2015-2023 Université catholique de Louvain (http://www.uclouvain.be)
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    A copy of this license - GNU General Public License - is available
+#    at the root of the source code of this program.  If not,
+#    see http://www.gnu.org/licenses/.
+#
+# ##############################################################################
+import uuid
 from pathlib import Path
 from uuid import UUID
 
@@ -18,7 +44,11 @@ def merge_files_to_one_pdf(liste_uuid_files: [], output_file_name=None) -> UUID:
         if file.mimetype != "application/pdf":
             raise FormatInvalidException
         merger.append(file.file.path)
-    merger.write(f"{OSIS_UPLOAD_FOLDER}{output_file_name}.pdf")
+    if output_file_name:
+        path = f"{OSIS_UPLOAD_FOLDER}{output_file_name}.pdf"
+    else:
+        path = f"{OSIS_UPLOAD_FOLDER}{'merge_'+str(uuid.uuid4())}.pdf"
+    merger.write(path)
     merger.close()
     pdf_upload_object = _create_upload_instance(path=f"{OSIS_UPLOAD_FOLDER}{output_file_name}.pdf")
     post_processin_object = _create_post_processing_instance(input_files=input_files, output_file=pdf_upload_object)
