@@ -30,6 +30,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.validators import ArrayMinLengthValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+
 from osis_document.contrib.forms import FileUploadField
 from osis_document.utils import generate_filename
 from osis_document.validators import TokenValidator
@@ -86,7 +87,7 @@ class FileField(ArrayField):
         ]
         setattr(model_instance, self.attname, value)
         if self.post_processing:
-            self._post_processing()
+            self._post_processing(uuid_list=value)
         return value
 
     def _confirm_upload(self, model_instance, token):
@@ -100,6 +101,6 @@ class FileField(ArrayField):
             upload_to=dirname(generate_filename(model_instance, filename, self.upload_to)),
         )
 
-    def _post_processing(self):
+    def _post_processing(self, uuid_list: list):
         from osis_document.api.utils import post_processing
-        return post_processing(uuid_list=[], post_processing_type=self.post_processing)
+        return post_processing(uuid_list=[uuid_list], post_processing_type=self.post_processing)

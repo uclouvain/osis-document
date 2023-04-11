@@ -76,6 +76,7 @@ class FileUploadField(SplitArrayField):
         self.min_files = kwargs.pop('min_files', None)
         self.upload_to = kwargs.pop('upload_to', None)
         self.related_model = kwargs.pop('related_model', None)
+        self.post_processing = kwargs.pop('post_processing', None)
         kwargs.setdefault('widget', FileUploadWidget(
             max_size=self.max_size,
             mimetypes=self.mimetypes,

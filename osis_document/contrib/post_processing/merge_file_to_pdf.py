@@ -28,17 +28,19 @@ from pathlib import Path
 from uuid import UUID
 
 from django.core.files import File
+from pypdf import PdfMerger
+
+from backoffice.settings.base import OSIS_UPLOAD_FOLDER
 from osis_document.enums import PostProcessingType
 from osis_document.exceptions import FormatInvalidException
 from osis_document.models import Upload, PostProcessing
 from osis_document.utils import calculate_hash
-from pypdf import PdfMerger
-
-from backoffice.settings.base import OSIS_UPLOAD_FOLDER
 
 
 def merge_files_to_one_pdf(liste_uuid_files: [], output_file_name=None) -> UUID:
     input_files = Upload.objects.filter(uuid__in=liste_uuid_files)
+    if not input_files:
+        input_files = Upload.objects.filter(output_files__uuid__in=liste_uuid_files)
     merger = PdfMerger()
     for file in input_files:
         if file.mimetype != "application/pdf":
@@ -47,12 +49,13 @@ def merge_files_to_one_pdf(liste_uuid_files: [], output_file_name=None) -> UUID:
     if output_file_name:
         path = f"{OSIS_UPLOAD_FOLDER}{output_file_name}.pdf"
     else:
-        path = f"{OSIS_UPLOAD_FOLDER}{'merge_'+str(uuid.uuid4())}.pdf"
+        path = f"{OSIS_UPLOAD_FOLDER}{'merge_' + str(uuid.uuid4())}.pdf"
     merger.write(path)
     merger.close()
-    pdf_upload_object = _create_upload_instance(path=f"{OSIS_UPLOAD_FOLDER}{output_file_name}.pdf")
+    pdf_upload_object = _create_upload_instance(path=path)
     post_processin_object = _create_post_processing_instance(input_files=input_files, output_file=pdf_upload_object)
     return post_processin_object.uuid
+
 
 def _create_upload_instance(path: str) -> Upload:
     with Path(path).open(mode='rb') as f:

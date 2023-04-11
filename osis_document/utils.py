@@ -37,6 +37,7 @@ from django.core import signing
 from django.core.exceptions import FieldError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
+
 from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
 from osis_document.enums import FileStatus
 from osis_document.exceptions import HashMismatch, FormatInvalidException
@@ -177,7 +178,7 @@ def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
 
 
 def post_processing(uuid_list: List, post_process_type: List) -> Dict:
-    post_processing_return = {}
+    post_processing_return = {'convert_to_pdf': {}, 'merge_pdf': {}}
     from osis_document.contrib.post_processing.converter.context import Context
     from osis_document.contrib.post_processing.converter.converter_text_document_to_pdf import \
         ConverterTextDocumentToPdf
@@ -195,11 +196,14 @@ def post_processing(uuid_list: List, post_process_type: List) -> Dict:
                 list_uuid_post_processing_convert.append(context.make_conversion())
             else:
                 raise FormatInvalidException
-        post_processing_return["convert_to_pdf"] = list_uuid_post_processing_convert
+        post_processing_return["convert_to_pdf"]["input"] = uuid_list
+        post_processing_return["convert_to_pdf"]["output"] = list_uuid_post_processing_convert
     if PostProcessingEnums.MERGE_PDF.name in post_process_type:
         if PostProcessingEnums.CONVERT_TO_PDF.name in post_process_type:
-            post_processing_return["merge_pdf"] = merge_files_to_one_pdf(
-                liste_uuid_files=list_uuid_post_processing_convert)
+            post_processing_return["merge_pdf"]["input"] = list_uuid_post_processing_convert
+            post_processing_return["merge_pdf"]["output"] = [merge_files_to_one_pdf(
+                liste_uuid_files=list_uuid_post_processing_convert)]
         else:
-            post_processing_return["merge_pdf"] = merge_files_to_one_pdf(liste_uuid_files=uuid_list)
+            post_processing_return["merge_pdf"]["input"] = uuid_list
+            post_processing_return["merge_pdf"]["output"] = [merge_files_to_one_pdf(liste_uuid_files=uuid_list)]
     return post_processing_return
