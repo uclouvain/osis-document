@@ -24,12 +24,16 @@
 #
 # ##############################################################################
 import string
+from pathlib import Path
 
 import factory
+from django.core.files import File
 from factory.fuzzy import FuzzyText
 
+from backoffice.settings.base import OSIS_UPLOAD_FOLDER
 from osis_document.enums import TokenAccess
 from osis_document.models import Token, Upload
+from osis_document.utils import calculate_hash
 
 
 class PdfUploadFactory(factory.django.DjangoModelFactory):
@@ -45,6 +49,32 @@ class PdfUploadFactory(factory.django.DjangoModelFactory):
     }
 
 
+class TextDocumentUploadFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Upload
+
+    file = File(Path(OSIS_UPLOAD_FOLDER + 'OSIS-Document.docx').open(mode='rb'), name='a_DOCX_file.docx')
+    size = file.size
+    mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    metadata = {
+        'hash': calculate_hash(file),
+        'name': 'a_DOCX_file.docx',
+    }
+
+
+class CorrectPDFUploadFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Upload
+
+    file = File(Path(OSIS_UPLOAD_FOLDER + 'file-sample_1MB_doc.pdf').open(mode='rb'), name='a_PDF_file.pdf')
+    size = file.size
+    mimetype = 'application/pdf'
+    metadata = {
+        'hash': calculate_hash(file),
+        'name': 'a_PDF_file.pdf',
+    }
+
+
 class ImageUploadFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Upload
@@ -55,6 +85,19 @@ class ImageUploadFactory(factory.django.DjangoModelFactory):
     metadata = {
         'hash': '50d858e0985ecc7f60418aaf0cc5ab587f42c2570a884095a9e8ccacd0f6545c',
         'name': 'the_file.jpg',
+    }
+
+
+class BadExtensionUploadFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Upload
+
+    file = File(Path(OSIS_UPLOAD_FOLDER + 'sample-zip-file.zip').open(mode='rb'), name='sample-zip-file.zip')
+    size = 380
+    mimetype = "application/zip"
+    metadata = {
+        'hash': calculate_hash(file),
+        'name': 'sample-zip-file.zip',
     }
 
 
