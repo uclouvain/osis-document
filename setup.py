@@ -27,7 +27,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='OSIS Document',
-    version='OSIS-7850',
+    version='0.1',
     description='Document management API and widget',
     url='http://github.com/uclouvain/osis-document',
     author='Université catholique de Louvain',
