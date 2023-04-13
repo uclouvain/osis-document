@@ -217,10 +217,10 @@ downloaded files in  OSIS-Document
 Allowed Format : `Docx`, `Doc`, `Odt`, `txt`, `JPG`, and `PNG`
 
 ```python
-from osis_document.contrib.post_processing.converteur.context import Context
-from osis_document.contrib.post_processing.converteur.converteur_image_to_pdf import ConverterImageToPdf
+from osis_document.contrib.post_processing.converter.context import Context
+from osis_document.contrib.post_processing.converter.converter_image_to_pdf import ConverterImageToPdf
 
-context = Context(converteur=ConverterImageToPdf(), upload_object=Upload.objects.get(uuid=""))
+context = Context(converter=ConverterImageToPdf(), upload_object=Upload.objects.get(uuid=""), output_filename='new_filename')
 context.make_conversion()
 ```
 To convert a text file into a pdf use `ConverterTextDocumentToPdf`
@@ -236,10 +236,46 @@ If the files are not in the PDF format the correct conversion class must
 be used before merging.
 
 ```python
-from osis_document.contrib.post_processing.merge_file_to_pdf import merge_files_to_one_pdf
+from osis_document.contrib.post_processing.merger import Merger
 
-merge_files_to_one_pdf(liste_uuid_files=[], output_file_name='output.pdf')
-```
+Merger().process(input_uuid_files=[], filename='new_filename')
+``` 
+
+## Post-processing files
+
+To perform post-processing actions on files, use the utility function
+`post_processing`. This function allows you to convert files, merge files,
+or do both at the same time.
+
+To do this, set the `post_process_type` parameter with the appropriate
+values from the `PostProcessingEnums` enumeration and provide the uuids of
+the files.
+
+To define the name(s) of the output file(s), use the
+`output_convert_filename` and `output_merge_filename` parameters.
+
+```python
+from osis_document.utils import post_processing
+from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
+
+post_processing(uuid_list=[],
+                post_process_type=[],
+                output_convert_filename=None,
+                output_merge_filename=None)
+``` 
+### Post-processing output template
+```python
+output={
+  'convert_to_pdf': {
+    'input':[object_uuid, ...],
+    'output':[post_processing_object_uuid, ...]
+  },
+  'merge_pdf': {
+    'input':[object_uuid, ...],
+    'output':[post_processing_object_uuid]
+  }
+}
+``` 
 
 # Contributing to OSIS-Document
 
