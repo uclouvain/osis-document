@@ -34,7 +34,7 @@ __all__ = [
     'FileUploadField',
     'FileUploadWidget',
     'FileFieldSerializer',
-    'merge_files_to_one_pdf',
+    'process',
     'Context',
     'Converter',
     'ConverterImageToPdf',

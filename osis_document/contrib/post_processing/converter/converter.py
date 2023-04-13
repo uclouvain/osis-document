@@ -30,9 +30,8 @@ from osis_document.models import Upload, PostProcessing
 
 
 class Converter(ABC):
-
     @abstractmethod
-    def convert(self, upload_object: Upload) -> UUID:
+    def convert(self, upload_input_object: Upload, output_filename=None) -> UUID:
         pass
 
     @staticmethod
@@ -42,10 +41,15 @@ class Converter(ABC):
 
     @staticmethod
     @abstractmethod
-    def create_upload_instance(path: str) -> Upload:
+    def _get_output_filename(output_filename: str, upload_input_object: Upload) -> str:
         pass
 
     @staticmethod
     @abstractmethod
-    def create_post_processing_instance(input_object: Upload, output_object: Upload) -> PostProcessing:
+    def _create_upload_instance(path: str) -> Upload:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def _create_post_processing_instance(upload_input_object: Upload, upload_output_object: Upload) -> PostProcessing:
         pass

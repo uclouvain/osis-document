@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import os
 import subprocess
 from os.path import splitext
 from pathlib import Path
@@ -39,18 +40,22 @@ from osis_document.utils import calculate_hash
 
 
 class ConverterTextDocumentToPdf(Converter):
-
-    def convert(self, upload_object: Upload) -> UUID:
-        if upload_object.mimetype not in self.get_supported_format():
+    def convert(self, upload_input_object: Upload, output_filename=None) -> UUID:
+        if upload_input_object.mimetype not in self.get_supported_format():
             raise FormatInvalidException
         try:
-            new_file_name = splitext(upload_object.metadata['name'])[0] + '.pdf'
+            new_file_name = self._get_output_filename(output_filename=output_filename,
+                                                     upload_input_object=upload_input_object
+                                                     )
             cmd = subprocess.Popen(
-                f'lowriter --headless --convert-to pdf:writer_pdf_Export --outdir {OSIS_UPLOAD_FOLDER} {upload_object.file.path}',
+                f'lowriter --headless --convert-to pdf:writer_pdf_Export --outdir {OSIS_UPLOAD_FOLDER} {upload_input_object.file.path}',
                 shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             cmd.communicate()
-            pdf_upload_object = self.create_upload_instance(path=OSIS_UPLOAD_FOLDER + new_file_name)
-            post_processing_object = self.create_post_processing_instance(input_object=upload_object, output_object=pdf_upload_object)
+            os.rename(f'{splitext(upload_input_object.file.path)[0]}.pdf', f'{OSIS_UPLOAD_FOLDER}{new_file_name}')
+            pdf_upload_object = self._create_upload_instance(path=f'{OSIS_UPLOAD_FOLDER}{new_file_name}')
+            post_processing_object = self._create_post_processing_instance(upload_input_object=upload_input_object,
+                                                                          upload_output_object=pdf_upload_object
+                                                                          )
             return post_processing_object.uuid
         except Exception:
             raise ConversionError
@@ -62,7 +67,14 @@ class ConverterTextDocumentToPdf(Converter):
                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
 
     @staticmethod
-    def create_upload_instance(path: str) -> Upload:
+    def _get_output_filename(output_filename: str, upload_input_object: Upload) -> str:
+        if output_filename:
+            return output_filename + '.pdf'
+        else:
+            return splitext(upload_input_object.metadata['name'])[0] + '.pdf'
+
+    @staticmethod
+    def _create_upload_instance(path: str) -> Upload:
         with Path(path).open(mode='rb') as f:
             file = File(f, name=Path(path).name)
             instance = Upload(
@@ -76,9 +88,9 @@ class ConverterTextDocumentToPdf(Converter):
             return instance
 
     @staticmethod
-    def create_post_processing_instance(input_object: Upload, output_object: Upload) -> PostProcessing:
+    def _create_post_processing_instance(upload_input_object: Upload, upload_output_object: Upload) -> PostProcessing:
         instance = PostProcessing(type=PostProcessingType.CONVERT.name)
         instance.save()
-        instance.input_files.add(input_object)
-        instance.output_files.add(output_object)
+        instance.input_files.add(upload_input_object)
+        instance.output_files.add(upload_output_object)
         return instance

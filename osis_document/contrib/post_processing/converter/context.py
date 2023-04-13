@@ -31,9 +31,10 @@ from osis_document.models import Upload
 
 class Context:
 
-    def __init__(self, converter: Converter, upload_object: Upload) -> None:
+    def __init__(self, converter: Converter, upload_object: Upload, output_filename: str) -> None:
         self._upload_object = upload_object
         self._converter = converter
+        self.output_filename = output_filename
 
     @property
     def converter(self) -> Converter:
@@ -52,4 +53,4 @@ class Context:
         self._upload_object = upload_object
 
     def make_conversion(self) -> UUID:
-        return self._converter.convert(upload_object=self._upload_object)
+        return self._converter.convert(upload_input_object=self._upload_object, output_filename=self.output_filename)

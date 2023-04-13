@@ -177,22 +177,28 @@ def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
     return response.json().get('token')
 
 
-def post_processing(uuid_list: List, post_process_type: List) -> Dict:
-    post_processing_return = {'convert_to_pdf': {}, 'merge_pdf': {}}
+def post_processing(uuid_list: List, post_process_type: List, output_convert_filename=None,
+                    output_merge_filename=None) -> Dict:
+
     from osis_document.contrib.post_processing.converter.context import Context
     from osis_document.contrib.post_processing.converter.converter_text_document_to_pdf import \
         ConverterTextDocumentToPdf
     from osis_document.contrib.post_processing.converter.converter_image_to_pdf import ConverterImageToPdf
-    from osis_document.contrib.post_processing.merge_file_to_pdf import merge_files_to_one_pdf
+    from osis_document.contrib.post_processing.merger import Merger
+
     list_uuid_post_processing_convert = []
+    post_processing_return = {'convert_to_pdf': {}, 'merge_pdf': {}}
+
     if PostProcessingEnums.CONVERT_TO_PDF.name in post_process_type:
         for uuid_file in uuid_list:
             file = Upload.objects.get(uuid=uuid_file)
             if file.mimetype in ConverterImageToPdf.get_supported_format():
-                context = Context(converter=ConverterImageToPdf(), upload_object=file)
+                context = Context(converter=ConverterImageToPdf(), upload_object=file,
+                                  output_filename=output_convert_filename)
                 list_uuid_post_processing_convert.append(context.make_conversion())
             elif file.mimetype in ConverterTextDocumentToPdf.get_supported_format():
-                context = Context(converter=ConverterTextDocumentToPdf(), upload_object=file)
+                context = Context(converter=ConverterTextDocumentToPdf(), upload_object=file,
+                                  output_filename=output_convert_filename)
                 list_uuid_post_processing_convert.append(context.make_conversion())
             else:
                 raise FormatInvalidException
@@ -200,10 +206,13 @@ def post_processing(uuid_list: List, post_process_type: List) -> Dict:
         post_processing_return["convert_to_pdf"]["output"] = list_uuid_post_processing_convert
     if PostProcessingEnums.MERGE_PDF.name in post_process_type:
         if PostProcessingEnums.CONVERT_TO_PDF.name in post_process_type:
-            post_processing_return["merge_pdf"]["input"] = list_uuid_post_processing_convert
-            post_processing_return["merge_pdf"]["output"] = [merge_files_to_one_pdf(
-                liste_uuid_files=list_uuid_post_processing_convert)]
+            post_processing_return["merge_pdf"]["input"] = post_processing_return["convert_to_pdf"]["output"]
+            post_processing_return["merge_pdf"]["output"] = [
+                Merger().process(input_uuid_files=list_uuid_post_processing_convert, filename=output_merge_filename)
+            ]
         else:
             post_processing_return["merge_pdf"]["input"] = uuid_list
-            post_processing_return["merge_pdf"]["output"] = [merge_files_to_one_pdf(liste_uuid_files=uuid_list)]
+            post_processing_return["merge_pdf"]["output"] = [
+                Merger().process(input_uuid_files=uuid_list, filename=output_merge_filename)
+            ]
     return post_processing_return

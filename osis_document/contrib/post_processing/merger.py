@@ -23,51 +23,44 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from os.path import splitext
+import uuid
 from pathlib import Path
 from uuid import UUID
-from xdrlib import ConversionError
 
-from PIL import Image
 from django.core.files import File
+from pypdf import PdfMerger
 
 from backoffice.settings.base import OSIS_UPLOAD_FOLDER
-from osis_document.contrib.post_processing.converter.converter import Converter
 from osis_document.enums import PostProcessingType
 from osis_document.exceptions import FormatInvalidException
 from osis_document.models import Upload, PostProcessing
 from osis_document.utils import calculate_hash
 
 
-class ConverterImageToPdf(Converter):
-    def convert(self, upload_input_object: Upload, output_filename=None) -> UUID:
-        if upload_input_object.mimetype not in self.get_supported_format():
-            raise FormatInvalidException
-        try:
-            new_file_name = self._get_output_filename(output_filename=output_filename,
-                                                      upload_input_object=upload_input_object
-                                                      )
-            image = Image.open(upload_input_object.file)
-            image_pdf = image.convert('RGB')
-            image_pdf.save(OSIS_UPLOAD_FOLDER + new_file_name, quality=95, resolution=19.0, optimize=True)
-            pdf_upload_object = self._create_upload_instance(path=OSIS_UPLOAD_FOLDER + new_file_name)
-            post_processing_object = self._create_post_processing_instance(upload_input_object=upload_input_object,
-                                                                           upload_output_object=pdf_upload_object
-                                                                           )
-            return post_processing_object.uuid
-        except Exception:
-            raise ConversionError
+class Merger:
+    def process(self, input_uuid_files: list, filename=None) -> UUID:
+        input_files = Upload.objects.filter(uuid__in=input_uuid_files)
+        if not input_files:
+            input_files = Upload.objects.filter(output_files__uuid__in=input_uuid_files)
+        merger = PdfMerger()
+        for file in input_files:
+            if file.mimetype != "application/pdf":
+                raise FormatInvalidException
+            merger.append(file.file.path)
+        path = f'{OSIS_UPLOAD_FOLDER}{self._get_output_filename(filename)}'
+        merger.write(path)
+        merger.close()
+        pdf_upload_object = self._create_upload_instance(path=path)
+        post_processin_object = self._create_post_processing_instance(input_files=input_files,
+                                                                      output_file=pdf_upload_object)
+        return post_processin_object.uuid
 
     @staticmethod
-    def get_supported_format() -> list:
-        return ['image/png', 'image/jpg', 'image/jpeg']
-
-    @staticmethod
-    def _get_output_filename(output_filename: str, upload_input_object: Upload) -> str:
-        if output_filename:
-            return output_filename + '.pdf'
+    def _get_output_filename(filename: str):
+        if filename:
+            return f"{filename}.pdf"
         else:
-            return splitext(upload_input_object.metadata['name'])[0] + '.pdf'
+            return f"{'merge_' + str(uuid.uuid4())}.pdf"
 
     @staticmethod
     def _create_upload_instance(path: str) -> Upload:
@@ -84,9 +77,10 @@ class ConverterImageToPdf(Converter):
             return instance
 
     @staticmethod
-    def _create_post_processing_instance(upload_input_object: Upload, upload_output_object: Upload) -> PostProcessing:
-        instance = PostProcessing(type=PostProcessingType.CONVERT.name)
+    def _create_post_processing_instance(input_files: [Upload], output_file: Upload):
+        instance = PostProcessing(type=PostProcessingType.MERGE.name)
         instance.save()
-        instance.input_files.add(upload_input_object)
-        instance.output_files.add(upload_output_object)
+        for file in input_files:
+            instance.input_files.add(file)
+        instance.output_files.add(output_file)
         return instance
