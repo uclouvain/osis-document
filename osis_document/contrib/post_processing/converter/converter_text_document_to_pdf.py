@@ -45,18 +45,18 @@ class ConverterTextDocumentToPdf(Converter):
             raise FormatInvalidException
         try:
             new_file_name = self._get_output_filename(output_filename=output_filename,
-                                                     upload_input_object=upload_input_object
-                                                     )
+                                                      upload_input_object=upload_input_object
+                                                      )
             cmd = subprocess.Popen(
                 f'lowriter --headless --convert-to pdf:writer_pdf_Export --outdir {OSIS_UPLOAD_FOLDER} {upload_input_object.file.path}',
                 shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             cmd.communicate()
             os.rename(f'{splitext(upload_input_object.file.path)[0]}.pdf', f'{OSIS_UPLOAD_FOLDER}{new_file_name}')
             pdf_upload_object = self._create_upload_instance(path=f'{OSIS_UPLOAD_FOLDER}{new_file_name}')
-            post_processing_object = self._create_post_processing_instance(upload_input_object=upload_input_object,
-                                                                          upload_output_object=pdf_upload_object
-                                                                          )
-            return post_processing_object.uuid
+            self._create_post_processing_instance(upload_input_object=upload_input_object,
+                                                  upload_output_object=pdf_upload_object
+                                                  )
+            return pdf_upload_object.uuid
         except Exception:
             raise ConversionError
 

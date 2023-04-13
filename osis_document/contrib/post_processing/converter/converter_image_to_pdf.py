@@ -51,10 +51,10 @@ class ConverterImageToPdf(Converter):
             image_pdf = image.convert('RGB')
             image_pdf.save(OSIS_UPLOAD_FOLDER + new_file_name, quality=95, resolution=19.0, optimize=True)
             pdf_upload_object = self._create_upload_instance(path=OSIS_UPLOAD_FOLDER + new_file_name)
-            post_processing_object = self._create_post_processing_instance(upload_input_object=upload_input_object,
-                                                                           upload_output_object=pdf_upload_object
-                                                                           )
-            return post_processing_object.uuid
+            self._create_post_processing_instance(upload_input_object=upload_input_object,
+                                                  upload_output_object=pdf_upload_object
+                                                  )
+            return pdf_upload_object.uuid
         except Exception:
             raise ConversionError
 

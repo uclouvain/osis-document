@@ -268,11 +268,11 @@ post_processing(uuid_list=[],
 output={
   'convert_to_pdf': {
     'input':[object_uuid, ...],
-    'output':[post_processing_object_uuid, ...]
+    'output':[upload_object_uuid, ...]
   },
   'merge_pdf': {
     'input':[object_uuid, ...],
-    'output':[post_processing_object_uuid]
+    'output':[upload_object_uuid]
   }
 }
 ``` 

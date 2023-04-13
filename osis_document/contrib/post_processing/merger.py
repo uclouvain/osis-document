@@ -53,7 +53,7 @@ class Merger:
         pdf_upload_object = self._create_upload_instance(path=path)
         post_processin_object = self._create_post_processing_instance(input_files=input_files,
                                                                       output_file=pdf_upload_object)
-        return post_processin_object.uuid
+        return pdf_upload_object.uuid
 
     @staticmethod
     def _get_output_filename(filename: str):

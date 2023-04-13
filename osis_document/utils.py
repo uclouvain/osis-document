@@ -179,40 +179,42 @@ def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
 
 def post_processing(uuid_list: List, post_process_type: List, output_convert_filename=None,
                     output_merge_filename=None) -> Dict:
-
     from osis_document.contrib.post_processing.converter.context import Context
+    from osis_document.contrib.post_processing.merger import Merger
+
+    post_processing_return = {'convert_to_pdf': {}, 'merge_pdf': {}}
+    intermediary_output = []
+
+    for post_process in post_process_type:
+        if post_process == PostProcessingEnums.CONVERT_TO_PDF.name:
+            uuid_output_convert = []
+            for uuid_file in uuid_list:
+                upload_object = Upload.objects.get(uuid=uuid_file)
+                context = Context(converter=convertor_selector(upload_object=upload_object),
+                                  upload_object=upload_object,
+                                  output_filename=output_convert_filename)
+                uuid_output_convert.append(context.make_conversion())
+            post_processing_return["convert_to_pdf"]["input"] = uuid_list
+            post_processing_return["convert_to_pdf"]["output"] = intermediary_output = uuid_output_convert
+        if post_process == PostProcessingEnums.MERGE_PDF.name:
+            if intermediary_output:
+                post_processing_return["merge_pdf"]["input"] = intermediary_output
+            else:
+                post_processing_return["merge_pdf"]["input"] = uuid_list
+
+            merge_output = Merger().process(input_uuid_files=post_processing_return["merge_pdf"]["input"],
+                                            filename=output_merge_filename)
+            post_processing_return["merge_pdf"]["output"] = intermediary_output = [merge_output]
+    return post_processing_return
+
+
+def convertor_selector(upload_object: Upload):
     from osis_document.contrib.post_processing.converter.converter_text_document_to_pdf import \
         ConverterTextDocumentToPdf
     from osis_document.contrib.post_processing.converter.converter_image_to_pdf import ConverterImageToPdf
-    from osis_document.contrib.post_processing.merger import Merger
-
-    list_uuid_post_processing_convert = []
-    post_processing_return = {'convert_to_pdf': {}, 'merge_pdf': {}}
-
-    if PostProcessingEnums.CONVERT_TO_PDF.name in post_process_type:
-        for uuid_file in uuid_list:
-            file = Upload.objects.get(uuid=uuid_file)
-            if file.mimetype in ConverterImageToPdf.get_supported_format():
-                context = Context(converter=ConverterImageToPdf(), upload_object=file,
-                                  output_filename=output_convert_filename)
-                list_uuid_post_processing_convert.append(context.make_conversion())
-            elif file.mimetype in ConverterTextDocumentToPdf.get_supported_format():
-                context = Context(converter=ConverterTextDocumentToPdf(), upload_object=file,
-                                  output_filename=output_convert_filename)
-                list_uuid_post_processing_convert.append(context.make_conversion())
-            else:
-                raise FormatInvalidException
-        post_processing_return["convert_to_pdf"]["input"] = uuid_list
-        post_processing_return["convert_to_pdf"]["output"] = list_uuid_post_processing_convert
-    if PostProcessingEnums.MERGE_PDF.name in post_process_type:
-        if PostProcessingEnums.CONVERT_TO_PDF.name in post_process_type:
-            post_processing_return["merge_pdf"]["input"] = post_processing_return["convert_to_pdf"]["output"]
-            post_processing_return["merge_pdf"]["output"] = [
-                Merger().process(input_uuid_files=list_uuid_post_processing_convert, filename=output_merge_filename)
-            ]
-        else:
-            post_processing_return["merge_pdf"]["input"] = uuid_list
-            post_processing_return["merge_pdf"]["output"] = [
-                Merger().process(input_uuid_files=uuid_list, filename=output_merge_filename)
-            ]
-    return post_processing_return
+    if upload_object.mimetype in ConverterImageToPdf.get_supported_format():
+        return ConverterImageToPdf()
+    elif upload_object.mimetype in ConverterTextDocumentToPdf.get_supported_format():
+        return ConverterTextDocumentToPdf()
+    else:
+        raise FormatInvalidException
