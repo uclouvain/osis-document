@@ -1,12 +1,13 @@
-from osis_document.api import serializers
-from osis_document.api.schema import DetailedAutoSchema
-from osis_document.utils import post_processing
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from osis_document.api import serializers
+from osis_document.api.schema import DetailedAutoSchema
+from osis_document.utils import post_processing
 
-class RequestPostProcessingSchema(DetailedAutoSchema):
+
+class PostProcessingSchema(DetailedAutoSchema):
     serializer_mapping = {
         'POST': (None, serializers.PostProcessing),
     }
@@ -20,11 +21,11 @@ class RequestPostProcessingSchema(DetailedAutoSchema):
         return operation
 
 
-class RequestPostProcessingView(APIView):
+class PostProcessingView(APIView):
     name = 'request-post-processing'
     authentication_classes = []
     permission_classes = []
-    schema = RequestPostProcessingSchema
+    schema = PostProcessingSchema
 
     def post(self, *args, **kwargs):
         try:
@@ -33,7 +34,7 @@ class RequestPostProcessingView(APIView):
             })
             validated_data = input_serializer_data.is_valid(raise_exception=True)
             uuids_result_dict = post_processing(uuid_list=validated_data["files_uuid"],
-                                           post_process_type=validated_data["post_process_type"])
+                                                post_process_type=validated_data["post_process_type"])
             return Response(data=uuids_result_dict, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({

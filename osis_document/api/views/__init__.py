@@ -25,7 +25,7 @@
 # ##############################################################################
 
 from .metadata import MetadataView, ChangeMetadataView, MetadataListView
-from .post_processing import RequestPostProcessingView
+from .post_processing import PostProcessingView
 from .raw_file import RawFileView
 from .rotate import RotateImageView
 from .security import DeclareFileAsInfectedView
@@ -43,5 +43,5 @@ __all__ = [
     "GetTokenListView",
     "RotateImageView",
     "DeclareFileAsInfectedView",
-    'RequestPostProcessingView',
+    'PostProcessingView',
 ]

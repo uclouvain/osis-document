@@ -182,7 +182,9 @@ def post_processing(uuid_list: List, post_process_type: List, output_convert_fil
     from osis_document.contrib.post_processing.converter.context import Context
     from osis_document.contrib.post_processing.merger import Merger
 
-    post_processing_return = {'convert_to_pdf': {}, 'merge_pdf': {}}
+    post_processing_return = {}
+    post_processing_return.setdefault(PostProcessingEnums.CONVERT_TO_PDF.name, {'input': [], 'output': []})
+    post_processing_return.setdefault(PostProcessingEnums.MERGE_PDF.name, {'input': [], 'output': []})
     intermediary_output = []
 
     for post_process in post_process_type:
@@ -194,17 +196,19 @@ def post_processing(uuid_list: List, post_process_type: List, output_convert_fil
                                   upload_object=upload_object,
                                   output_filename=output_convert_filename)
                 uuid_output_convert.append(context.make_conversion())
-            post_processing_return["convert_to_pdf"]["input"] = uuid_list
-            post_processing_return["convert_to_pdf"]["output"] = intermediary_output = uuid_output_convert
+            post_processing_return[PostProcessingEnums.CONVERT_TO_PDF.name]["input"] = uuid_list
+            post_processing_return[PostProcessingEnums.CONVERT_TO_PDF.name][
+                "output"] = intermediary_output = uuid_output_convert
         if post_process == PostProcessingEnums.MERGE_PDF.name:
             if intermediary_output:
-                post_processing_return["merge_pdf"]["input"] = intermediary_output
+                post_processing_return[PostProcessingEnums.MERGE_PDF.name]["input"] = intermediary_output
             else:
-                post_processing_return["merge_pdf"]["input"] = uuid_list
+                post_processing_return[PostProcessingEnums.MERGE_PDF.name]["input"] = uuid_list
 
-            merge_output = Merger().process(input_uuid_files=post_processing_return["merge_pdf"]["input"],
-                                            filename=output_merge_filename)
-            post_processing_return["merge_pdf"]["output"] = intermediary_output = [merge_output]
+            merge_output = Merger().process(
+                input_uuid_files=post_processing_return[PostProcessingEnums.MERGE_PDF.name]["input"],
+                filename=output_merge_filename)
+            post_processing_return[PostProcessingEnums.MERGE_PDF.name]["output"] = intermediary_output = [merge_output]
     return post_processing_return
 
 

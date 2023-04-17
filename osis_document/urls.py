@@ -41,5 +41,5 @@ urlpatterns = [
     path('change-metadata/<path:token>', views.ChangeMetadataView.as_view(), name=views.ChangeMetadataView.name),
     path('rotate-image/<path:token>', views.RotateImageView.as_view(), name=views.RotateImageView.name),
     path('file/<path:token>', views.RawFileView.as_view(), name=views.RawFileView.name),
-    path('request-post-processing', views.RequestPostProcessingView.as_view(), name=views.RequestPostProcessingView.name),
+    path('post-processing', views.PostProcessingView.as_view(), name=views.PostProcessingView.name),
 ]
