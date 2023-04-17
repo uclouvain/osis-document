@@ -25,7 +25,7 @@ class PostProcessingView(APIView):
     name = 'request-post-processing'
     authentication_classes = []
     permission_classes = []
-    schema = PostProcessingSchema
+    schema = PostProcessingSchema()
 
     def post(self, *args, **kwargs):
         try:

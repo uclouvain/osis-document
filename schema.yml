@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: OSIS Document Service
-  version: 1.0.3
+  version: 1.0.4
   description: A set of API endpoints that allow you to get information about uploads
 paths:
   /metadata/{token}:
@@ -114,6 +114,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ConfirmUploadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ConfirmUploadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConfirmUploadRequest'
       responses:
         '201':
           content:
@@ -141,6 +147,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DeclareFileAsInfected'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeclareFileAsInfected'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DeclareFileAsInfected'
       responses:
         '201':
           content:
@@ -166,12 +178,18 @@ paths:
       - name: uuid
         in: path
         required: true
-        description: A UUID string identifying this Upload.
+        description: A UUID string identifying this Transfert.
         schema:
           type: string
       requestBody:
         content:
           application/json:
+            schema:
+              $ref: '#/components/schemas/Token'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Token'
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/Token'
       responses:
@@ -199,12 +217,18 @@ paths:
       - name: uuid
         in: path
         required: true
-        description: A UUID string identifying this Upload.
+        description: A UUID string identifying this Transfert.
         schema:
           type: string
       requestBody:
         content:
           application/json:
+            schema:
+              $ref: '#/components/schemas/Token'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Token'
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/Token'
       responses:
@@ -232,6 +256,18 @@ paths:
       requestBody:
         content:
           application/json:
+            type: array
+            items:
+              type: string
+              format: uuid
+              description: The uuid of the persisted file upload
+          application/x-www-form-urlencoded:
+            type: array
+            items:
+              type: string
+              format: uuid
+              description: The uuid of the persisted file upload
+          multipart/form-data:
             type: array
             items:
               type: string
@@ -267,6 +303,16 @@ paths:
       requestBody:
         content:
           application/json:
+            type: array
+            items:
+              type: string
+              description: The file token
+          application/x-www-form-urlencoded:
+            type: array
+            items:
+              type: string
+              description: The file token
+          multipart/form-data:
             type: array
             items:
               type: string
@@ -314,6 +360,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ChangeMetadata'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangeMetadata'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangeMetadata'
       responses:
         '200':
           content:
@@ -344,6 +396,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RotateImage'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RotateImage'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RotateImage'
       responses:
         '200':
           content:
@@ -359,6 +417,36 @@ paths:
           $ref: '#/components/responses/NotFound'
       tags:
       - rotate-image
+  /post-processing:
+    post:
+      operationId: postProcessing
+      description: ''
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+          application/x-www-form-urlencoded:
+            schema: {}
+          multipart/form-data:
+            schema: {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostProcessing'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - post-processing
+      security:
+      - ApiKeyAuth: []
 components:
   schemas:
     Metadata:
@@ -482,6 +570,20 @@ components:
           description: The rotation requested, in degrees, usually 90, 180 or 270
       required:
       - rotate
+    PostProcessing:
+      type: object
+      properties:
+        files_uuid:
+          type: array
+          items: {}
+          description: A list of files UUID
+        post_process_type:
+          type: array
+          items: {}
+          description: A list of actions to perform on the files
+      required:
+      - files_uuid
+      - post_process_type
     Error:
       type: object
       properties:
