@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 
 from osis_document.api import serializers
 from osis_document.api.schema import DetailedAutoSchema
-from osis_document.utils import post_processing
+from osis_document.utils import post_process
 
 
 class PostProcessingSchema(DetailedAutoSchema):
@@ -33,8 +33,8 @@ class PostProcessingView(APIView):
                 **self.request.data,
             })
             validated_data = input_serializer_data.is_valid(raise_exception=True)
-            uuids_result_dict = post_processing(uuid_list=validated_data["files_uuid"],
-                                                post_process_type=validated_data["post_process_type"])
+            uuids_result_dict = post_process(uuid_list=validated_data["files_uuid"],
+                                             post_process_type=validated_data["post_process_type"])
             return Response(data=uuids_result_dict, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({

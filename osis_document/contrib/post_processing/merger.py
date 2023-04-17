@@ -60,7 +60,7 @@ class Merger:
         if filename:
             return f"{filename}.pdf"
         else:
-            return f"{'merge_' + str(uuid.uuid4())}.pdf"
+            return f"merge_{uuid.uuid4()}.pdf"
 
     @staticmethod
     def _create_upload_instance(path: str) -> Upload:

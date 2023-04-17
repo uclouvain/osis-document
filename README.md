@@ -211,16 +211,18 @@ Note that the `Uploader` component has the `osis-document-uploader` class.
 
 In order to use the file conversion `OSIS_UPLOAD_FOLDER` must be defined
 in the `.env` file that shows the whole path to the folder of the
-downloaded files in  OSIS-Document
+downloaded files in  OSIS-Document **and LibreOffice must be installed on
+the computer.**
 
 ### Converter use
 Allowed Format : `Docx`, `Doc`, `Odt`, `txt`, `JPG`, and `PNG`
 
 ```python
-from osis_document.contrib.post_processing.converter.context import Context
+from osis_document.contrib.post_processing.converter.converter_registry import Context
 from osis_document.contrib.post_processing.converter.converter_image_to_pdf import ConverterImageToPdf
 
-context = Context(converter=ConverterImageToPdf(), upload_object=Upload.objects.get(uuid=""), output_filename='new_filename')
+context = Context(converter=ConverterImageToPdf(), upload_object=Upload.objects.get(uuid=""),
+                  output_filename='new_filename')
 context.make_conversion()
 ```
 To convert a text file into a pdf use `ConverterTextDocumentToPdf`
@@ -229,8 +231,7 @@ instead of ConverterImageToPdf
 ## Files merge in PDF
 In order to use the pdf merging `OSIS_UPLOAD_FOLDER` must be defined in
 the `.env` file  that shows the whole path to the folder of the
-downloaded files in  OSIS-Document and LibreOffice must be installed on
-the computer.
+downloaded files in  OSIS-Document.
 
 If the files are not in the PDF format the correct conversion class must
 be used before merging.
@@ -244,7 +245,7 @@ Merger().process(input_uuid_files=[], filename='new_filename')
 ## Post-processing files
 
 To perform post-processing actions on files, use the utility function
-`post_processing`. This function allows you to convert files, merge files,
+`post_process`. This function allows you to convert files, merge files,
 or do both at the same time.
 
 To do this, set the `post_process_type` parameter with the appropriate
@@ -255,10 +256,10 @@ To define the name(s) of the output file(s), use the
 `output_convert_filename` and `output_merge_filename` parameters.
 
 ```python
-from osis_document.utils import post_processing
+from osis_document.utils import post_process
 from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
 
-post_processing(uuid_list=[],
+post_process(uuid_list=[],
                 post_process_type=[],
                 output_convert_filename=None,
                 output_merge_filename=None)

@@ -40,7 +40,7 @@ from django.utils.translation import gettext_lazy as _
 
 from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
 from osis_document.enums import FileStatus
-from osis_document.exceptions import HashMismatch, FormatInvalidException
+from osis_document.exceptions import HashMismatch
 from osis_document.models import Token, Upload
 
 
@@ -177,10 +177,13 @@ def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
     return response.json().get('token')
 
 
-def post_processing(uuid_list: List, post_process_type: List, output_convert_filename=None,
-                    output_merge_filename=None) -> Dict:
-    from osis_document.contrib.post_processing.converter.context import Context
+def post_process(uuid_list: List, post_process_type: List, output_convert_filename=None,
+                 output_merge_filename=None) -> Dict[str, Dict[str, List[UUID]]]:
+    from osis_document.contrib.post_processing.converter.converter_registry import ConverterRegistry
     from osis_document.contrib.post_processing.merger import Merger
+    from osis_document.contrib.post_processing.converter.converter_text_document_to_pdf import \
+        ConverterTextDocumentToPdf
+    from osis_document.contrib.post_processing.converter.converter_image_to_pdf import ConverterImageToPdf
 
     post_processing_return = {}
     post_processing_return.setdefault(PostProcessingEnums.CONVERT_TO_PDF.name, {'input': [], 'output': []})
@@ -192,10 +195,11 @@ def post_processing(uuid_list: List, post_process_type: List, output_convert_fil
             uuid_output_convert = []
             for uuid_file in uuid_list:
                 upload_object = Upload.objects.get(uuid=uuid_file)
-                context = Context(converter=convertor_selector(upload_object=upload_object),
-                                  upload_object=upload_object,
-                                  output_filename=output_convert_filename)
-                uuid_output_convert.append(context.make_conversion())
+                converters = ConverterRegistry()
+                converters.add_converter(ConverterImageToPdf())
+                converters.add_converter(ConverterTextDocumentToPdf())
+                uuid_output_convert.append(converters.make_conversion(upload_object=upload_object,
+                                                                      output_filename=output_convert_filename))
             post_processing_return[PostProcessingEnums.CONVERT_TO_PDF.name]["input"] = uuid_list
             post_processing_return[PostProcessingEnums.CONVERT_TO_PDF.name][
                 "output"] = intermediary_output = uuid_output_convert
@@ -210,15 +214,3 @@ def post_processing(uuid_list: List, post_process_type: List, output_convert_fil
                 filename=output_merge_filename)
             post_processing_return[PostProcessingEnums.MERGE_PDF.name]["output"] = intermediary_output = [merge_output]
     return post_processing_return
-
-
-def convertor_selector(upload_object: Upload):
-    from osis_document.contrib.post_processing.converter.converter_text_document_to_pdf import \
-        ConverterTextDocumentToPdf
-    from osis_document.contrib.post_processing.converter.converter_image_to_pdf import ConverterImageToPdf
-    if upload_object.mimetype in ConverterImageToPdf.get_supported_format():
-        return ConverterImageToPdf()
-    elif upload_object.mimetype in ConverterTextDocumentToPdf.get_supported_format():
-        return ConverterTextDocumentToPdf()
-    else:
-        raise FormatInvalidException

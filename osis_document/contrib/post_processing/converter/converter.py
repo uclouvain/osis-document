@@ -24,9 +24,15 @@
 #
 # ##############################################################################
 from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import List
 from uuid import UUID
 
+from django.core.files import File
+
+from osis_document.enums import PostProcessingType
 from osis_document.models import Upload, PostProcessing
+from osis_document.utils import calculate_hash
 
 
 class Converter(ABC):
@@ -36,7 +42,7 @@ class Converter(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_supported_format() -> list:
+    def get_supported_formats() -> List:
         pass
 
     @staticmethod
@@ -45,11 +51,23 @@ class Converter(ABC):
         pass
 
     @staticmethod
-    @abstractmethod
     def _create_upload_instance(path: str) -> Upload:
-        pass
+        with Path(path).open(mode='rb') as f:
+            file = File(f, name=Path(path).name)
+            instance = Upload(
+                mimetype="application/pdf",
+                size=file.size,
+                metadata={'hash': calculate_hash(file), 'name': file.name},
+            )
+            instance.file = Path(path).name
+            instance.file.file = file
+            instance.save()
+            return instance
 
     @staticmethod
-    @abstractmethod
     def _create_post_processing_instance(upload_input_object: Upload, upload_output_object: Upload) -> PostProcessing:
-        pass
+        instance = PostProcessing(type=PostProcessingType.CONVERT.name)
+        instance.save()
+        instance.input_files.add(upload_input_object)
+        instance.output_files.add(upload_output_object)
+        return instance

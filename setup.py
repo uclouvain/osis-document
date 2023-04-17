@@ -38,5 +38,7 @@ setup(
     install_requires=[
         'requests>=2.20.0,<3.0',
         'filetype>=1.1.0,<2.0',
+        'Pillow==9.3.0',
+        'pypdf==3.6.0',
     ]
 )

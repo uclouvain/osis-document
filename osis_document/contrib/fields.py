@@ -75,7 +75,6 @@ class FileField(ArrayField):
             'upload_button_text': self.upload_button_text,
             'upload_text': self.upload_text,
             'upload_to': self.upload_to,
-            'post_processing': self.post_processing,
             **kwargs,
         })
 
@@ -102,5 +101,5 @@ class FileField(ArrayField):
         )
 
     def _post_processing(self, uuid_list: list):
-        from osis_document.api.utils import post_processing
-        return post_processing(uuid_list=[uuid_list], post_processing_type=self.post_processing)
+        from osis_document.api.utils import launch_post_processing
+        return launch_post_processing(uuid_list=[uuid_list], post_processing_type=self.post_processing)
