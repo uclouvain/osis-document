@@ -218,12 +218,8 @@ the computer.**
 Allowed Format : `Docx`, `Doc`, `Odt`, `txt`, `JPG`, and `PNG`
 
 ```python
-from osis_document.contrib.post_processing.converter.converter_registry import Context
-from osis_document.contrib.post_processing.converter.converter_image_to_pdf import ConverterImageToPdf
-
-context = Context(converter=ConverterImageToPdf(), upload_object=Upload.objects.get(uuid=""),
-                  output_filename='new_filename')
-context.make_conversion()
+from osis_document.contrib.post_processing.converter.converter_registry import converter_registry
+output = converter_registry.process(upload_objects_uuid= List[UUID], output_filename='new_filename')
 ```
 To convert a text file into a pdf use `ConverterTextDocumentToPdf`
 instead of ConverterImageToPdf
@@ -260,9 +256,8 @@ from osis_document.utils import post_process
 from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
 
 post_process(uuid_list=[],
-                post_process_type=[],
-                output_convert_filename=None,
-                output_merge_filename=None)
+             post_process_actions=[PostProcessingEnums.CONVERT_TO_PDF.name, PostProcessingEnums.MERGE_PDF.name],
+             output_filename=None)
 ``` 
 ### Post-processing output template
 ```python

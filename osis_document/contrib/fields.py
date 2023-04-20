@@ -30,7 +30,6 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.validators import ArrayMinLengthValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
 from osis_document.contrib.forms import FileUploadField
 from osis_document.utils import generate_filename
 from osis_document.validators import TokenValidator
@@ -102,4 +101,4 @@ class FileField(ArrayField):
 
     def _post_processing(self, uuid_list: list):
         from osis_document.api.utils import launch_post_processing
-        return launch_post_processing(uuid_list=[uuid_list], post_processing_type=self.post_processing)
+        return launch_post_processing(uuid_list=[uuid_list], post_processing_types=self.post_processing)

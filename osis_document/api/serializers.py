@@ -185,5 +185,5 @@ class TokenSerializer(serializers.ModelSerializer):
 class PostProcessing(serializers.Serializer):
     files_uuid = serializers.ListField(help_text="A list of files UUID",
                                        required=True, )
-    post_process_type = serializers.ListField(help_text="A list of actions to perform on the files",
-                                              required=True, )
+    post_process_types = serializers.ListField(help_text="A list of actions to perform on the files",
+                                               required=True, )

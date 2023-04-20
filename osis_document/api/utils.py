@@ -27,11 +27,10 @@ from typing import Union, List, Dict
 from urllib.parse import urlparse
 
 from django.conf import settings
+from osis_document.exceptions import FileInfectedException, UploadInvalidException
 from requests import HTTPError
 from rest_framework import status
 from rest_framework.views import APIView
-
-from osis_document.exceptions import FileInfectedException, UploadInvalidException
 
 
 def get_remote_metadata(token: str) -> Union[dict, None]:
@@ -150,10 +149,10 @@ def confirm_remote_upload(token, upload_to=None, related_model=None, related_mod
     return response.json().get('uuid')
 
 
-def launch_post_processing(uuid_list: List, post_processing_type: List):
+def launch_post_processing(uuid_list: List, post_processing_types: List):
     import requests
     url = "{}request-post-processing".format(settings.OSIS_DOCUMENT_BASE_URL)
-    data = {'post_process_type': post_processing_type, 'files_uuid': uuid_list}
+    data = {'post_process_types': post_processing_types, 'files_uuid': uuid_list}
     response = requests.post(
         url,
         json=data,
