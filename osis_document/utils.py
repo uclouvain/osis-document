@@ -37,10 +37,9 @@ from django.core import signing
 from django.core.exceptions import FieldError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
-
 from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
 from osis_document.enums import FileStatus
-from osis_document.exceptions import HashMismatch
+from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction
 from osis_document.models import Token, Upload
 
 
@@ -177,40 +176,26 @@ def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
     return response.json().get('token')
 
 
-def post_process(uuid_list: List, post_process_type: List, output_convert_filename=None,
-                 output_merge_filename=None) -> Dict[str, Dict[str, List[UUID]]]:
-    from osis_document.contrib.post_processing.converter.converter_registry import ConverterRegistry
-    from osis_document.contrib.post_processing.merger import Merger
-    from osis_document.contrib.post_processing.converter.converter_text_document_to_pdf import \
-        ConverterTextDocumentToPdf
-    from osis_document.contrib.post_processing.converter.converter_image_to_pdf import ConverterImageToPdf
+def post_process(uuid_list: List, post_process_actions: List, output_filename=None) -> Dict[str, Dict[str, List[UUID]]]:
+    from osis_document.contrib.post_processing.converter.converter_registry import converter_registry
+    from osis_document.contrib.post_processing.merger import merger
 
     post_processing_return = {}
     post_processing_return.setdefault(PostProcessingEnums.CONVERT_TO_PDF.name, {'input': [], 'output': []})
     post_processing_return.setdefault(PostProcessingEnums.MERGE_PDF.name, {'input': [], 'output': []})
     intermediary_output = []
 
-    for post_process in post_process_type:
-        if post_process == PostProcessingEnums.CONVERT_TO_PDF.name:
-            uuid_output_convert = []
-            for uuid_file in uuid_list:
-                upload_object = Upload.objects.get(uuid=uuid_file)
-                converters = ConverterRegistry()
-                converters.add_converter(ConverterImageToPdf())
-                converters.add_converter(ConverterTextDocumentToPdf())
-                uuid_output_convert.append(converters.make_conversion(upload_object=upload_object,
-                                                                      output_filename=output_convert_filename))
-            post_processing_return[PostProcessingEnums.CONVERT_TO_PDF.name]["input"] = uuid_list
-            post_processing_return[PostProcessingEnums.CONVERT_TO_PDF.name][
-                "output"] = intermediary_output = uuid_output_convert
-        if post_process == PostProcessingEnums.MERGE_PDF.name:
-            if intermediary_output:
-                post_processing_return[PostProcessingEnums.MERGE_PDF.name]["input"] = intermediary_output
-            else:
-                post_processing_return[PostProcessingEnums.MERGE_PDF.name]["input"] = uuid_list
+    processors = {
+        PostProcessingEnums.CONVERT_TO_PDF.name: converter_registry,
+        PostProcessingEnums.MERGE_PDF.name: merger,
+    }
 
-            merge_output = Merger().process(
-                input_uuid_files=post_processing_return[PostProcessingEnums.MERGE_PDF.name]["input"],
-                filename=output_merge_filename)
-            post_processing_return[PostProcessingEnums.MERGE_PDF.name]["output"] = intermediary_output = [merge_output]
+    for action_type in post_process_actions:
+        processor = processors.get(action_type, None)
+        if not processor:
+            raise InvalidPostProcessorAction
+        input = post_processing_return[action_type]["input"] = intermediary_output or uuid_list
+        intermediary_output = [processor.process(input, output_filename)]
+        post_processing_return[action_type]["output"] = intermediary_output
+
     return post_processing_return

@@ -29,11 +29,12 @@ from uuid import UUID
 from xdrlib import ConversionError
 
 from PIL import Image
-
-from backoffice.settings.base import OSIS_UPLOAD_FOLDER
 from osis_document.contrib.post_processing.converter.converter import Converter
 from osis_document.exceptions import FormatInvalidException
 from osis_document.models import Upload
+
+from backoffice.settings.base import OSIS_UPLOAD_FOLDER
+from .converter_registry import converter_registry
 
 
 class ConverterImageToPdf(Converter):
@@ -66,3 +67,5 @@ class ConverterImageToPdf(Converter):
         else:
             return splitext(upload_input_object.metadata['name'])[0] + '.pdf'
 
+
+converter_registry.add_converter(ConverterImageToPdf())

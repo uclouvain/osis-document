@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from typing import List
 from uuid import UUID
 
 from osis_document.contrib.post_processing.converter.converter import Converter
@@ -37,8 +38,14 @@ class ConverterRegistry:
     def add_converter(self, converter: Converter) -> None:
         self.converters.append(converter)
 
-    def make_conversion(self, upload_object: Upload, output_filename: str) -> UUID:
+    def process(self, upload_objects_uuid: List[UUID], output_filename: str) -> UUID:
+        upload_objects = Upload.objects.filter(uuid__in=upload_objects_uuid)
         for converter in self.converters:
-            if upload_object.mimetype in converter.get_supported_formats():
-                return converter.convert(upload_input_object=upload_object, output_filename=output_filename)
+            for upload_object in upload_objects:
+                if upload_object.mimetype in converter.get_supported_formats():
+                    return converter.convert(upload_input_object=upload_object, output_filename=output_filename)
         raise FormatInvalidException
+
+
+converter_registry = ConverterRegistry()
+

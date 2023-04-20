@@ -29,10 +29,12 @@ from os.path import splitext
 from typing import List
 from uuid import UUID
 
-from backoffice.settings.base import OSIS_UPLOAD_FOLDER
 from osis_document.contrib.post_processing.converter.converter import Converter
 from osis_document.exceptions import FormatInvalidException, ConversionError
 from osis_document.models import Upload
+
+from backoffice.settings.base import OSIS_UPLOAD_FOLDER
+from .converter_registry import converter_registry
 
 
 class ConverterTextDocumentToPdf(Converter):
@@ -67,3 +69,6 @@ class ConverterTextDocumentToPdf(Converter):
             return output_filename + '.pdf'
         else:
             return splitext(upload_input_object.metadata['name'])[0] + '.pdf'
+
+
+converter_registry.add_converter(ConverterTextDocumentToPdf())

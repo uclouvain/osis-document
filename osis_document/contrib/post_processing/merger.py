@@ -28,20 +28,24 @@ from pathlib import Path
 from uuid import UUID
 
 from django.core.files import File
+from django.db.models import Q
+from osis_document.enums import PostProcessingType
+from osis_document.exceptions import FormatInvalidException, MissingFileException
+from osis_document.models import Upload, PostProcessing
+from osis_document.utils import calculate_hash
 from pypdf import PdfMerger
 
 from backoffice.settings.base import OSIS_UPLOAD_FOLDER
-from osis_document.enums import PostProcessingType
-from osis_document.exceptions import FormatInvalidException
-from osis_document.models import Upload, PostProcessing
-from osis_document.utils import calculate_hash
 
 
 class Merger:
     def process(self, input_uuid_files: list, filename=None) -> UUID:
-        input_files = Upload.objects.filter(uuid__in=input_uuid_files)
-        if not input_files:
-            input_files = Upload.objects.filter(output_files__uuid__in=input_uuid_files)
+        input_files = Upload.objects.filter(
+            Q(uuid__in=input_uuid_files)
+            | Q(output_files__uuid__in=input_uuid_files)
+        ).distinct('uuid')
+        if len(input_files) != len(input_uuid_files):
+            raise MissingFileException
         merger = PdfMerger()
         for file in input_files:
             if file.mimetype != "application/pdf":
@@ -84,3 +88,6 @@ class Merger:
             instance.input_files.add(file)
         instance.output_files.add(output_file)
         return instance
+
+
+merger = Merger()
