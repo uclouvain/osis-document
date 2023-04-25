@@ -66,7 +66,7 @@ class ContentTypeSerializer(serializers.Serializer):
     )
     instance_filters = serializers.JSONField(
         help_text="Lookup arguments allowing to filter the model instances to return one single object that will be "
-                  "used to compute the upload directory path (via the 'upload_to' property)",
+        "used to compute the upload directory path (via the 'upload_to' property)",
         required=False,
     )
 
@@ -183,7 +183,11 @@ class TokenSerializer(serializers.ModelSerializer):
 
 
 class PostProcessing(serializers.Serializer):
-    files_uuid = serializers.ListField(help_text="A list of files UUID",
-                                       required=True, )
-    post_process_types = serializers.ListField(help_text="A list of actions to perform on the files",
-                                               required=True, )
+    files_uuid = serializers.ListField(
+        help_text="A list of files UUID",
+        required=True,
+    )
+    post_process_types = serializers.ListField(
+        help_text="A list of actions to perform on the files",
+        required=True,
+    )

@@ -94,8 +94,8 @@ def get_remote_token(uuid, write_token=False):
             return UploadInvalidException.__class__.__name__
         json = response.json()
         if (
-                response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-                and json['detail'] == FileInfectedException.default_detail
+            response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+            and json['detail'] == FileInfectedException.default_detail
         ):
             return FileInfectedException.__class__.__name__
         return json.get('token')
@@ -151,6 +151,7 @@ def confirm_remote_upload(token, upload_to=None, related_model=None, related_mod
 
 def launch_post_processing(uuid_list: List, post_processing_types: List):
     import requests
+
     url = "{}request-post-processing".format(settings.OSIS_DOCUMENT_BASE_URL)
     data = {'post_process_types': post_processing_types, 'files_uuid': uuid_list}
     response = requests.post(

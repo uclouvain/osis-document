@@ -101,6 +101,7 @@ class Upload(models.Model):
 
 def default_expiration_time():
     from django.utils.timezone import now
+
     max_age = getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
     return now() + timedelta(seconds=max_age)
 
@@ -154,22 +155,12 @@ class PostProcessing(models.Model):
         primary_key=True,
         default=uuid.uuid4,
     )
-    input_files = models.ManyToManyField(
-        to='osis_document.Upload',
-        verbose_name=_("Input"),
-        related_name='input_files'
-    )
+    input_files = models.ManyToManyField(to='osis_document.Upload', verbose_name=_("Input"), related_name='input_files')
     output_files = models.ManyToManyField(
-        to='osis_document.Upload',
-        verbose_name=_("Output"),
-        related_name='output_files'
+        to='osis_document.Upload', verbose_name=_("Output"), related_name='output_files'
     )
     created_at = models.DateTimeField(
         verbose_name=_("Created at"),
         auto_now_add=True,
     )
-    type = models.CharField(
-        max_length=255,
-        choices=PostProcessingType.choices(),
-        blank=False
-    )
+    type = models.CharField(max_length=255, choices=PostProcessingType.choices(), blank=False)

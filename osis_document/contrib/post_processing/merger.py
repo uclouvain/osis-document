@@ -41,8 +41,7 @@ from backoffice.settings.base import OSIS_UPLOAD_FOLDER
 class Merger:
     def process(self, input_uuid_files: list, filename=None) -> UUID:
         input_files = Upload.objects.filter(
-            Q(uuid__in=input_uuid_files)
-            | Q(output_files__uuid__in=input_uuid_files)
+            Q(uuid__in=input_uuid_files) | Q(output_files__uuid__in=input_uuid_files)
         ).distinct('uuid')
         if len(input_files) != len(input_uuid_files):
             raise MissingFileException
@@ -55,8 +54,9 @@ class Merger:
         merger.write(path)
         merger.close()
         pdf_upload_object = self._create_upload_instance(path=path)
-        post_processin_object = self._create_post_processing_instance(input_files=input_files,
-                                                                      output_file=pdf_upload_object)
+        post_processin_object = self._create_post_processing_instance(
+            input_files=input_files, output_file=pdf_upload_object
+        )
         return pdf_upload_object.uuid
 
     @staticmethod

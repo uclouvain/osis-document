@@ -29,19 +29,18 @@ import filetype
 from django.conf import settings
 from django.core.exceptions import FieldError
 from django.forms import modelform_factory
+from osis_document.api import serializers
+from osis_document.api.permissions import APIKeyPermission
+from osis_document.api.schema import DetailedAutoSchema
+from osis_document.api.utils import CorsAllowOriginMixin
+from osis_document.exceptions import MimeMismatch
+from osis_document.models import Upload
+from osis_document.utils import calculate_hash, confirm_upload, get_token
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
-
-from osis_document.api import serializers
-from osis_document.api.schema import DetailedAutoSchema
-from osis_document.api.permissions import APIKeyPermission
-from osis_document.api.utils import CorsAllowOriginMixin
-from osis_document.exceptions import MimeMismatch
-from osis_document.models import Upload
-from osis_document.utils import calculate_hash, confirm_upload, get_token
 
 
 class RequestUploadSchema(DetailedAutoSchema):  # pragma: no cover
@@ -54,29 +53,14 @@ class RequestUploadSchema(DetailedAutoSchema):  # pragma: no cover
 
     def get_responses(self, path, method):
         responses = super().get_responses(path, method)
-        responses['429'] = {
-            "description": "Too many requests",
-            "content": {
-                "application/json": {
-                    "schema": {}
-                }
-            }
-        }
+        responses['429'] = {"description": "Too many requests", "content": {"application/json": {"schema": {}}}}
         return responses
 
     def get_request_body(self, path, method):
         return {
             "content": {
                 "multipart/form-data": {
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "file": {
-                                "type": "string",
-                                "format": "binary"
-                            }
-                        }
-                    }
+                    "schema": {"type": "object", "properties": {"file": {"type": "string", "format": "binary"}}}
                 }
             }
         }
@@ -89,6 +73,7 @@ class UploadUserThrottle(UserRateThrottle):
 
 class RequestUploadView(CorsAllowOriginMixin, APIView):
     """Receive a file (from VueJS) and create a temporary upload object"""
+
     name = 'request-upload'
     authentication_classes = []
     permission_classes = []
@@ -136,6 +121,7 @@ class ConfirmUploadSchema(DetailedAutoSchema):  # pragma: no cover
 
 class ConfirmUploadView(CorsAllowOriginMixin, APIView):
     """Given a writing token and server-to-server request, persist the matching upload"""
+
     name = 'confirm-upload'
     authentication_classes = []
     permission_classes = [APIKeyPermission]
@@ -143,9 +129,11 @@ class ConfirmUploadView(CorsAllowOriginMixin, APIView):
 
     def post(self, *args, **kwargs):
         try:
-            input_serializer_data = serializers.ConfirmUploadRequestSerializer(data={
-                **self.request.data,
-            })
+            input_serializer_data = serializers.ConfirmUploadRequestSerializer(
+                data={
+                    **self.request.data,
+                }
+            )
             input_serializer_data.is_valid(raise_exception=True)
             validated_data = input_serializer_data.validated_data
             uuid = confirm_upload(
@@ -154,7 +142,5 @@ class ConfirmUploadView(CorsAllowOriginMixin, APIView):
                 model_instance=validated_data.get('related_model', {}).get('instance'),
             )
         except FieldError as e:
-            return Response({
-                'error': str(e)
-            }, status.HTTP_400_BAD_REQUEST)
+            return Response({'error': str(e)}, status.HTTP_400_BAD_REQUEST)
         return Response({'uuid': uuid}, status.HTTP_201_CREATED)

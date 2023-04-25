@@ -42,26 +42,29 @@ class ConverterTextDocumentToPdf(Converter):
         if upload_input_object.mimetype not in self.get_supported_formats():
             raise FormatInvalidException
         try:
-            new_file_name = self._get_output_filename(output_filename=output_filename,
-                                                      upload_input_object=upload_input_object
-                                                      )
+            new_file_name = self._get_output_filename(
+                output_filename=output_filename, upload_input_object=upload_input_object
+            )
             command = f'lowriter --headless --convert-to pdf:writer_pdf_Export --outdir {OSIS_UPLOAD_FOLDER} {upload_input_object.file.path}'
             subprocess.run(command, shell=True)
 
             os.rename(f'{splitext(upload_input_object.file.path)[0]}.pdf', f'{OSIS_UPLOAD_FOLDER}{new_file_name}')
             pdf_upload_object = self._create_upload_instance(path=f'{OSIS_UPLOAD_FOLDER}{new_file_name}')
-            self._create_post_processing_instance(upload_input_object=upload_input_object,
-                                                  upload_output_object=pdf_upload_object
-                                                  )
+            self._create_post_processing_instance(
+                upload_input_object=upload_input_object, upload_output_object=pdf_upload_object
+            )
             return pdf_upload_object.uuid
         except Exception:
             raise ConversionError
 
     @staticmethod
     def get_supported_formats() -> List:
-        return ['text/plain', 'application/msword',
-                'application/vnd.oasis.opendocument.text',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+        return [
+            'text/plain',
+            'application/msword',
+            'application/vnd.oasis.opendocument.text',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ]
 
     @staticmethod
     def _get_output_filename(output_filename: str, upload_input_object: Upload) -> str:

@@ -34,10 +34,15 @@ from osis_document.contrib.post_processing.post_processing_enums import PostProc
 from osis_document.enums import FileStatus
 from osis_document.exceptions import HashMismatch, FormatInvalidException
 from osis_document.models import Upload, PostProcessing
-from osis_document.tests.factories import PdfUploadFactory, WriteTokenFactory, CorrectPDFUploadFactory, \
-    ImageUploadFactory, BadExtensionUploadFactory, TextDocumentUploadFactory
-from osis_document.utils import confirm_upload, generate_filename, get_metadata, is_uuid, save_raw_upload, \
-    post_process
+from osis_document.tests.factories import (
+    PdfUploadFactory,
+    WriteTokenFactory,
+    CorrectPDFUploadFactory,
+    ImageUploadFactory,
+    BadExtensionUploadFactory,
+    TextDocumentUploadFactory,
+)
+from osis_document.utils import confirm_upload, generate_filename, get_metadata, is_uuid, save_raw_upload, post_process
 
 
 @override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
@@ -174,15 +179,20 @@ class PostProcessingTestCase(TestCase):
         a_image = ImageUploadFactory()
         post_processing_types = [PostProcessingEnums.CONVERT_TO_PDF.name]
         output_filename = "test_img_convert"
-        uuid_output = post_process(uuid_list=[a_image.uuid], post_process_actions=post_processing_types,
-                                   output_filename=output_filename)
+        uuid_output = post_process(
+            uuid_list=[a_image.uuid], post_process_actions=post_processing_types, output_filename=output_filename
+        )
         output_upload_object = Upload.objects.get(
-            uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"])
+            uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]
+        )
         self.assertTrue(
-            Upload.objects.filter(uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]).exists())
+            Upload.objects.filter(uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]).exists()
+        )
         self.assertTrue(
             PostProcessing.objects.filter(
-                output_files__uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]).exists())
+                output_files__uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]
+            ).exists()
+        )
         self.assertTrue(output_upload_object.size > a_image.size)
         self.assertEqual(output_upload_object.file.name, f'{output_filename}.pdf')
 
@@ -190,15 +200,22 @@ class PostProcessingTestCase(TestCase):
         a_text_document = TextDocumentUploadFactory()
         post_processing_types = [PostProcessingEnums.CONVERT_TO_PDF.name]
         output_filename = "test_text_document_convert"
-        uuid_output = post_process(uuid_list=[a_text_document.uuid], post_process_actions=post_processing_types,
-                                   output_filename=output_filename)
+        uuid_output = post_process(
+            uuid_list=[a_text_document.uuid],
+            post_process_actions=post_processing_types,
+            output_filename=output_filename,
+        )
         output_upload_object = Upload.objects.get(
-            uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"])
+            uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]
+        )
         self.assertTrue(
-            Upload.objects.filter(uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]).exists())
+            Upload.objects.filter(uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]).exists()
+        )
         self.assertTrue(
             PostProcessing.objects.filter(
-                output_files__uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]).exists())
+                output_files__uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]
+            ).exists()
+        )
         self.assertTrue(output_upload_object.size >= a_text_document.size)
         self.assertEqual(output_upload_object.file.name, f'{output_filename}.pdf')
 
@@ -208,14 +225,18 @@ class PostProcessingTestCase(TestCase):
         uuid_list = [file1.uuid, file2.uuid]
         post_processing_types = [PostProcessingEnums.MERGE_PDF.name]
         output_filename = "test_merge"
-        uuid_output = post_process(uuid_list=uuid_list, post_process_actions=post_processing_types,
-                                   output_filename=output_filename)
+        uuid_output = post_process(
+            uuid_list=uuid_list, post_process_actions=post_processing_types, output_filename=output_filename
+        )
         output_upload_object = Upload.objects.get(uuid__in=uuid_output[PostProcessingEnums.MERGE_PDF.name]["output"])
         self.assertTrue(
-            Upload.objects.filter(uuid__in=uuid_output[PostProcessingEnums.MERGE_PDF.name]["output"]).exists())
+            Upload.objects.filter(uuid__in=uuid_output[PostProcessingEnums.MERGE_PDF.name]["output"]).exists()
+        )
         self.assertTrue(
             PostProcessing.objects.filter(
-                output_files__uuid__in=uuid_output[PostProcessingEnums.MERGE_PDF.name]["output"]).exists())
+                output_files__uuid__in=uuid_output[PostProcessingEnums.MERGE_PDF.name]["output"]
+            ).exists()
+        )
         self.assertEqual(Upload.objects.all().__len__(), 3)
         self.assertTrue(file1.size + file2.size <= output_upload_object.size + (file2.size / 10))
         self.assertEqual(output_upload_object.file.name, f'{output_filename}.pdf')
@@ -225,13 +246,18 @@ class PostProcessingTestCase(TestCase):
         a_text_document = TextDocumentUploadFactory()
         output_filename = "test_merge_and_convert"
         post_processing_types = [PostProcessingEnums.CONVERT_TO_PDF.name, PostProcessingEnums.MERGE_PDF.name]
-        uuid_output = post_process(uuid_list=[a_image.uuid, a_text_document.uuid],
-                                   post_process_actions=post_processing_types, output_filename=output_filename)
+        uuid_output = post_process(
+            uuid_list=[a_image.uuid, a_text_document.uuid],
+            post_process_actions=post_processing_types,
+            output_filename=output_filename,
+        )
         output_upload_object = Upload.objects.get(uuid__in=uuid_output[PostProcessingEnums.MERGE_PDF.name]["output"])
         self.assertTrue(
-            Upload.objects.filter(uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]).exists())
+            Upload.objects.filter(uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]).exists()
+        )
         self.assertTrue(
-            Upload.objects.filter(uuid__in=uuid_output[PostProcessingEnums.MERGE_PDF.name]["output"]).exists())
+            Upload.objects.filter(uuid__in=uuid_output[PostProcessingEnums.MERGE_PDF.name]["output"]).exists()
+        )
         self.assertEqual(output_upload_object.file.name, f'{output_filename}.pdf')
 
     def test_merge_with_bad_file_extensions(self):

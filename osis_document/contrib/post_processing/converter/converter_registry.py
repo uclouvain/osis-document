@@ -33,6 +33,7 @@ from osis_document.models import Upload
 
 class ConverterRegistry:
     """Register and launch appropriate converters"""
+
     converters = []
 
     def add_converter(self, converter: Converter) -> None:
@@ -48,4 +49,3 @@ class ConverterRegistry:
 
 
 converter_registry = ConverterRegistry()
-

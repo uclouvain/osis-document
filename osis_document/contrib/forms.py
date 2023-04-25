@@ -50,6 +50,7 @@ class TokenField(forms.CharField):
         cleaned_data = super().clean(value)
         # Check file presence, size and mimetype
         from osis_document.api.utils import get_remote_metadata
+
         metadata = get_remote_metadata(cleaned_data)
         if not metadata:
             raise forms.ValidationError(self.error_messages['nonexistent'], code='nonexistent')
@@ -76,17 +77,20 @@ class FileUploadField(SplitArrayField):
         self.min_files = kwargs.pop('min_files', None)
         self.upload_to = kwargs.pop('upload_to', None)
         self.related_model = kwargs.pop('related_model', None)
-        kwargs.setdefault('widget', FileUploadWidget(
-            max_size=self.max_size,
-            mimetypes=self.mimetypes,
-            automatic_upload=kwargs.pop('automatic_upload', True),
-            can_edit_filename=kwargs.pop('can_edit_filename', True),
-            upload_button_text=kwargs.pop('upload_button_text', None),
-            upload_text=kwargs.pop('upload_text', None),
-            size=self.min_files,
-            min_files=self.min_files,
-            max_files=self.max_files,
-        ))
+        kwargs.setdefault(
+            'widget',
+            FileUploadWidget(
+                max_size=self.max_size,
+                mimetypes=self.mimetypes,
+                automatic_upload=kwargs.pop('automatic_upload', True),
+                can_edit_filename=kwargs.pop('can_edit_filename', True),
+                upload_button_text=kwargs.pop('upload_button_text', None),
+                upload_text=kwargs.pop('upload_text', None),
+                size=self.min_files,
+                min_files=self.min_files,
+                max_files=self.max_files,
+            ),
+        )
         base_field = TokenField(
             required=True,
             max_size=self.max_size,
@@ -114,6 +118,7 @@ class FileUploadField(SplitArrayField):
     def persist(self, values, related_model_instance=None):
         """Call the remote API to persist the uploaded files."""
         from osis_document.api.utils import confirm_remote_upload
+
         return [
             confirm_remote_upload(
                 token=token,
@@ -128,6 +133,6 @@ class FileUploadField(SplitArrayField):
         """Get a remote token when given an uuid as initial value"""
         if isinstance(value, list):
             from osis_document.api.utils import get_remote_token
-            return [get_remote_token(v, write_token=True) if is_uuid(v) else v
-                    for v in value]
+
+            return [get_remote_token(v, write_token=True) if is_uuid(v) else v for v in value]
         return value

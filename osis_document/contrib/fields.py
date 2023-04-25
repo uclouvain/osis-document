@@ -37,6 +37,7 @@ from osis_document.validators import TokenValidator
 
 class FileField(ArrayField):
     """This is the model field that handle storage of UUIDs"""
+
     default_error_messages = {
         'invalid_token': _("Invalid token"),
     }
@@ -63,19 +64,21 @@ class FileField(ArrayField):
 
     def formfield(self, **kwargs):
         """Transfer all properties to the form field"""
-        return super(ArrayField, self).formfield(**{
-            'form_class': FileUploadField,
-            'max_size': self.max_size,
-            'min_files': self.min_files,
-            'max_files': self.max_files,
-            'mimetypes': self.mimetypes,
-            'automatic_upload': self.automatic_upload,
-            'can_edit_filename': self.can_edit_filename,
-            'upload_button_text': self.upload_button_text,
-            'upload_text': self.upload_text,
-            'upload_to': self.upload_to,
-            **kwargs,
-        })
+        return super(ArrayField, self).formfield(
+            **{
+                'form_class': FileUploadField,
+                'max_size': self.max_size,
+                'min_files': self.min_files,
+                'max_files': self.max_files,
+                'mimetypes': self.mimetypes,
+                'automatic_upload': self.automatic_upload,
+                'can_edit_filename': self.can_edit_filename,
+                'upload_button_text': self.upload_button_text,
+                'upload_text': self.upload_text,
+                'upload_to': self.upload_to,
+                **kwargs,
+            }
+        )
 
     def pre_save(self, model_instance, add):
         """Convert all writing tokens to UUIDs by remotely confirming their upload, leaving existing uuids"""
@@ -101,4 +104,5 @@ class FileField(ArrayField):
 
     def _post_processing(self, uuid_list: list):
         from osis_document.api.utils import launch_post_processing
+
         return launch_post_processing(uuid_list=[uuid_list], post_processing_types=self.post_processing)

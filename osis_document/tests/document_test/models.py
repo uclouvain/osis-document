@@ -4,10 +4,7 @@ from osis_document.contrib.fields import FileField
 
 
 def compute_upload_to(value, filename):
-    return 'default_path/{}/{}'.format(
-        getattr(value, 'id', 'others/'),
-        filename
-    )
+    return 'default_path/{}/{}'.format(getattr(value, 'id', 'others/'), filename)
 
 
 class TestDocument(models.Model):

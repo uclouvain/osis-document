@@ -47,10 +47,7 @@ class UploadAdmin(admin.ModelAdmin):
     ]
 
     def file_button(self, obj):
-        return format_html(
-            '<a href="{}" target="_blank" class="button">&nbsp;&gt;&nbsp;</a>',
-            obj.file.url
-        )
+        return format_html('<a href="{}" target="_blank" class="button">&nbsp;&gt;&nbsp;</a>', obj.file.url)
 
     file_button.short_description = _('File')
 
