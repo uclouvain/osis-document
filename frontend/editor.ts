@@ -23,11 +23,36 @@
  * see http://www.gnu.org/licenses/.
  *
  */
+// eslint-disable-next-line vue/prefer-import-from-vue
+import {createApp} from '@vue/runtime-dom'; // So it can be spied on in tests
+import {i18n} from './i18n';
+import Editor from './DocumentEditor.vue';
 
-// Declare *.vue file export as Vue components,
-// see https://github.com/vuejs/vue-eslint-parser/issues/104#issuecomment-1217306443
-declare module "*.vue" {
-  import { DefineComponent } from "vue";
-  const component: DefineComponent;
-  export default component;
+
+interface EditorProps extends Record<string, unknown> {
+  baseUrl: string,
+  value: string,
+  pagination?: boolean,
+  zoom?: boolean,
+  comment?: boolean,
+  highlight?: boolean,
+  rotation?: boolean,
 }
+
+function initEditors() {
+  document.querySelectorAll<HTMLElement>('.osis-document-editor:not([data-v-app])').forEach((elem) => {
+    const props: EditorProps = {baseUrl: "", value: "", ...elem.dataset};
+    for (const propName of ['pagination', 'zoom', 'comment', 'highlight', 'rotation'])
+      if (typeof elem.dataset[propName] !== 'undefined') {
+        props[propName] = elem.dataset[propName] === "true";
+      }
+    createApp(Editor, props).use(i18n).mount(elem);
+  });
+}
+
+// Initialize at first load
+initEditors();
+
+// Initialize later if nodes are added dynamically
+const observer = new MutationObserver(initEditors);
+observer.observe(document, {childList: true, subtree: true});

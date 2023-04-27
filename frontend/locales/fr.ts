@@ -48,6 +48,22 @@ export default {
     save: "Enregistrer",
     file_infected: "Le fichier référencé semble infecté par un virus",
   },
+  editor: {
+    pagination: '{currentPage} de {pages}',
+    zoom: {
+      auto: "Zoom automatique",
+      'page-width': "Pleine largeur",
+      'page-fit': "Page entière",
+      'page-actual': "Taille réelle",
+    },
+    colors: {
+      warning: 'Jaune',
+      danger: 'Rouge',
+      info: 'Bleu',
+      success: 'Vert',
+      muted: 'Blanc',
+    },
+  },
   error: 'Erreur : {error}',
   request_error: 'Erreur lors de la requête : {error}',
   units: ['o', 'Ko', 'Mo', 'Go', 'To'],

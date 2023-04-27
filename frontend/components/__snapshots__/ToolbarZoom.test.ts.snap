@@ -1,0 +1,22 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`should mount 1`] = `
+"<div class=\\"btn-group\\"><button class=\\"btn btn-default\\" type=\\"button\\"><span class=\\"fas fa-magnifying-glass-plus\\"></span></button>
+  <div class=\\"btn-group dropup\\" role=\\"group\\"><button type=\\"button\\" class=\\"btn btn-default dropdown-toggle\\" data-toggle=\\"dropdown\\" aria-haspopup=\\"true\\" aria-expanded=\\"false\\">editor.zoom.auto <span class=\\"caret\\"></span></button>
+    <ul class=\\"dropdown-menu\\">
+      <li class=\\"active\\" value=\\"0\\"><a href=\\"#\\">editor.zoom.auto</a></li>
+      <li class=\\"\\" value=\\"0\\"><a href=\\"#\\">editor.zoom.page-actual</a></li>
+      <li class=\\"\\" value=\\"0\\"><a href=\\"#\\">editor.zoom.page-fit</a></li>
+      <li class=\\"\\" value=\\"0\\"><a href=\\"#\\">editor.zoom.page-width</a></li>
+      <li class=\\"\\" value=\\"0\\"><a href=\\"#\\">50%</a></li>
+      <li class=\\"\\" value=\\"0\\"><a href=\\"#\\">75%</a></li>
+      <li class=\\"\\" value=\\"1\\"><a href=\\"#\\">100%</a></li>
+      <li class=\\"\\" value=\\"1\\"><a href=\\"#\\">125%</a></li>
+      <li class=\\"\\" value=\\"1\\"><a href=\\"#\\">150%</a></li>
+      <li class=\\"\\" value=\\"2\\"><a href=\\"#\\">200%</a></li>
+      <li class=\\"\\" value=\\"3\\"><a href=\\"#\\">300%</a></li>
+      <li class=\\"\\" value=\\"4\\"><a href=\\"#\\">400%</a></li>
+    </ul>
+  </div><button class=\\"btn btn-default\\" type=\\"button\\"><span class=\\"fas fa-magnifying-glass-minus\\"></span></button>
+</div>"
+`;

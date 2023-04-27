@@ -24,10 +24,23 @@
  *
  */
 
-// Declare *.vue file export as Vue components,
-// see https://github.com/vuejs/vue-eslint-parser/issues/104#issuecomment-1217306443
-declare module "*.vue" {
-  import { DefineComponent } from "vue";
-  const component: DefineComponent;
-  export default component;
-}
+import {it, expect} from 'vitest';
+import {mount} from "@vue/test-utils";
+import ToolbarRotation from "./ToolbarRotation.vue";
+
+const props = {
+  currentRotation: 0,
+};
+
+it('should mount', () => {
+  const wrapper = mount(ToolbarRotation, {props});
+  expect(wrapper.html()).toMatchSnapshot();
+});
+
+it('should emit events', async () => {
+  const wrapper = mount(ToolbarRotation, {props});
+  await wrapper.findAll('button')[0].trigger('click');
+  expect(wrapper.emitted()).toHaveProperty('onRotate.0.0', -90);
+  await wrapper.findAll('button')[1].trigger('click');
+  expect(wrapper.emitted()).toHaveProperty('onRotate.1.0', 90);
+});

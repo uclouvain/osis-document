@@ -24,10 +24,35 @@
  *
  */
 
-// Declare *.vue file export as Vue components,
-// see https://github.com/vuejs/vue-eslint-parser/issues/104#issuecomment-1217306443
-declare module "*.vue" {
-  import { DefineComponent } from "vue";
-  const component: DefineComponent;
-  export default component;
-}
+import {vi, it, expect} from 'vitest';
+import {mount} from "@vue/test-utils";
+import ToolbarZoom from "./ToolbarZoom.vue";
+
+vi.mock("vue-i18n", () => ({
+  useI18n: () => ({ t: (key: string) => key }),
+}));
+
+it('should mount', () => {
+  const wrapper = mount(ToolbarZoom, {
+    props: {
+      currentZoom: 'auto',
+    },
+  });
+  expect(wrapper.html()).toMatchSnapshot();
+});
+
+it('should emit events', async () => {
+  const wrapper = mount(ToolbarZoom, {
+    props: {
+      currentZoom: 'auto',
+    },
+  });
+  await wrapper.findAll('button')[0].trigger('click');
+  expect(wrapper.emitted()).toHaveProperty('onZoomIn');
+
+  await wrapper.findAll('button')[2].trigger('click');
+  expect(wrapper.emitted()).toHaveProperty('onZoomOut');
+
+  await wrapper.findAll('li a')[2].trigger('click');
+  expect(wrapper.emitted()).toHaveProperty('onSetScale.0.0', 'page-fit');
+});

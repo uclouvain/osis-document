@@ -43,6 +43,16 @@ def document_visualizer(values):
     }
 
 
+@register.inclusion_tag('osis_document/editor.html')
+def document_editor(value, **attrs):
+    from osis_document.api.utils import get_remote_token
+    return {
+        'value': get_remote_token(value, write_token=True),
+        'base_url': settings.OSIS_DOCUMENT_BASE_URL,
+        'attrs': attrs,
+    }
+
+
 @register.simple_tag
 def get_metadata(uuid):
     from osis_document.api.utils import get_remote_metadata, get_remote_token

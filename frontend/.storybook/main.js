@@ -29,7 +29,7 @@ module.exports = {
   stories: [
     '../**/*.stories.@(js|jsx|ts|tsx)',
   ],
-  staticDirs: ['../assets/'],
+  staticDirs: ['../assets/', '../../osis_document/'],
   addons: [
     '@storybook/addon-essentials',
   ],
