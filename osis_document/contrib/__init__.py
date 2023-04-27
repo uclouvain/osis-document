@@ -24,12 +24,22 @@
 #
 # ##############################################################################
 
+from osis_document.contrib.fields import FileField
+from osis_document.contrib.forms import FileUploadField
+from osis_document.contrib.post_processing.converter.converter import Converter
+from osis_document.contrib.post_processing.converter.converter_image_to_pdf import ConverterImageToPdf
+from osis_document.contrib.post_processing.converter.converter_registry import ConverterRegistry
+from osis_document.contrib.post_processing.converter.converter_text_document_to_pdf import ConverterTextDocumentToPdf
+from osis_document.contrib.post_processing.merger import merger
+from osis_document.contrib.serializers import FileField as FileFieldSerializer
+from osis_document.contrib.widgets import FileUploadWidget
+
 __all__ = [
     'FileField',
     'FileUploadField',
     'FileUploadWidget',
     'FileFieldSerializer',
-    'Merger',
+    'merger',
     'ConverterRegistry',
     'Converter',
     'ConverterImageToPdf',
