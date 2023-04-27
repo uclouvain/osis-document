@@ -73,6 +73,7 @@ class FileUploadWidget(SplitArrayWidget):
         self.can_edit_filename = kwargs.pop('can_edit_filename', True)
         self.min_files = kwargs.pop('min_files', None)
         self.max_files = kwargs.pop('max_files', None)
+        self.post_processing = kwargs.pop('post_processing', None)
         if kwargs.get('size', None) is None:
             kwargs['size'] = 0
         super().__init__(widget=forms.TextInput, **kwargs)
@@ -126,6 +127,8 @@ class FileUploadWidget(SplitArrayWidget):
             attrs['data-max-files'] = self.max_files
         if self.min_files is not None:
             attrs['data-min-files'] = self.min_files
+        if self.post_processing is not None:
+            attrs['post_processing'] = self.post_processing
         return attrs
 
     def format_value(self, values):

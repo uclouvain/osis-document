@@ -53,6 +53,7 @@ class FileField(ArrayField):
         self.min_files = kwargs.pop('min_files', None)
         self.upload_to = kwargs.pop('upload_to', '')
         self.post_processing = kwargs.pop('post_processing', [])
+        self.output_post_processing = kwargs.pop('output_post_processing', None)
 
         kwargs.setdefault('default', list)
         kwargs.setdefault('base_field', models.UUIDField())
@@ -76,6 +77,8 @@ class FileField(ArrayField):
                 'upload_button_text': self.upload_button_text,
                 'upload_text': self.upload_text,
                 'upload_to': self.upload_to,
+                'post_processing': self.post_processing,
+                'output_post_processing': self.output_post_processing,
                 **kwargs,
             }
         )
@@ -88,7 +91,11 @@ class FileField(ArrayField):
         ]
         setattr(model_instance, self.attname, value)
         if self.post_processing:
-            self._post_processing(uuid_list=value)
+            data_post_processing = self._post_processing(uuid_list=value)
+            if self.output_post_processing:
+                value = data_post_processing[self.output_post_processing]["output"]
+            else:
+                value = data_post_processing[self.post_processing[-1]]["output"]
         return value
 
     def _confirm_upload(self, model_instance, token):
@@ -104,5 +111,5 @@ class FileField(ArrayField):
 
     def _post_processing(self, uuid_list: list):
         from osis_document.api.utils import launch_post_processing
-
-        return launch_post_processing(uuid_list=[uuid_list], post_processing_types=self.post_processing)
+        return launch_post_processing(uuid_list=[uuid_list] if not isinstance(uuid_list, list) else uuid_list,
+                                      post_processing_types=self.post_processing)

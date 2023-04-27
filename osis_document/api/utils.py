@@ -152,14 +152,14 @@ def confirm_remote_upload(token, upload_to=None, related_model=None, related_mod
 def launch_post_processing(uuid_list: List, post_processing_types: List):
     import requests
 
-    url = "{}request-post-processing".format(settings.OSIS_DOCUMENT_BASE_URL)
+    url = "{}post-processing".format(settings.OSIS_DOCUMENT_BASE_URL)
     data = {'post_process_types': post_processing_types, 'files_uuid': uuid_list}
     response = requests.post(
         url,
         json=data,
         headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
     )
-    return response.json().get('uuid')
+    return response.json()
 
 
 class CorsAllowOriginMixin(APIView):
