@@ -36,7 +36,8 @@ class PostProcessingView(APIView):
             validated_data = input_serializer_data.is_valid(raise_exception=True)
             if validated_data:
                 uuids_result_dict = post_process(
-                    uuid_list=input_serializer_data.data["files_uuid"], post_process_actions=input_serializer_data.data["post_process_types"]
+                    uuid_list=input_serializer_data.data["files_uuid"],
+                    post_process_actions=input_serializer_data.data["post_process_types"],
                 )
                 return Response(data=uuids_result_dict, status=status.HTTP_201_CREATED)
         except Exception as e:

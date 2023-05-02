@@ -23,36 +23,19 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import List
-from uuid import UUID
 
-from osis_document.contrib.post_processing.converter.converter import Converter
-from osis_document.exceptions import MissingFileException
 from osis_document.models import Upload
 
 
-class ConverterRegistry:
-    """Register and launch appropriate converters"""
+class Converter(ABC):
+    @abstractmethod
+    def convert(self, upload_input_object: Upload, output_filename: str) -> Path:
+        raise NotImplemented
 
-    converters = []
-
-    def add_converter(self, converter: Converter) -> None:
-        self.converters.append(converter)
-
-    def process(self, upload_objects_uuids: List[UUID], output_filename: str) -> List[UUID]:
-        upload_objects = Upload.objects.filter(uuid__in=upload_objects_uuids)
-        process_return = []
-        for converter in self.converters:
-            for upload_object in upload_objects:
-                if upload_object.mimetype == 'application/pdf'  and not upload_object.uuid in process_return:
-                    process_return.append(upload_object.uuid)
-                if upload_object.mimetype in converter.get_supported_formats():
-                    process_return.append(
-                        converter.convert(upload_input_object=upload_object, output_filename=output_filename))
-        if len(upload_objects_uuids) == len(process_return):
-            return process_return
-        else:
-            raise MissingFileException
-
-
-converter_registry = ConverterRegistry()
+    @staticmethod
+    @abstractmethod
+    def get_supported_formats() -> List[str]:
+        raise NotImplemented

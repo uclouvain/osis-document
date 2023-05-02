@@ -176,8 +176,12 @@ def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
     return response.json().get('token')
 
 
-def post_process(uuid_list: List, post_process_actions: List, output_filename=None) -> Dict[str, Dict[str, List[UUID]]]:
-    from osis_document.contrib.post_processing.converter.converter_registry import converter_registry
+def post_process(
+    uuid_list: List[UUID],
+    post_process_actions: List[str],
+    output_filename: str = None,
+) -> Dict[str, Dict[str, List[UUID]]]:
+    from osis_document.contrib.post_processing.converter_registry import converter_registry
     from osis_document.contrib.post_processing.merger import merger
 
     post_processing_return = {}
