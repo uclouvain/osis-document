@@ -1,0 +1,10 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`should mount 1`] = `
+"<div class=\\"btn-group dropup annotation-dropdown\\"><button class=\\"btn btn-default\\" type=\\"button\\"><span class=\\"fas hightlighy\\"></span></button><button type=\\"button\\" class=\\"btn btn-default dropdown-toggle\\" data-toggle=\\"dropdown\\"><span class=\\"caret\\"></span></button>
+  <ul class=\\"dropdown-menu\\">
+    <li class=\\"bg-danger\\"><a href=\\"#\\" class=\\"bg-danger\\">editor.colors.danger</a></li>
+    <li class=\\"bg-warning\\"><a href=\\"#\\" class=\\"bg-warning\\">editor.colors.warning</a></li>
+  </ul>
+</div>"
+`;

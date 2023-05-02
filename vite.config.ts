@@ -17,10 +17,12 @@ export default defineConfig({
     'process.env.NODE_ENV': process.env.NODE_ENV === 'test' ? '"test"' : '"production"',
   },
   build: {
+    emptyOutDir: false,
     lib: {
       // what to build
       name: 'OsisDocument',
-      entry: 'frontend/main.ts',
+      // This is to have multiple UMD builds, until something like https://github.com/vitejs/vite/pull/10609
+      entry: process.env.VITE_BUILD_EDITOR ? 'frontend/editor.ts' : 'frontend/main.ts',
       formats: ['umd'],
     },
     rollupOptions: {
@@ -33,8 +35,18 @@ export default defineConfig({
           'vue-i18n': 'VueI18n',
           '@vue/runtime-dom': 'Vue',
         },
-        entryFileNames: "osis-document.umd.min.js",
-        assetFileNames: "osis-document.[ext]",
+        entryFileNames: (chunkInfo) => {
+          if (chunkInfo.name === 'editor') {
+            return 'osis-document-editor.umd.min.js';
+          }
+          return "osis-document.umd.min.js";
+        },
+        assetFileNames: () => {
+          if (process.env.VITE_BUILD_EDITOR) {
+            return 'osis-document-editor.[ext]';
+          }
+          return "osis-document.[ext]";
+        },
       },
     },
   },

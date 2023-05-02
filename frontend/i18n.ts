@@ -30,6 +30,7 @@ import en from "./locales/en";
 
 export const i18n = createI18n({
   locale: document.documentElement.lang || 'en',
+  allowComposition: true,
   messages: {
     en,
     fr,

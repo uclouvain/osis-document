@@ -23,7 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-
+from .editor import SaveEditorView
 from .metadata import MetadataView, ChangeMetadataView, MetadataListView
 from .raw_file import RawFileView
 from .rotate import RotateImageView
@@ -42,4 +42,5 @@ __all__ = [
     "GetTokenListView",
     "RotateImageView",
     "DeclareFileAsInfectedView",
+    "SaveEditorView",
 ]

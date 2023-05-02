@@ -48,6 +48,22 @@ export default {
     save: "Save",
     file_infected: "The referenced file appears to be infected with a virus",
   },
+  editor: {
+    pagination: '{currentPage} of {pages}',
+    zoom: {
+      auto: "Automatic Zoom",
+      'page-width': "Page Width",
+      'page-fit': "Page Fit",
+      'page-actual': "Actual Size",
+    },
+    colors: {
+      warning: 'Yellow',
+      danger: 'Red',
+      info: 'Blue',
+      success: 'Green',
+      muted: 'White',
+    },
+  },
   error: 'Error: {error}',
   request_error: 'Request error: {error}',
   units: ['B', 'KB', 'MB', 'GB', 'TB'],
