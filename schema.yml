@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: OSIS Document Service
-  version: 1.0.3
+  version: 1.0.4
   description: A set of API endpoints that allow you to get information about uploads
 paths:
   /metadata/{token}:
@@ -166,7 +166,7 @@ paths:
       - name: uuid
         in: path
         required: true
-        description: A UUID string identifying this Upload.
+        description: A UUID string identifying this Transfert.
         schema:
           type: string
       requestBody:
@@ -199,7 +199,7 @@ paths:
       - name: uuid
         in: path
         required: true
-        description: A UUID string identifying this Upload.
+        description: A UUID string identifying this Transfert.
         schema:
           type: string
       requestBody:
@@ -359,6 +359,32 @@ paths:
           $ref: '#/components/responses/NotFound'
       tags:
       - rotate-image
+  /post-processing:
+    post:
+      operationId: postProcessing
+      description: ''
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostProcessing'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - post-processing
+      security:
+      - ApiKeyAuth: []
 components:
   schemas:
     Metadata:
@@ -482,6 +508,20 @@ components:
           description: The rotation requested, in degrees, usually 90, 180 or 270
       required:
       - rotate
+    PostProcessing:
+      type: object
+      properties:
+        files_uuid:
+          type: array
+          items: {}
+          description: A list of files UUID
+        post_process_types:
+          type: array
+          items: {}
+          description: A list of actions to perform on the files
+      required:
+      - files_uuid
+      - post_process_types
     Error:
       type: object
       properties:

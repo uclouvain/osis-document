@@ -27,10 +27,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.utils.translation import gettext_lazy as _
+from osis_document.models import Token, Upload
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-
-from osis_document.models import Token, Upload
 
 
 class RequestUploadSerializer(serializers.Serializer):
@@ -194,3 +193,14 @@ class TokenSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data = self.complete_new_validated_data(validated_data)
         return super().create(validated_data)
+
+
+class PostProcessing(serializers.Serializer):
+    files_uuid = serializers.ListField(
+        help_text="A list of files UUID",
+        required=True,
+    )
+    post_process_types = serializers.ListField(
+        help_text="A list of actions to perform on the files",
+        required=True,
+    )

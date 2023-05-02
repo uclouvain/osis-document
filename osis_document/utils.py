@@ -29,7 +29,7 @@ import hashlib
 import posixpath
 import sys
 import uuid
-from typing import Union
+from typing import Union, List, Dict
 from uuid import UUID
 
 from django.conf import settings
@@ -37,9 +37,9 @@ from django.core import signing
 from django.core.exceptions import FieldError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
-
+from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
 from osis_document.enums import FileStatus
-from osis_document.exceptions import HashMismatch
+from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction
 from osis_document.models import Token, Upload
 
 
@@ -174,3 +174,28 @@ def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
     # Create the request
     response = requests.post(url, files=data)
     return response.json().get('token')
+
+
+def post_process(uuid_list: List, post_process_actions: List, output_filename=None) -> Dict[str, Dict[str, List[UUID]]]:
+    from osis_document.contrib.post_processing.converter.converter_registry import converter_registry
+    from osis_document.contrib.post_processing.merger import merger
+
+    post_processing_return = {}
+    post_processing_return.setdefault(PostProcessingEnums.CONVERT_TO_PDF.name, {'input': [], 'output': []})
+    post_processing_return.setdefault(PostProcessingEnums.MERGE_PDF.name, {'input': [], 'output': []})
+    intermediary_output = []
+
+    processors = {
+        PostProcessingEnums.CONVERT_TO_PDF.name: converter_registry,
+        PostProcessingEnums.MERGE_PDF.name: merger,
+    }
+
+    for action_type in post_process_actions:
+        processor = processors.get(action_type, None)
+        if not processor:
+            raise InvalidPostProcessorAction
+        input = post_processing_return[action_type]["input"] = intermediary_output or uuid_list
+        intermediary_output = processor.process(input, output_filename)
+        post_processing_return[action_type]["output"] = intermediary_output
+
+    return post_processing_return

@@ -207,6 +207,71 @@ uploader.addEventListener('osisdocument:add', event => {
 
 Note that the `Uploader` component has the `osis-document-uploader` class.
 
+## File format conversion
+
+In order to use the file conversion `OSIS_UPLOAD_FOLDER` must be defined
+in the `.env` file that shows the whole path to the folder of the
+downloaded files in  OSIS-Document **and LibreOffice must be installed on
+the computer.**
+
+### Converter use
+Allowed Format : `Docx`, `Doc`, `Odt`, `txt`, `JPG`, and `PNG`
+
+```python
+from osis_document.contrib.post_processing.converter.converter_registry import converter_registry
+output = converter_registry.process(upload_objects_uuid= List[UUID], output_filename='new_filename')
+```
+To convert a text file into a pdf use `ConverterTextDocumentToPdf`
+instead of ConverterImageToPdf
+
+## Files merge in PDF
+In order to use the pdf merging `OSIS_UPLOAD_FOLDER` must be defined in
+the `.env` file  that shows the whole path to the folder of the
+downloaded files in  OSIS-Document.
+
+If the files are not in the PDF format the correct conversion class must
+be used before merging.
+
+```python
+from osis_document.contrib.post_processing.merger import Merger
+
+Merger().process(input_uuid_files=[], filename='new_filename')
+``` 
+
+## Post-processing files
+
+To perform post-processing actions on files, use the utility function
+`post_process`. This function allows you to convert files, merge files,
+or do both at the same time.
+
+To do this, set the `post_process_type` parameter with the appropriate
+values from the `PostProcessingEnums` enumeration and provide the uuids of
+the files.
+
+To define the name(s) of the output file(s), use the
+`output_convert_filename` and `output_merge_filename` parameters.
+
+```python
+from osis_document.utils import post_process
+from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
+
+post_process(uuid_list=[],
+             post_process_actions=[PostProcessingEnums.CONVERT_TO_PDF.name, PostProcessingEnums.MERGE_PDF.name],
+             output_filename=None)
+``` 
+### Post-processing output template
+```python
+output={
+  'convert_to_pdf': {
+    'input':[object_uuid, ...],
+    'output':[upload_object_uuid, ...]
+  },
+  'merge_pdf': {
+    'input':[object_uuid, ...],
+    'output':[upload_object_uuid]
+  }
+}
+``` 
 ## Add a widget to edit a PDF
 
 ```html

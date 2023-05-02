@@ -38,21 +38,9 @@ class OsisDocumentSchemaGenerator(SchemaGenerator):
         schema["servers"] = [
             {
                 "url": "https://{environment}.osis.uclouvain.be/api/v1/osis_document/",
-                "variables": {
-                    "environment": {
-                        "default": "dev",
-                        "enum": [
-                            "dev",
-                            "qa",
-                            "test"
-                        ]
-                    }
-                }
+                "variables": {"environment": {"default": "dev", "enum": ["dev", "qa", "test"]}},
             },
-            {
-                "url": "https://osis.uclouvain.be/api/v1/osis_document/",
-                "description": "Production server"
-            }
+            {"url": "https://osis.uclouvain.be/api/v1/osis_document/", "description": "Production server"},
         ]
         schema['components']["securitySchemes"] = {
             "ApiKeyAuth": {
@@ -64,34 +52,16 @@ class OsisDocumentSchemaGenerator(SchemaGenerator):
         schema['components']['responses'] = {
             "Unauthorized": {
                 "description": "Unauthorized",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "$ref": "#/components/schemas/Error"
-                        }
-                    }
-                }
+                "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}},
             },
             "BadRequest": {
                 "description": "Bad request",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "$ref": "#/components/schemas/Error"
-                        }
-                    }
-                }
+                "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}},
             },
             "NotFound": {
                 "description": "The specified resource was not found",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "$ref": "#/components/schemas/Error"
-                        }
-                    }
-                }
-            }
+                "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}},
+            },
         }
         schema['components']['schemas']['Error'] = {
             "type": "object",
@@ -119,17 +89,13 @@ class OsisDocumentSchemaGenerator(SchemaGenerator):
         }
         for path, path_content in schema['paths'].items():
             for method, method_content in path_content.items():
-                method_content['responses'].update({
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/NotFound"
+                method_content['responses'].update(
+                    {
+                        "400": {"$ref": "#/components/responses/BadRequest"},
+                        "401": {"$ref": "#/components/responses/Unauthorized"},
+                        "404": {"$ref": "#/components/responses/NotFound"},
                     }
-                })
+                )
         return schema
 
 
@@ -149,12 +115,7 @@ class DetailedAutoSchema(AutoSchema):
         else:
             item_schema = self._get_reference(serializer)
 
-        return {
-            'content': {
-                ct: {'schema': item_schema}
-                for ct in self.request_media_types
-            }
-        }
+        return {'content': {ct: {'schema': item_schema} for ct in self.request_media_types}}
 
     def get_components(self, path, method):
         if method.lower() == 'delete':

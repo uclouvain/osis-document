@@ -29,15 +29,14 @@ import hashlib
 from django.conf import settings
 from django.http import FileResponse
 from django.utils.translation import gettext_lazy as _
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.schemas.openapi import AutoSchema
-from rest_framework.views import APIView
-
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import FileStatus
 from osis_document.exceptions import FileInfectedException
 from osis_document.models import Upload
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.schemas.openapi import AutoSchema
+from rest_framework.views import APIView
 
 
 class RawFileSchema(AutoSchema):  # pragma: no cover
@@ -45,20 +44,14 @@ class RawFileSchema(AutoSchema):  # pragma: no cover
         responses = super().get_responses(path, method)
         responses['200'] = {
             "description": "The raw binary file",
-            "content": {
-                "*/*": {
-                    "schema": {
-                        "type": "string",
-                        "format": "binary"
-                    }
-                }
-            }
+            "content": {"*/*": {"schema": {"type": "string", "format": "binary"}}},
         }
         return responses
 
 
 class RawFileView(CorsAllowOriginMixin, APIView):
     """Get raw file from a token"""
+
     name = 'raw-file'
     authentication_classes = []
     permission_classes = []
@@ -67,17 +60,13 @@ class RawFileView(CorsAllowOriginMixin, APIView):
     def get(self, *args, **kwargs):
         upload = Upload.objects.from_token(self.kwargs['token'])
         if not upload:
-            return Response({
-                'error': _("Resource not found")
-            }, status.HTTP_404_NOT_FOUND)
+            return Response({'error': _("Resource not found")}, status.HTTP_404_NOT_FOUND)
         if upload.status == FileStatus.INFECTED.name:
             raise FileInfectedException
         with upload.file.open() as file:
             hash = hashlib.sha256(file.read()).hexdigest()
         if upload.metadata.get('hash') != hash:
-            return Response({
-                'error': _("Hash checksum mismatch")
-            }, status.HTTP_409_CONFLICT)
+            return Response({'error': _("Hash checksum mismatch")}, status.HTTP_409_CONFLICT)
         # TODO handle internal nginx redirect based on a setting
         kwargs = {}
         if self.request.GET.get('dl'):

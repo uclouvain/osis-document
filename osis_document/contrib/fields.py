@@ -30,7 +30,6 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.validators import ArrayMinLengthValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
 from osis_document.contrib.forms import FileUploadField
 from osis_document.utils import generate_filename
 from osis_document.validators import TokenValidator
@@ -38,6 +37,7 @@ from osis_document.validators import TokenValidator
 
 class FileField(ArrayField):
     """This is the model field that handle storage of UUIDs"""
+
     default_error_messages = {
         'invalid_token': _("Invalid token"),
     }
@@ -52,6 +52,8 @@ class FileField(ArrayField):
         self.max_files = kwargs.pop('max_files', None)
         self.min_files = kwargs.pop('min_files', None)
         self.upload_to = kwargs.pop('upload_to', '')
+        self.post_processing = kwargs.pop('post_processing', [])
+        self.output_post_processing = kwargs.pop('output_post_processing', None)
 
         kwargs.setdefault('default', list)
         kwargs.setdefault('base_field', models.UUIDField())
@@ -63,19 +65,23 @@ class FileField(ArrayField):
 
     def formfield(self, **kwargs):
         """Transfer all properties to the form field"""
-        return super(ArrayField, self).formfield(**{
-            'form_class': FileUploadField,
-            'max_size': self.max_size,
-            'min_files': self.min_files,
-            'max_files': self.max_files,
-            'mimetypes': self.mimetypes,
-            'automatic_upload': self.automatic_upload,
-            'can_edit_filename': self.can_edit_filename,
-            'upload_button_text': self.upload_button_text,
-            'upload_text': self.upload_text,
-            'upload_to': self.upload_to,
-            **kwargs,
-        })
+        return super(ArrayField, self).formfield(
+            **{
+                'form_class': FileUploadField,
+                'max_size': self.max_size,
+                'min_files': self.min_files,
+                'max_files': self.max_files,
+                'mimetypes': self.mimetypes,
+                'automatic_upload': self.automatic_upload,
+                'can_edit_filename': self.can_edit_filename,
+                'upload_button_text': self.upload_button_text,
+                'upload_text': self.upload_text,
+                'upload_to': self.upload_to,
+                'post_processing': self.post_processing,
+                'output_post_processing': self.output_post_processing,
+                **kwargs,
+            }
+        )
 
     def pre_save(self, model_instance, add):
         """Convert all writing tokens to UUIDs by remotely confirming their upload, leaving existing uuids"""
@@ -83,6 +89,12 @@ class FileField(ArrayField):
             self._confirm_upload(model_instance, token) if isinstance(token, str) else token
             for token in (getattr(model_instance, self.attname) or [])
         ]
+        if self.post_processing:
+            data_post_processing = self._post_processing(uuid_list=value)
+            if self.output_post_processing:
+                value = data_post_processing[self.output_post_processing]["output"]
+            else:
+                value = data_post_processing[self.post_processing[-1]]["output"]
         setattr(model_instance, self.attname, value)
         return value
 
@@ -96,3 +108,8 @@ class FileField(ArrayField):
             token=token,
             upload_to=dirname(generate_filename(model_instance, filename, self.upload_to)),
         )
+
+    def _post_processing(self, uuid_list: list):
+        from osis_document.api.utils import launch_post_processing
+        return launch_post_processing(uuid_list=[uuid_list] if not isinstance(uuid_list, list) else uuid_list,
+                                      post_processing_types=self.post_processing)

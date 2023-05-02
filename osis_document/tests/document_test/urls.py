@@ -50,7 +50,9 @@ urlpatterns = [
     ),
     path(
         'view/<int:pk>',
-        DetailView.as_view(model=TestDocument,),
+        DetailView.as_view(
+            model=TestDocument,
+        ),
         name='test-view',
     ),
     path('document/', include('osis_document.urls')),

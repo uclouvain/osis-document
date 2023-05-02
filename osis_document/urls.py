@@ -42,4 +42,5 @@ urlpatterns = [
     path('rotate-image/<path:token>', views.RotateImageView.as_view(), name=views.RotateImageView.name),
     path('save-editor/<path:token>', views.SaveEditorView.as_view(), name=views.SaveEditorView.name),
     path('file/<path:token>', views.RawFileView.as_view(), name=views.RawFileView.name),
+    path('post-processing', views.PostProcessingView.as_view(), name=views.PostProcessingView.name),
 ]

@@ -38,8 +38,10 @@ from osis_document.models import Upload, Token
 
 @app.task
 def cleanup_old_uploads():
-    qs = Upload.objects.filter(status=FileStatus.REQUESTED.name, uploaded_at__lte=now() - timedelta(
-        seconds=settings.OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE), )
+    qs = Upload.objects.filter(
+        status=FileStatus.REQUESTED.name,
+        uploaded_at__lte=now() - timedelta(seconds=settings.OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE),
+    )
     qs.delete()
     Token.objects.filter(
         expires_at__lte=now(),
