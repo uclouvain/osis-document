@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: OSIS Document Service
-  version: 1.0.4
+  version: 1.0.5
   description: A set of API endpoints that allow you to get information about uploads
 paths:
   /metadata/{token}:
@@ -318,7 +318,8 @@ paths:
         '200':
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/Metadata'
           description: ''
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -359,6 +360,38 @@ paths:
           $ref: '#/components/responses/NotFound'
       tags:
       - rotate-image
+  /save-editor/{token}:
+    post:
+      operationId: saveEditor
+      description: Receive a file (from VueJS), rotate its pages if needed and replace
+        corresponding upload
+      parameters:
+      - name: token
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaveEditor'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveEditorResponse'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - save-editor
   /post-processing:
     post:
       operationId: postProcessing
@@ -420,6 +453,14 @@ components:
           description: A writing token for the uploaded file
       required:
       - token
+    RequestUpload:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+      - file
     ConfirmUploadResponse:
       type: object
       properties:
@@ -508,6 +549,27 @@ components:
           description: The rotation requested, in degrees, usually 90, 180 or 270
       required:
       - rotate
+    SaveEditorResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: A fresh writing token for the modified file
+      required:
+      - token
+    SaveEditor:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        rotations:
+          type: object
+          description: The rotations requested, a mapping of 0-indexed page number
+            and degrees
+      required:
+      - file
+      - rotations
     PostProcessing:
       type: object
       properties:

@@ -147,7 +147,7 @@ class MetadataListView(CorsAllowOriginMixin, APIView):
 
 class ChangeMetadataSchema(DetailedAutoSchema):  # pragma: no cover
     serializer_mapping = {
-        'POST': (serializers.ChangeMetadataSerializer, None),
+        'POST': (serializers.ChangeMetadataSerializer, serializers.MetadataSerializer),
     }
 
     def get_operation_id(self, path, method):
@@ -175,4 +175,4 @@ class ChangeMetadataView(CorsAllowOriginMixin, APIView):
         upload = token.upload
         upload.metadata['name'] = self.request.data.get('name', '')
         upload.save()
-        return Response(status=status.HTTP_200_OK)
+        return Response(upload.metadata, status=status.HTTP_200_OK)
