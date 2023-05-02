@@ -29,18 +29,17 @@ from io import BytesIO
 
 from PIL import Image
 from django.core.files.base import ContentFile
-from rest_framework import status
-from rest_framework.generics import get_object_or_404
-from rest_framework.response import Response
-from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
-
-from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api import serializers
+from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import TokenAccess
 from osis_document.models import Token
 from osis_document.utils import get_token
+from rest_framework import status
+from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 
 class RotateImageSchema(DetailedAutoSchema):  # pragma: no cover
@@ -59,6 +58,7 @@ class RotateImageSchema(DetailedAutoSchema):  # pragma: no cover
 
 class RotateImageView(CorsAllowOriginMixin, APIView):
     """Rotate an image from a writing token"""
+
     name = 'rotate-image'
     authentication_classes = []
     permission_classes = []
@@ -72,9 +72,7 @@ class RotateImageView(CorsAllowOriginMixin, APIView):
         upload = token.upload
 
         if upload.mimetype.split('/')[0] != 'image':
-            return Response({
-                'error': _("File is not an image")
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': _("File is not an image")}, status=status.HTTP_400_BAD_REQUEST)
 
         rotated_photo = BytesIO()
         image = Image.open(upload.file)

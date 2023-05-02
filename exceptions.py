@@ -24,10 +24,9 @@
 #
 # ##############################################################################
 from django.utils.translation import gettext_lazy as _
+from osis_document.enums import DocumentError
 from rest_framework import status
 from rest_framework.exceptions import APIException
-
-from osis_document.enums import DocumentError
 
 
 class HashMismatch(APIException):
@@ -46,3 +45,19 @@ class FileInfectedException(APIException):
 
 class UploadInvalidException(APIException):
     default_detail = _("Invalid upload UUID")
+
+
+class FormatInvalidException(APIException):
+    default_detail = _("Invalid file format")
+
+
+class ConversionError(APIException):
+    default_detail = _("Error during file conversion to pdf")
+
+
+class MissingFileException(APIException):
+    default_detail = _("Error during getting input files")
+
+
+class InvalidPostProcessorAction(APIException):
+    default_detail = _("Invalid post_processing action")

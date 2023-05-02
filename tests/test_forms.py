@@ -28,7 +28,6 @@ from unittest.mock import Mock, patch
 
 from django import forms
 from django.test import TestCase, override_settings
-
 from osis_document.contrib.forms import FileUploadField, TokenField
 from osis_document.tests.factories import WriteTokenFactory
 
@@ -36,12 +35,15 @@ from osis_document.tests.factories import WriteTokenFactory
 @override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class FormTestCase(TestCase):
     def setUp(self):
-        self.mock_remote_metadata = patch('osis_document.api.utils.get_remote_metadata', return_value={
-            "size": 1024,
-            "mimetype": "application/pdf",
-            "name": "test.pdf",
-            "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
-        })
+        self.mock_remote_metadata = patch(
+            'osis_document.api.utils.get_remote_metadata',
+            return_value={
+                "size": 1024,
+                "mimetype": "application/pdf",
+                "name": "test.pdf",
+                "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
+            },
+        )
         self.mock_remote_metadata.start()
         self.addCleanup(self.mock_remote_metadata.stop)
         mock_remote_token = patch('osis_document.api.utils.get_remote_token', return_value='a:token')
@@ -52,14 +54,18 @@ class FormTestCase(TestCase):
         class TestForm(forms.Form):
             media = FileUploadField()
 
-        form = TestForm({
-            'media_0': WriteTokenFactory().token,
-        })
+        form = TestForm(
+            {
+                'media_0': WriteTokenFactory().token,
+            }
+        )
         self.assertTrue(form.is_valid(), msg=form.errors)
 
-        form = TestForm({
-            'media': [WriteTokenFactory().token],
-        })
+        form = TestForm(
+            {
+                'media': [WriteTokenFactory().token],
+            }
+        )
         self.assertTrue(form.is_valid(), msg=form.errors)
 
     def test_initial_uuid(self):
@@ -67,9 +73,11 @@ class FormTestCase(TestCase):
             media = FileUploadField()
 
         random_uuid = '8620708e-13fe-437d-9193-edb37e46055d'
-        form = TestForm(initial={
-            'media': [random_uuid],
-        })
+        form = TestForm(
+            initial={
+                'media': [random_uuid],
+            }
+        )
         self.assertNotIn(random_uuid, form.as_p())
         self.mock_remote_token.assert_called()
 
@@ -77,18 +85,22 @@ class FormTestCase(TestCase):
         class TestForm(forms.Form):
             media = FileUploadField()
 
-        TestForm(initial={
-            'media': None,
-        }).as_p()
+        TestForm(
+            initial={
+                'media': None,
+            }
+        ).as_p()
         self.mock_remote_token.assert_not_called()
 
     def test_initial_token(self):
         class TestForm(forms.Form):
             media = FileUploadField()
 
-        TestForm(initial={
-            'media': [WriteTokenFactory().token],
-        }).as_p()
+        TestForm(
+            initial={
+                'media': [WriteTokenFactory().token],
+            }
+        ).as_p()
         self.mock_remote_token.assert_not_called()
         TestForm().as_p()
         self.mock_remote_token.assert_not_called()
@@ -97,9 +109,11 @@ class FormTestCase(TestCase):
         class TestForm(forms.Form):
             media = FileUploadField()
 
-        form = TestForm({
-            'media_0': 'foobar',
-        })
+        form = TestForm(
+            {
+                'media_0': 'foobar',
+            }
+        )
 
         with patch('osis_document.api.utils.get_remote_metadata') as get_remote_metadata:
             get_remote_metadata.return_value = None
@@ -111,9 +125,11 @@ class FormTestCase(TestCase):
         class TestForm(forms.Form):
             media = FileUploadField()
 
-        form = TestForm({
-            'media': WriteTokenFactory().token,
-        })
+        form = TestForm(
+            {
+                'media': WriteTokenFactory().token,
+            }
+        )
 
         with patch('osis_document.api.utils.get_remote_metadata') as get_remote_metadata:
             get_remote_metadata.return_value = None
@@ -125,29 +141,37 @@ class FormTestCase(TestCase):
         class TestFormMin(forms.Form):
             media = FileUploadField(min_files=2)
 
-        form = TestFormMin({
-            'media_0': WriteTokenFactory().token,
-            'media_1': WriteTokenFactory().token,
-        })
+        form = TestFormMin(
+            {
+                'media_0': WriteTokenFactory().token,
+                'media_1': WriteTokenFactory().token,
+            }
+        )
         self.assertTrue(form.is_valid(), msg=form.errors)
         self.assertEqual(2, len(form.cleaned_data['media']))
-        form = TestFormMin({
-            'media_0': WriteTokenFactory().token,
-        })
+        form = TestFormMin(
+            {
+                'media_0': WriteTokenFactory().token,
+            }
+        )
         self.assertFalse(form.is_valid())
 
     def test_check_file_max_count(self):
         class TestFormMax(forms.Form):
             media = FileUploadField(max_files=1)
 
-        form = TestFormMax({
-            'media_0': WriteTokenFactory().token,
-            'media_1': WriteTokenFactory().token,
-        })
+        form = TestFormMax(
+            {
+                'media_0': WriteTokenFactory().token,
+                'media_1': WriteTokenFactory().token,
+            }
+        )
         self.assertFalse(form.is_valid())
-        form = TestFormMax({
-            'media_0': WriteTokenFactory().token,
-        })
+        form = TestFormMax(
+            {
+                'media_0': WriteTokenFactory().token,
+            }
+        )
         self.assertTrue(form.is_valid())
         self.assertEqual(1, len(form.cleaned_data['media']))
 
@@ -155,20 +179,26 @@ class FormTestCase(TestCase):
         class TestFormMinMax(forms.Form):
             media = FileUploadField(min_files=2, max_files=2)
 
-        form = TestFormMinMax({
-            'media_0': WriteTokenFactory().token,
-        })
+        form = TestFormMinMax(
+            {
+                'media_0': WriteTokenFactory().token,
+            }
+        )
         self.assertFalse(form.is_valid())
-        form = TestFormMinMax({
-            'media_0': WriteTokenFactory().token,
-            'media_1': WriteTokenFactory().token,
-            'media_2': WriteTokenFactory().token,
-        })
+        form = TestFormMinMax(
+            {
+                'media_0': WriteTokenFactory().token,
+                'media_1': WriteTokenFactory().token,
+                'media_2': WriteTokenFactory().token,
+            }
+        )
         self.assertFalse(form.is_valid())
-        form = TestFormMinMax({
-            'media_0': WriteTokenFactory().token,
-            'media_1': WriteTokenFactory().token,
-        })
+        form = TestFormMinMax(
+            {
+                'media_0': WriteTokenFactory().token,
+                'media_1': WriteTokenFactory().token,
+            }
+        )
         self.assertTrue(form.is_valid())
         self.assertEqual(2, len(form.cleaned_data['media']))
 
@@ -176,9 +206,11 @@ class FormTestCase(TestCase):
         class TestForm(forms.Form):
             media = FileUploadField(max_size=2)
 
-        form = TestForm({
-            'media_0': WriteTokenFactory().token,
-        })
+        form = TestForm(
+            {
+                'media_0': WriteTokenFactory().token,
+            }
+        )
         self.assertFalse(form.is_valid(), form.errors)
         error = TokenField.default_error_messages['size']
         self.assertIn(str(error), form.errors['media'][0])
@@ -187,21 +219,25 @@ class FormTestCase(TestCase):
         class TestForm(forms.Form):
             media = FileUploadField(mimetypes=('image/jpeg',))
 
-        form = TestForm({
-            'media_0': WriteTokenFactory().token,
-        })
+        form = TestForm(
+            {
+                'media_0': WriteTokenFactory().token,
+            }
+        )
         self.assertFalse(form.is_valid(), form.errors)
         error = TokenField.default_error_messages['mimetype']
         self.assertIn(str(error), form.errors['media'][0])
 
     def test_persist_confirms_token(self):
         class TestForm(forms.Form):
-            media = FileUploadField(related_model={
-                'app': 'app_name',
-                'model': 'model_name',
-                'field': 'field_name',
-                'instance_filter_fields': ['id'],
-            })
+            media = FileUploadField(
+                related_model={
+                    'app': 'app_name',
+                    'model': 'model_name',
+                    'field': 'field_name',
+                    'instance_filter_fields': ['id'],
+                }
+            )
 
         mock_instance = Mock(id=10)
         token = WriteTokenFactory().token
@@ -217,17 +253,20 @@ class FormTestCase(TestCase):
             media = FileUploadField(disabled=True, required=False)
 
         # Without initial data: [] -> []
-        form = TestForm(data={
-            'media_0': WriteTokenFactory().token,
-        })
+        form = TestForm(
+            data={
+                'media_0': WriteTokenFactory().token,
+            }
+        )
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data.get('media'), [])
 
         # With initial data: [uuid] -> [token]
-        form = TestForm(data={
-            'media_0': WriteTokenFactory().token,
-        },
-            initial={'media': [str(uuid.uuid4())]}
+        form = TestForm(
+            data={
+                'media_0': WriteTokenFactory().token,
+            },
+            initial={'media': [str(uuid.uuid4())]},
         )
 
         self.assertTrue(form.is_valid())

@@ -31,6 +31,7 @@ from osis_document.utils import is_uuid
 
 class TokenValidator:
     """Validate a token remotely."""
+
     def __init__(self, message=None):
         super().__init__()
         self.message = message or _("Invalid token")
