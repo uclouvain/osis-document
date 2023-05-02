@@ -195,7 +195,7 @@ def post_process(uuid_list: List, post_process_actions: List, output_filename=No
         if not processor:
             raise InvalidPostProcessorAction
         input = post_processing_return[action_type]["input"] = intermediary_output or uuid_list
-        intermediary_output = [processor.process(input, output_filename)]
+        intermediary_output = processor.process(input, output_filename)
         post_processing_return[action_type]["output"] = intermediary_output
 
     return post_processing_return

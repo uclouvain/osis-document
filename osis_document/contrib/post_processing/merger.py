@@ -25,6 +25,7 @@
 # ##############################################################################
 import uuid
 from pathlib import Path
+from typing import List
 from uuid import UUID
 
 from django.core.files import File
@@ -39,7 +40,7 @@ from backoffice.settings.base import OSIS_UPLOAD_FOLDER
 
 
 class Merger:
-    def process(self, input_uuid_files: list, filename=None) -> UUID:
+    def process(self, input_uuid_files: list, filename=None) -> List[UUID]:
         input_files = Upload.objects.filter(
             Q(uuid__in=input_uuid_files) | Q(output_files__uuid__in=input_uuid_files)
         ).distinct('uuid')
@@ -57,7 +58,7 @@ class Merger:
         post_processin_object = self._create_post_processing_instance(
             input_files=input_files, output_file=pdf_upload_object
         )
-        return pdf_upload_object.uuid
+        return [pdf_upload_object.uuid]
 
     @staticmethod
     def _get_output_filename(filename: str):

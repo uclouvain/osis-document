@@ -89,13 +89,13 @@ class FileField(ArrayField):
             self._confirm_upload(model_instance, token) if isinstance(token, str) else token
             for token in (getattr(model_instance, self.attname) or [])
         ]
-        setattr(model_instance, self.attname, value)
         if self.post_processing:
             data_post_processing = self._post_processing(uuid_list=value)
             if self.output_post_processing:
                 value = data_post_processing[self.output_post_processing]["output"]
             else:
                 value = data_post_processing[self.post_processing[-1]]["output"]
+        setattr(model_instance, self.attname, value)
         return value
 
     def _confirm_upload(self, model_instance, token):
