@@ -32,6 +32,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 
+class RequestUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+
 class RequestUploadResponseSerializer(serializers.Serializer):
     token = serializers.CharField(help_text="A writing token for the uploaded file")
 
@@ -66,7 +70,7 @@ class ContentTypeSerializer(serializers.Serializer):
     )
     instance_filters = serializers.JSONField(
         help_text="Lookup arguments allowing to filter the model instances to return one single object that will be "
-        "used to compute the upload directory path (via the 'upload_to' property)",
+                  "used to compute the upload directory path (via the 'upload_to' property)",
         required=False,
     )
 
@@ -150,6 +154,15 @@ class RotateImageSerializer(serializers.Serializer):
 
 class RotateImageResponseSerializer(serializers.Serializer):
     token = serializers.CharField(help_text="A fresh writing token for the rotated file")
+
+
+class SaveEditorSerializer(serializers.Serializer):
+    file = serializers.FileField()
+    rotations = serializers.JSONField(help_text="The rotations requested, a mapping of 0-indexed page number and degrees")
+
+
+class SaveEditorResponseSerializer(serializers.Serializer):
+    token = serializers.CharField(help_text="A fresh writing token for the modified file")
 
 
 class TokenListSerializer(serializers.ListSerializer):

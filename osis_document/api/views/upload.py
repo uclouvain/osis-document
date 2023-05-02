@@ -45,7 +45,7 @@ from rest_framework.views import APIView
 
 class RequestUploadSchema(DetailedAutoSchema):  # pragma: no cover
     serializer_mapping = {
-        'POST': (None, serializers.RequestUploadResponseSerializer),
+        'POST': (serializers.RequestUploadSerializer, serializers.RequestUploadResponseSerializer),
     }
 
     def get_operation_id(self, path, method):
@@ -81,12 +81,11 @@ class RequestUploadView(CorsAllowOriginMixin, APIView):
     parser_classes = [MultiPartParser]
     schema = RequestUploadSchema()
 
-    def post(self, *args, **kwargs):
-        # Check that the sent data is ok
-        form = modelform_factory(Upload, fields=['file'])(self.request.POST, self.request.FILES)
-        if form.is_valid():
+    def post(self, request, *args, **kwargs):
+        serializer = serializers.RequestUploadSerializer(data=request.data)
+        if serializer.is_valid():
             # Process file: calculate hash and save it to db
-            file = self.request.FILES['file']
+            file = serializer.validated_data['file']
             bytesa = file.file.read(4096)
             file.file.seek(0)
             fileguess = filetype.guess(bytesa)
@@ -102,7 +101,7 @@ class RequestUploadView(CorsAllowOriginMixin, APIView):
 
             # Create a writing token to allow persistance
             return Response({'token': get_token(instance.uuid)}, status.HTTP_201_CREATED)
-        return Response({'error': form.errors}, status.HTTP_400_BAD_REQUEST)
+        return Response({'error': serializer.errors}, status.HTTP_400_BAD_REQUEST)
 
 
 class ConfirmUploadSchema(DetailedAutoSchema):  # pragma: no cover

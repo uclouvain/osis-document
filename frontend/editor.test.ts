@@ -24,10 +24,42 @@
  *
  */
 
-// Declare *.vue file export as Vue components,
-// see https://github.com/vuejs/vue-eslint-parser/issues/104#issuecomment-1217306443
-declare module "*.vue" {
-  import { DefineComponent } from "vue";
-  const component: DefineComponent;
-  export default component;
-}
+import {expect, test, vi} from 'vitest';
+/* eslint-disable vue/prefer-import-from-vue */
+import * as exports from '@vue/runtime-dom';
+import {createApp} from "vue";
+
+const editor = vi.fn();
+vi.mock('./DocumentEditor.vue', () => ({
+  default: editor,
+}));
+
+const spy = vi.spyOn(exports, 'createApp').mockImplementation(createApp);
+
+test('mount editor', async () => {
+  document.body.innerHTML = `<div class="osis-document-editor" data-base-url="/api" data-value="foo"></div>`;
+
+  // Executes editor file
+  await import('./editor');
+
+  expect(spy).toBeCalledTimes(1);
+  expect(spy).toHaveBeenCalledWith(editor, {
+    baseUrl: '/api',
+    value: 'foo',
+  });
+});
+
+test('mount editor with some tools disabled', async () => {
+  spy.mockClear();
+  document.body.innerHTML = `<div class="osis-document-editor" data-base-url="/api" data-value="foo" data-zoom="false"></div>`;
+
+  // Executes editor file
+  await import('./editor');
+
+  expect(spy).toBeCalledTimes(1);
+  expect(spy).toHaveBeenCalledWith(editor, {
+    baseUrl: '/api',
+    value: 'foo',
+    zoom: false,
+  });
+});

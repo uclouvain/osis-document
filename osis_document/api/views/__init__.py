@@ -23,7 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-
+from .editor import SaveEditorView
 from .metadata import MetadataView, ChangeMetadataView, MetadataListView
 from .post_processing import PostProcessingView
 from .raw_file import RawFileView
@@ -44,4 +44,5 @@ __all__ = [
     "RotateImageView",
     "DeclareFileAsInfectedView",
     'PostProcessingView',
+    "SaveEditorView",
 ]

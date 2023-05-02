@@ -272,6 +272,60 @@ output={
   }
 }
 ``` 
+## Add a widget to edit a PDF
+
+```html
+{% load osis_document %}
+
+{% block content %}
+  {% document_editor yourinstance.document.0 %}
+{% endblock %}
+
+{% block style %}
+  <link href="{% static 'osis_document/osis-document-editor.css' %}" rel="stylesheet" />
+{% endblock %}
+
+{% block script %}
+  <script type="text/javascript" src="{% static 'osis_document/osis-document-editor.umd.min.js' %}"></script>
+{% endblock %}
+```
+
+This editor comes with a few toolbar components, namely:
+ - `pagination`
+ - `zoom`
+ - `comment`
+ - `highlight`
+ - `rotation`
+
+If you need to disable some, you can specify `{% document_editor admission.documents_projet.0 zoom=false %}`
+
+Along with these options, you can dispatch custom events to control the widget externally:
+ - `changeCurrentPage`
+ - `rotate`
+ - `zoomIn`
+ - `zoomOut`
+ - `setScale`
+ - `setHighlight`
+ - `setCommenting`
+ - `save`
+
+```js
+var element = document.querySelector('.osis-document-editor');
+element.dispatchEvent(new CustomEvent('changeCurrentPage', { detail: 2 }));
+element.dispatchEvent(new CustomEvent('rotate', { detail: 90 }));
+element.dispatchEvent(new CustomEvent('zoomIn'));
+element.dispatchEvent(new CustomEvent('setScale', { detail: 'auto' }));
+element.dispatchEvent(new CustomEvent('setCommenting', { detail: '#ff0000' }));
+element.dispatchEvent(new CustomEvent('save'));
+
+// You can also listen for these events to know the number of pages and when the user scrolls
+element.addEventListener('pageChange', ({detail: {pageNumber}}) => {
+  console.log(pageNumber);
+});
+element.addEventListener('numPages', ({detail: {numPages}}) => {
+  console.log(numPages);
+});
+```
 
 # Contributing to OSIS-Document
 
