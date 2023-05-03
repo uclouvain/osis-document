@@ -23,49 +23,32 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from os.path import splitext
+from pathlib import Path
 from typing import List
-from uuid import UUID
 from xdrlib import ConversionError
 
 from PIL import Image
-from osis_document.contrib.post_processing.converter.converter import Converter
-from osis_document.exceptions import FormatInvalidException
-from osis_document.models import Upload
+from django.conf import settings
 
-from backoffice.settings.base import OSIS_UPLOAD_FOLDER
-from .converter_registry import converter_registry
+from osis_document.models import Upload
+from .converter import Converter
+from ..converter_registry import converter_registry
 
 
 class ConverterImageToPdf(Converter):
-    def convert(self, upload_input_object: Upload, output_filename=None) -> UUID:
-        if upload_input_object.mimetype not in self.get_supported_formats():
-            raise FormatInvalidException
+    def convert(self, upload_input_object: Upload, output_filename: str) -> Path:
         try:
-            new_file_name = self._get_output_filename(
-                output_filename=output_filename, upload_input_object=upload_input_object
-            )
             image = Image.open(upload_input_object.file)
             image_pdf = image.convert('RGB')
-            image_pdf.save(OSIS_UPLOAD_FOLDER + new_file_name, quality=95, resolution=19.0, optimize=True)
-            pdf_upload_object = self._create_upload_instance(path=OSIS_UPLOAD_FOLDER + new_file_name)
-            self._create_post_processing_instance(
-                upload_input_object=upload_input_object, upload_output_object=pdf_upload_object
-            )
-            return pdf_upload_object.uuid
+            new_filepath = Path(settings.OSIS_UPLOAD_FOLDER) / output_filename
+            image_pdf.save(new_filepath, quality=95, resolution=19.0, optimize=True)
+            return new_filepath
         except Exception:
             raise ConversionError
 
     @staticmethod
-    def get_supported_formats() -> List:
+    def get_supported_formats() -> List[str]:
         return ['image/png', 'image/jpg', 'image/jpeg']
-
-    @staticmethod
-    def _get_output_filename(output_filename: str, upload_input_object: Upload) -> str:
-        if output_filename:
-            return output_filename + '.pdf'
-        else:
-            return splitext(upload_input_object.metadata['name'])[0] + '.pdf'
 
 
 converter_registry.add_converter(ConverterImageToPdf())

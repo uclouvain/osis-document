@@ -26,52 +26,46 @@
 import os
 import subprocess
 from os.path import splitext
+from pathlib import Path
 from typing import List
-from uuid import UUID
 
-from osis_document.contrib.post_processing.converter.converter import Converter
-from osis_document.exceptions import FormatInvalidException, ConversionError
+from django.conf import settings
+
+from osis_document.exceptions import ConversionError, FormatInvalidException
 from osis_document.models import Upload
-
-from backoffice.settings.base import OSIS_UPLOAD_FOLDER
-from .converter_registry import converter_registry
+from .converter import Converter
+from ..converter_registry import converter_registry
 
 
 class ConverterTextDocumentToPdf(Converter):
-    def convert(self, upload_input_object: Upload, output_filename=None) -> UUID:
+    def convert(self, upload_input_object: Upload, output_filename: str) -> Path:
         if upload_input_object.mimetype not in self.get_supported_formats():
             raise FormatInvalidException
         try:
-            new_file_name = self._get_output_filename(
-                output_filename=output_filename, upload_input_object=upload_input_object
+            command = (
+                f'lowriter '
+                f'--headless '
+                f'--convert-to pdf:writer_pdf_Export '
+                f'--outdir {settings.OSIS_UPLOAD_FOLDER} {upload_input_object.file.path}'
             )
-            command = f'lowriter --headless --convert-to pdf:writer_pdf_Export --outdir {OSIS_UPLOAD_FOLDER} {upload_input_object.file.path}'
-            subprocess.run(command, shell=True)
+            result = subprocess.run(command, shell=True)
+            if result.returncode:
+                raise ConversionError(result.stderr)
 
-            os.rename(f'{splitext(upload_input_object.file.path)[0]}.pdf', f'{OSIS_UPLOAD_FOLDER}{new_file_name}')
-            pdf_upload_object = self._create_upload_instance(path=f'{OSIS_UPLOAD_FOLDER}{new_file_name}')
-            self._create_post_processing_instance(
-                upload_input_object=upload_input_object, upload_output_object=pdf_upload_object
-            )
-            return pdf_upload_object.uuid
-        except Exception:
-            raise ConversionError
+            new_filepath = Path(settings.OSIS_UPLOAD_FOLDER) / output_filename
+            os.rename(f'{splitext(upload_input_object.file.path)[0]}.pdf', new_filepath)
+            return new_filepath
+        except Exception as e:
+            raise ConversionError(str(e))
 
     @staticmethod
-    def get_supported_formats() -> List:
+    def get_supported_formats() -> List[str]:
         return [
             'text/plain',
             'application/msword',
             'application/vnd.oasis.opendocument.text',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         ]
-
-    @staticmethod
-    def _get_output_filename(output_filename: str, upload_input_object: Upload) -> str:
-        if output_filename:
-            return output_filename + '.pdf'
-        else:
-            return splitext(upload_input_object.metadata['name'])[0] + '.pdf'
 
 
 converter_registry.add_converter(ConverterTextDocumentToPdf())

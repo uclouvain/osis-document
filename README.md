@@ -218,8 +218,9 @@ the computer.**
 Allowed Format : `Docx`, `Doc`, `Odt`, `txt`, `JPG`, and `PNG`
 
 ```python
-from osis_document.contrib.post_processing.converter.converter_registry import converter_registry
-output = converter_registry.process(upload_objects_uuid= List[UUID], output_filename='new_filename')
+from osis_document.contrib.post_processing.converter_registry import converter_registry
+
+output = converter_registry.process(upload_objects_uuid=List[UUID], output_filename='new_filename')
 ```
 To convert a text file into a pdf use `ConverterTextDocumentToPdf`
 instead of ConverterImageToPdf
