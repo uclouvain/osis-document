@@ -30,7 +30,6 @@ import factory
 from django.core.files import File
 from factory.fuzzy import FuzzyText
 
-from backoffice.settings.base import OSIS_UPLOAD_FOLDER
 from osis_document.enums import TokenAccess
 from osis_document.models import Token, Upload
 from osis_document.utils import calculate_hash
@@ -53,7 +52,7 @@ class TextDocumentUploadFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Upload
 
-    file = File(Path(OSIS_UPLOAD_FOLDER + 'OSIS-Document.docx').open(mode='rb'), name='a_DOCX_file.docx')
+    file = File((Path(__file__).parent / 'test.docx').open(mode='rb'), name='a_DOCX_file.docx')
     size = file.size
     mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     metadata = {
@@ -66,7 +65,7 @@ class CorrectPDFUploadFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Upload
 
-    file = File(Path(OSIS_UPLOAD_FOLDER + 'file-sample_1MB_doc.pdf').open(mode='rb'), name='a_PDF_file.pdf')
+    file = File((Path(__file__).parent / 'placeholder.pdf').open(mode='rb'), name='a_PDF_file.pdf')
     size = file.size
     mimetype = 'application/pdf'
     metadata = {
@@ -92,7 +91,7 @@ class BadExtensionUploadFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Upload
 
-    file = File(Path(OSIS_UPLOAD_FOLDER + 'sample-zip-file.zip').open(mode='rb'), name='sample-zip-file.zip')
+    file = File((Path(__file__).parent / 'sample-zip-file.zip').open(mode='rb'), name='sample-zip-file.zip')
     size = 380
     mimetype = "application/zip"
     metadata = {

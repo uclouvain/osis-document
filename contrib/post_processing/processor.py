@@ -23,26 +23,40 @@
 #  see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from pathlib import Path
+from typing import List
+from uuid import UUID
 
-from osis_document.contrib.fields import FileField
-from osis_document.contrib.forms import FileUploadField
-from osis_document.contrib.post_processing.converter_registry import ConverterRegistry
+from django.core.files import File
 
-from osis_document.contrib.post_processing.converters.converter import Converter
-from osis_document.contrib.post_processing.converters.converter_image_to_pdf import ConverterImageToPdf
-from osis_document.contrib.post_processing.converters.converter_text_document_to_pdf import ConverterTextDocumentToPdf
-from osis_document.contrib.post_processing.merger import merger
-from osis_document.contrib.serializers import FileField as FileFieldSerializer
-from osis_document.contrib.widgets import FileUploadWidget
+from osis_document.models import PostProcessing, Upload
+from osis_document.utils import calculate_hash
 
-__all__ = [
-    'FileField',
-    'FileUploadField',
-    'FileUploadWidget',
-    'FileFieldSerializer',
-    'merger',
-    'ConverterRegistry',
-    'Converter',
-    'ConverterImageToPdf',
-    'ConverterTextDocumentToPdf',
-]
+
+class Processor:
+    type: str
+
+    @staticmethod
+    def _create_upload_instance(path: Path) -> Upload:
+        with path.open(mode='rb') as f:
+            file = File(f, name=path.name)
+            instance = Upload(
+                mimetype="application/pdf",
+                size=file.size,
+                metadata={'hash': calculate_hash(file), 'name': file.name},
+            )
+            instance.file = path.name
+            instance.file.file = file
+            instance.save()
+            return instance
+
+    @classmethod
+    def _create_post_processing_instance(cls, input_files: List[Upload], output_file: Upload) -> PostProcessing:
+        instance = PostProcessing(type=cls.type)
+        instance.save()
+        instance.input_files.add(*input_files)
+        instance.output_files.add(output_file)
+        return instance
+
+    def process(self, upload_objects_uuids: List[UUID], output_filename: str) -> List[UUID]:
+        raise NotImplemented
