@@ -32,8 +32,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 
-class RequestUploadSerializer(serializers.Serializer):
-    file = serializers.FileField()
+class RequestUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Upload
+        fields = ['file']
 
 
 class RequestUploadResponseSerializer(serializers.Serializer):

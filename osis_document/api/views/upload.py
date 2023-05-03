@@ -28,7 +28,12 @@ from pathlib import Path
 import filetype
 from django.conf import settings
 from django.core.exceptions import FieldError
-from django.forms import modelform_factory
+from rest_framework import status
+from rest_framework.parsers import MultiPartParser
+from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
+from rest_framework.views import APIView
+
 from osis_document.api import serializers
 from osis_document.api.permissions import APIKeyPermission
 from osis_document.api.schema import DetailedAutoSchema
@@ -36,11 +41,6 @@ from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.exceptions import MimeMismatch
 from osis_document.models import Upload
 from osis_document.utils import calculate_hash, confirm_upload, get_token
-from rest_framework import status
-from rest_framework.parsers import MultiPartParser
-from rest_framework.response import Response
-from rest_framework.throttling import UserRateThrottle
-from rest_framework.views import APIView
 
 
 class RequestUploadSchema(DetailedAutoSchema):  # pragma: no cover
