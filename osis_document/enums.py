@@ -83,3 +83,9 @@ class DocumentError(ChoiceEnum):
 class PostProcessingType(ChoiceEnum):
     MERGE = _('Merge')
     CONVERT = _('Convert')
+
+
+class PageSize(ChoiceEnum):
+    A3 = _('A3')
+    A4 = _('A4')
+    A5 = _('A5')
