@@ -25,18 +25,17 @@
 # ##############################################################################
 from django.db.models.functions import Now
 from django.http import Http404
-from rest_framework import status
-from rest_framework.generics import get_object_or_404
-from rest_framework.response import Response
-from rest_framework.schemas.openapi import AutoSchema
-from rest_framework.views import APIView
-
 from osis_document.api import serializers
 from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import DocumentError
 from osis_document.models import Token
 from osis_document.utils import get_metadata, get_upload_metadata
+from rest_framework import status
+from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
+from rest_framework.schemas.openapi import AutoSchema
+from rest_framework.views import APIView
 
 
 class MetadataSchema(DetailedAutoSchema):  # pragma: no cover
@@ -147,7 +146,7 @@ class MetadataListView(CorsAllowOriginMixin, APIView):
 
 class ChangeMetadataSchema(DetailedAutoSchema):  # pragma: no cover
     serializer_mapping = {
-        'POST': (serializers.ChangeMetadataSerializer, None),
+        'POST': (serializers.ChangeMetadataSerializer, serializers.MetadataSerializer),
     }
 
     def get_operation_id(self, path, method):
@@ -175,4 +174,4 @@ class ChangeMetadataView(CorsAllowOriginMixin, APIView):
         upload = token.upload
         upload.metadata['name'] = self.request.data.get('name', '')
         upload.save()
-        return Response(status=status.HTTP_200_OK)
+        return Response(upload.metadata, status=status.HTTP_200_OK)

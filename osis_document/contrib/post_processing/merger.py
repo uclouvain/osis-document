@@ -28,46 +28,43 @@ from pathlib import Path
 from typing import List
 from uuid import UUID
 
-from django.core.files import File
+from django.conf import settings
 from django.db.models import Q
+from osis_document.contrib.post_processing.processor import Processor
 from osis_document.enums import PostProcessingType
 from osis_document.exceptions import FormatInvalidException, MissingFileException
-from osis_document.models import Upload, PostProcessing
-from osis_document.utils import calculate_hash
+from osis_document.models import Upload
 from pypdf import PaperSize, PageObject, PdfReader, PdfWriter
 
-from backoffice.settings.base import OSIS_UPLOAD_FOLDER
 
+class Merger(Processor):
+    type = PostProcessingType.MERGE.name
 
-class Merger:
-    def process(self, input_uuid_files: list, **kwargs) -> List[UUID]:
-        filename = kwargs.pop('filename', None)
-        pages_dimension = kwargs.pop('pages_dimension', None)
+    def process(self, upload_objects_uuids: list, output_filename=None, pages_dimension=None) -> List[UUID]:
         input_files = Upload.objects.filter(
-            Q(uuid__in=input_uuid_files) | Q(output_files__uuid__in=input_uuid_files)
+            Q(uuid__in=upload_objects_uuids) | Q(output_files__uuid__in=upload_objects_uuids)
         ).distinct('uuid')
-        if len(input_files) != len(input_uuid_files):
+        if len(input_files) != len(upload_objects_uuids):
             raise MissingFileException
-        writer_pdf = PdfWriter()
+
+        pdf_writer = PdfWriter()
         for file in input_files:
             if file.mimetype != "application/pdf":
                 raise FormatInvalidException
             reader = PdfReader(stream=file.file.path)
             if pages_dimension:
-                writer_pdf = self._merge_and_change_pages_dimension(
-                    writer_instance=writer_pdf,
+                pdf_writer = self._merge_and_change_pages_dimension(
+                    writer_instance=pdf_writer,
                     pages=reader.pages,
                     dimension=pages_dimension
                 )
             else:
-                writer_pdf.append_pages_from_reader(reader=reader)
-        path = f'{OSIS_UPLOAD_FOLDER}{self._get_output_filename(filename)}'
-        writer_pdf.write(path)
-        writer_pdf.close()
+                pdf_writer.append_pages_from_reader(reader=reader)
+        path = Path(settings.OSIS_UPLOAD_FOLDER) / self._get_output_filename(output_filename)
+        pdf_writer.write(path)
+        pdf_writer.close()
         pdf_upload_object = self._create_upload_instance(path=path)
-        self._create_post_processing_instance(
-            input_files=input_files, output_file=pdf_upload_object
-        )
+        self._create_post_processing_instance(input_files=input_files, output_file=pdf_upload_object)
         return [pdf_upload_object.uuid]
 
     @staticmethod
@@ -75,7 +72,7 @@ class Merger:
         expected_page_width = getattr(PaperSize, dimension).width
         for page in pages:
             current_page_width = page.mediabox.width
-            if current_page_width > expected_page_width:
+            if current_page_width != expected_page_width:
                 y_translation_factor = expected_page_width / current_page_width
                 page.scale_to(
                     expected_page_width,
@@ -85,34 +82,10 @@ class Merger:
         return writer_instance
 
     @staticmethod
-    def _get_output_filename(filename: str):
-        if filename:
-            return f"{filename}.pdf"
-        else:
-            return f"merge_{uuid.uuid4()}.pdf"
-
-    @staticmethod
-    def _create_upload_instance(path: str) -> Upload:
-        with Path(path).open(mode='rb') as f:
-            file = File(f, name=Path(path).name)
-            instance = Upload(
-                mimetype="application/pdf",
-                size=file.size,
-                metadata={'hash': calculate_hash(file), 'name': file.name},
-            )
-            instance.file = Path(path).name
-            instance.file.file = file
-            instance.save()
-            return instance
-
-    @staticmethod
-    def _create_post_processing_instance(input_files: [Upload], output_file: Upload):
-        instance = PostProcessing(type=PostProcessingType.MERGE.name)
-        instance.save()
-        for file in input_files:
-            instance.input_files.add(file)
-        instance.output_files.add(output_file)
-        return instance
+    def _get_output_filename(output_filename: str):
+        if output_filename:
+            return f"{output_filename}.pdf"
+        return f"merge_{uuid.uuid4()}.pdf"
 
 
 merger = Merger()

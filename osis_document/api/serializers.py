@@ -204,3 +204,7 @@ class PostProcessing(serializers.Serializer):
         help_text="A list of actions to perform on the files",
         required=True,
     )
+    post_process_params = serializers.DictField(
+        help_text="A dict of params for post processing",
+        required=False
+    )
