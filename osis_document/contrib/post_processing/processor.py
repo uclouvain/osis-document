@@ -28,6 +28,7 @@ from typing import List
 from uuid import UUID
 
 from django.core.files import File
+
 from osis_document.models import PostProcessing, Upload
 from osis_document.utils import calculate_hash
 

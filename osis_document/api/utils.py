@@ -94,8 +94,8 @@ def get_remote_token(uuid, write_token=False):
             return UploadInvalidException.__class__.__name__
         json = response.json()
         if (
-                response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-                and json['detail'] == FileInfectedException.default_detail
+            response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+            and json['detail'] == FileInfectedException.default_detail
         ):
             return FileInfectedException.__class__.__name__
         return json.get('token')

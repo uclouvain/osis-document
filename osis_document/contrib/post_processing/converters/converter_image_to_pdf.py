@@ -29,8 +29,8 @@ from xdrlib import ConversionError
 
 from PIL import Image
 from django.conf import settings
-from osis_document.models import Upload
 
+from osis_document.models import Upload
 from .converter import Converter
 from ..converter_registry import converter_registry
 

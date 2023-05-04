@@ -29,6 +29,7 @@ from pathlib import Path
 import factory
 from django.core.files import File
 from factory.fuzzy import FuzzyText
+
 from osis_document.enums import TokenAccess
 from osis_document.models import Token, Upload
 from osis_document.utils import calculate_hash

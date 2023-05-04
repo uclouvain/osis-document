@@ -27,12 +27,11 @@ from os.path import splitext
 from typing import List, Optional
 from uuid import UUID
 
+from .converters.converter import Converter
 from osis_document.contrib.post_processing.processor import Processor
 from osis_document.enums import PostProcessingType
 from osis_document.exceptions import FormatInvalidException, MissingFileException
 from osis_document.models import Upload
-
-from .converters.converter import Converter
 
 
 class ConverterRegistry(Processor):

@@ -27,6 +27,7 @@ import uuid
 from pathlib import Path
 from typing import List
 from uuid import UUID
+from pypdf import PaperSize, PageObject, PdfReader, PdfWriter
 
 from django.conf import settings
 from django.db.models import Q
@@ -34,7 +35,6 @@ from osis_document.contrib.post_processing.processor import Processor
 from osis_document.enums import PostProcessingType
 from osis_document.exceptions import FormatInvalidException, MissingFileException
 from osis_document.models import Upload
-from pypdf import PaperSize, PageObject, PdfReader, PdfWriter
 
 
 class Merger(Processor):

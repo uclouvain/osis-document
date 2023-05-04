@@ -235,8 +235,9 @@ be used before merging.
 
 ```python
 from osis_document.contrib.post_processing.merger import Merger
+from osis_document.contrib.post_processing.post_processing_enums import PageFormatEnums
 
-Merger().process(input_uuid_files=[], filename='new_filename')
+Merger().process(input_uuid_files=[], filename='new_filename', pages_dimension=PageFormatEnums.A4.name)
 ``` 
 
 ## Post-processing files
@@ -249,16 +250,21 @@ To do this, set the `post_process_type` parameter with the appropriate
 values from the `PostProcessingEnums` enumeration and provide the uuids of
 the files.
 
-To define the name(s) of the output file(s), use the
-`output_convert_filename` and `output_merge_filename` parameters.
+To define the name(s) of the output file(s) or other parameters for the post-processing, use the
+`post_process_params` parameter.
 
 ```python
 from osis_document.utils import post_process
 from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
+from osis_document.contrib.post_processing.post_processing_enums import PageFormatEnums
 
 post_process(uuid_list=[],
              post_process_actions=[PostProcessingEnums.CONVERT_TO_PDF.name, PostProcessingEnums.MERGE_PDF.name],
-             output_filename=None)
+             post_process_params={
+               PostProcessingEnums.CONVERT_TO_PDF.name:{'output_filename': 'conversion_file_name'},
+               PostProcessingEnums.MERGE_PDF.name:{'pages_dimension': PageFormatEnums.A4.name,
+                                                   'output_filename': 'merge_file_name'}}
+             )
 ``` 
 ### Post-processing output template
 ```python
@@ -272,6 +278,24 @@ output={
     'output':[upload_object_uuid]
   }
 }
+``` 
+## Define post-processing actions in a FileField of a model
+```python
+class ModelName(models.Model):
+    ...
+    model_field_name = FileField(
+        ...
+        post_processing=[PostProcessingEnums.CONVERT_TO_PDF.name, PostProcessingEnums.MERGE_PDF.name],
+        post_process_params={
+            PostProcessingEnums.CONVERT_TO_PDF.name: {'output_filename': 'convert_filename'},
+            PostProcessingEnums.MERGE_PDF.name: {
+                'pages_dimension': PageFormatEnums.A4.name,
+                'output_filename': 'merge_filename'
+            }
+        },
+        ...
+    )
+    ...
 ``` 
 ## Add a widget to edit a PDF
 
@@ -351,7 +375,7 @@ Commands available:
 
 To ease generation, use the provided generator:
 ```console
-./manage.py generateschema --urlconf=osis_document.urls --generator_class osis_document.api.schema.OsisDocumentSchemaGenerator --file osis_document/schema.yml
+./manage.py generateschema --urlconf=osis_document.urls --generator_class osis_document.api.schema.OsisDocumentSchemaGenerator --file osis-document/schema.yml
 ```
 
 # Communication between servers

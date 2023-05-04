@@ -549,6 +549,27 @@ components:
           description: The rotation requested, in degrees, usually 90, 180 or 270
       required:
       - rotate
+    SaveEditorResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: A fresh writing token for the modified file
+      required:
+      - token
+    SaveEditor:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        rotations:
+          type: object
+          description: The rotations requested, a mapping of 0-indexed page number
+            and degrees
+      required:
+      - file
+      - rotations
     PostProcessing:
       type: object
       properties:
