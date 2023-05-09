@@ -179,8 +179,12 @@ class PostProcessingTestCase(TestCase):
         a_image = ImageUploadFactory()
         post_processing_types = [PostProcessingEnums.CONVERT_TO_PDF.name]
         output_filename = "test_img_convert"
+        post_process_params = {
+            PostProcessingEnums.CONVERT_TO_PDF.name: {'output_filename': output_filename}
+        }
         uuid_output = post_process(
-            uuid_list=[a_image.uuid], post_process_actions=post_processing_types, output_filename=output_filename
+            uuid_list=[a_image.uuid], post_process_actions=post_processing_types,
+            post_process_params=post_process_params
         )
         output_upload_object = Upload.objects.get(
             uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]
@@ -200,10 +204,13 @@ class PostProcessingTestCase(TestCase):
         a_text_document = TextDocumentUploadFactory()
         post_processing_types = [PostProcessingEnums.CONVERT_TO_PDF.name]
         output_filename = "test_text_document_convert"
+        post_process_params = {
+            PostProcessingEnums.CONVERT_TO_PDF.name: {'output_filename': output_filename}
+        }
         uuid_output = post_process(
             uuid_list=[a_text_document.uuid],
             post_process_actions=post_processing_types,
-            output_filename=output_filename,
+            post_process_params=post_process_params,
         )
         output_upload_object = Upload.objects.get(
             uuid__in=uuid_output[PostProcessingEnums.CONVERT_TO_PDF.name]["output"]
@@ -225,8 +232,11 @@ class PostProcessingTestCase(TestCase):
         uuid_list = [file1.uuid, file2.uuid]
         post_processing_types = [PostProcessingEnums.MERGE_PDF.name]
         output_filename = "test_merge"
+        post_process_params = {
+            PostProcessingEnums.MERGE_PDF.name: {'output_filename': output_filename}
+        }
         uuid_output = post_process(
-            uuid_list=uuid_list, post_process_actions=post_processing_types, output_filename=output_filename
+            uuid_list=uuid_list, post_process_actions=post_processing_types, post_process_params=post_process_params
         )
         output_upload_object = Upload.objects.get(uuid__in=uuid_output[PostProcessingEnums.MERGE_PDF.name]["output"])
         self.assertTrue(
@@ -246,10 +256,14 @@ class PostProcessingTestCase(TestCase):
         a_text_document = TextDocumentUploadFactory()
         output_filename = "test_merge_and_convert"
         post_processing_types = [PostProcessingEnums.CONVERT_TO_PDF.name, PostProcessingEnums.MERGE_PDF.name]
+        post_process_params = {
+            PostProcessingEnums.CONVERT_TO_PDF.name: {'output_filename': output_filename},
+            PostProcessingEnums.MERGE_PDF.name: {'output_filename': output_filename},
+        }
         uuid_output = post_process(
             uuid_list=[a_image.uuid, a_text_document.uuid],
             post_process_actions=post_processing_types,
-            output_filename=output_filename,
+            post_process_params=post_process_params,
         )
         output_upload_object = Upload.objects.get(uuid__in=uuid_output[PostProcessingEnums.MERGE_PDF.name]["output"])
         self.assertTrue(
@@ -266,10 +280,12 @@ class PostProcessingTestCase(TestCase):
         uuid_list = [file1.uuid, file2.uuid]
         post_processing_types = [PostProcessingEnums.MERGE_PDF.name]
         with self.assertRaises(expected_exception=FormatInvalidException):
-            post_process(uuid_list=uuid_list, post_process_actions=post_processing_types)
+            post_process(uuid_list=uuid_list, post_process_actions=post_processing_types,
+                         post_process_params={PostProcessingEnums.MERGE_PDF.name: {}})
 
     def test_convert_with_bad_file_extension(self):
         a_file = BadExtensionUploadFactory()
         post_processing_types = [PostProcessingEnums.CONVERT_TO_PDF.name]
         with self.assertRaises(expected_exception=FormatInvalidException):
-            post_process(uuid_list=[a_file.uuid], post_process_actions=post_processing_types)
+            post_process(uuid_list=[a_file.uuid], post_process_actions=post_processing_types,
+                         post_process_params={PostProcessingEnums.CONVERT_TO_PDF.name: {}})
