@@ -38,6 +38,7 @@ class PostProcessingView(APIView):
                 uuids_result_dict = post_process(
                     uuid_list=input_serializer_data.data["files_uuid"],
                     post_process_actions=input_serializer_data.data["post_process_types"],
+                    post_process_params=input_serializer_data.data["post_process_params"],
                 )
                 return Response(data=uuids_result_dict, status=status.HTTP_201_CREATED)
         except Exception as e:

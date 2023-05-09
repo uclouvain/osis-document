@@ -30,9 +30,9 @@ from pathlib import Path
 from typing import List
 
 from django.conf import settings
-
 from osis_document.exceptions import ConversionError, FormatInvalidException
 from osis_document.models import Upload
+
 from .converter import Converter
 from ..converter_registry import converter_registry
 

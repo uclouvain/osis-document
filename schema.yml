@@ -581,6 +581,9 @@ components:
           type: array
           items: {}
           description: A list of actions to perform on the files
+        post_process_params:
+          type: object
+          description: A dict of params for post processing
       required:
       - files_uuid
       - post_process_types

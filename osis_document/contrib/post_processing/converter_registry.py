@@ -44,7 +44,7 @@ class ConverterRegistry(Processor):
     def add_converter(self, converter: Converter) -> None:
         self.converters.append(converter)
 
-    def process(self, upload_objects_uuids: List[UUID], output_filename: Optional[str]) -> List[UUID]:
+    def process(self, upload_objects_uuids: List[UUID], output_filename: Optional[str] = None) -> List[UUID]:
         upload_objects = Upload.objects.filter(uuid__in=upload_objects_uuids)
         process_return = []
         converter: Converter
