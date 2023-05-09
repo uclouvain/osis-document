@@ -85,8 +85,8 @@ class Merger(Processor):
         return writer_instance
 
     @staticmethod
-    def _get_output_filename(output_filename: str):
-        if output_filename:
+    def _get_output_filename(output_filename: str = None):
+        if output_filename is not None:
             return f"{output_filename}.pdf"
         return f"merge_{uuid.uuid4()}.pdf"
 
