@@ -54,6 +54,7 @@ class FileField(ArrayField):
         self.upload_to = kwargs.pop('upload_to', '')
         self.post_processing = kwargs.pop('post_processing', [])
         self.output_post_processing = kwargs.pop('output_post_processing', None)
+        self.post_process_params = kwargs.pop('post_process_params', None)
 
         kwargs.setdefault('default', list)
         kwargs.setdefault('base_field', models.UUIDField())
@@ -79,6 +80,7 @@ class FileField(ArrayField):
                 'upload_to': self.upload_to,
                 'post_processing': self.post_processing,
                 'output_post_processing': self.output_post_processing,
+                'post_process_params': self.post_process_params,
                 **kwargs,
             }
         )
@@ -112,4 +114,5 @@ class FileField(ArrayField):
     def _post_processing(self, uuid_list: list):
         from osis_document.api.utils import launch_post_processing
         return launch_post_processing(uuid_list=[uuid_list] if not isinstance(uuid_list, list) else uuid_list,
-                                      post_processing_types=self.post_processing)
+                                      post_processing_types=self.post_processing,
+                                      post_process_params=self.post_process_params)

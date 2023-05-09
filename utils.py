@@ -177,9 +177,9 @@ def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
 
 
 def post_process(
-    uuid_list: List[UUID],
-    post_process_actions: List[str],
-    output_filename: str = None,
+        uuid_list: List[UUID],
+        post_process_actions: List[str],
+        post_process_params: Dict[str, Dict[str, str]],
 ) -> Dict[str, Dict[str, List[UUID]]]:
     from osis_document.contrib.post_processing.converter_registry import converter_registry
     from osis_document.contrib.post_processing.merger import merger
@@ -199,7 +199,7 @@ def post_process(
         if not processor:
             raise InvalidPostProcessorAction
         input = post_processing_return[action_type]["input"] = intermediary_output or uuid_list
-        intermediary_output = processor.process(input, output_filename)
+        intermediary_output = processor.process(upload_objects_uuids=input, **post_process_params[action_type])
         post_processing_return[action_type]["output"] = intermediary_output
 
     return post_processing_return

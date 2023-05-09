@@ -58,5 +58,5 @@ class Processor:
         instance.output_files.add(output_file)
         return instance
 
-    def process(self, upload_objects_uuids: List[UUID], output_filename: str) -> List[UUID]:
+    def process(self, upload_objects_uuids: List[UUID], output_filename: str = None) -> List[UUID]:
         raise NotImplemented

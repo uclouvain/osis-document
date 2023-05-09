@@ -27,44 +27,67 @@ import uuid
 from pathlib import Path
 from typing import List
 from uuid import UUID
+from pypdf import PaperSize, PageObject, PdfReader, PdfWriter
 
 from django.conf import settings
 from django.db.models import Q
-from pypdf import PdfMerger
-
 from osis_document.contrib.post_processing.processor import Processor
 from osis_document.enums import PostProcessingType
-from osis_document.exceptions import FormatInvalidException, MissingFileException
+from osis_document.exceptions import FormatInvalidException, MissingFileException, InvalidMergeFileDimension
 from osis_document.models import Upload
 
 
 class Merger(Processor):
     type = PostProcessingType.MERGE.name
 
-    def process(self, input_uuid_files: list, filename=None) -> List[UUID]:
+    def process(self, upload_objects_uuids: list, output_filename=None, pages_dimension=None) -> List[UUID]:
         input_files = Upload.objects.filter(
-            Q(uuid__in=input_uuid_files) | Q(output_files__uuid__in=input_uuid_files)
+            Q(uuid__in=upload_objects_uuids) | Q(output_files__uuid__in=upload_objects_uuids)
         ).distinct('uuid')
-        if len(input_files) != len(input_uuid_files):
+        if len(input_files) != len(upload_objects_uuids):
             raise MissingFileException
 
-        pdf_merger = PdfMerger()
+        pdf_writer = PdfWriter()
         for file in input_files:
             if file.mimetype != "application/pdf":
                 raise FormatInvalidException
-            pdf_merger.append(file.file.path)
-        path = Path(settings.OSIS_UPLOAD_FOLDER) / self._get_output_filename(filename)
-        pdf_merger.write(path)
-        pdf_merger.close()
-
+            reader = PdfReader(stream=file.file.path)
+            if pages_dimension:
+                pdf_writer = self._merge_and_change_pages_dimension(
+                    writer_instance=pdf_writer,
+                    pages=reader.pages,
+                    dimension=pages_dimension
+                )
+            else:
+                pdf_writer.append_pages_from_reader(reader=reader)
+        path = Path(settings.OSIS_UPLOAD_FOLDER) / self._get_output_filename(output_filename)
+        pdf_writer.write(path)
+        pdf_writer.close()
         pdf_upload_object = self._create_upload_instance(path=path)
         self._create_post_processing_instance(input_files=input_files, output_file=pdf_upload_object)
         return [pdf_upload_object.uuid]
 
     @staticmethod
-    def _get_output_filename(filename: str):
-        if filename:
-            return f"{filename}.pdf"
+    def _merge_and_change_pages_dimension(writer_instance: PdfWriter, pages: List[PageObject], dimension):
+        try :
+            expected_page_width = getattr(PaperSize, dimension).width
+        except AttributeError:
+            raise InvalidMergeFileDimension
+        for page in pages:
+            current_page_width = page.mediabox.width
+            if current_page_width != expected_page_width:
+                y_translation_factor = expected_page_width / current_page_width
+                page.scale_to(
+                    expected_page_width,
+                    page.mediabox.height * y_translation_factor,
+                )
+            writer_instance.add_page(page=page)
+        return writer_instance
+
+    @staticmethod
+    def _get_output_filename(output_filename: str = None):
+        if output_filename is not None:
+            return f"{output_filename}.pdf"
         return f"merge_{uuid.uuid4()}.pdf"
 
 

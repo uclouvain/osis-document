@@ -83,3 +83,4 @@ class DocumentError(ChoiceEnum):
 class PostProcessingType(ChoiceEnum):
     MERGE = _('Merge')
     CONVERT = _('Convert')
+
