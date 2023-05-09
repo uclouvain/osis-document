@@ -61,3 +61,7 @@ class MissingFileException(APIException):
 
 class InvalidPostProcessorAction(APIException):
     default_detail = _("Invalid post_processing action")
+
+
+class InvalidMergeFileDimension(APIException):
+    default_detail = _("Invalid dimension params given for merge action")

@@ -33,7 +33,7 @@ from django.conf import settings
 from django.db.models import Q
 from osis_document.contrib.post_processing.processor import Processor
 from osis_document.enums import PostProcessingType
-from osis_document.exceptions import FormatInvalidException, MissingFileException
+from osis_document.exceptions import FormatInvalidException, MissingFileException, InvalidMergeFileDimension
 from osis_document.models import Upload
 
 
@@ -69,7 +69,10 @@ class Merger(Processor):
 
     @staticmethod
     def _merge_and_change_pages_dimension(writer_instance: PdfWriter, pages: List[PageObject], dimension):
-        expected_page_width = getattr(PaperSize, dimension).width
+        try :
+            expected_page_width = getattr(PaperSize, dimension).width
+        except AttributeError:
+            raise InvalidMergeFileDimension
         for page in pages:
             current_page_width = page.mediabox.width
             if current_page_width != expected_page_width:
