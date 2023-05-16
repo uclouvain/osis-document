@@ -232,23 +232,23 @@ paths:
       requestBody:
         content:
           application/json:
-            type: array
-            items:
-              type: string
-              format: uuid
-              description: The uuid of the persisted file upload
+            schema:
+              type: array
+              items:
+                type: string
+                format: uuid
+                description: The uuid of the persisted file upload
       responses:
         '201':
           description: The tokens of several uploads
           content:
             application/json:
-              type: object
-              properties:
-                type: string
-              additionalProperties:
-                oneOf:
-                - $ref: '#/components/schemas/Token'
-                - $ref: '#/components/schemas/ErrorWithStatus'
+              schema:
+                type: object
+                additionalProperties:
+                  oneOf:
+                  - $ref: '#/components/schemas/Token'
+                  - $ref: '#/components/schemas/ErrorWithStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -267,10 +267,11 @@ paths:
       requestBody:
         content:
           application/json:
-            type: array
-            items:
-              type: string
-              description: The file token
+            schema:
+              type: array
+              items:
+                type: string
+                description: The file token
       responses:
         '201':
           content:
@@ -281,13 +282,12 @@ paths:
           description: The metadata of several uploads
           content:
             application/json:
-              type: object
-              properties:
-                type: string
-              additionalProperties:
-                oneOf:
-                - $ref: '#/components/schemas/Metadata'
-                - $ref: '#/components/schemas/ErrorWithStatus'
+              schema:
+                type: object
+                additionalProperties:
+                  oneOf:
+                  - $ref: '#/components/schemas/Metadata'
+                  - $ref: '#/components/schemas/ErrorWithStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -313,7 +313,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ChangeMetadata'
+              type: object
+              additionalProperties: true
       responses:
         '200':
           content:
@@ -527,12 +528,7 @@ components:
       - upload_id
     ChangeMetadata:
       type: object
-      properties:
-        name:
-          type: string
-          description: The file's new name
-      required:
-      - name
+      properties: {}
     RotateImageResponse:
       type: object
       properties:
