@@ -24,7 +24,7 @@
 #
 # ##############################################################################
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 from uuid import UUID
 
 from django.core.files import File
@@ -58,5 +58,5 @@ class Processor:
         instance.output_files.add(output_file)
         return instance
 
-    def process(self, upload_objects_uuids: List[UUID], output_filename: str = None) -> List[UUID]:
+    def process(self, upload_objects_uuids: List[UUID], output_filename: str = None) -> Dict[str, List[UUID]]:
         raise NotImplemented

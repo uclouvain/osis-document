@@ -25,7 +25,7 @@
 # ##############################################################################
 import uuid
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 from uuid import UUID
 from pypdf import PaperSize, PageObject, PdfReader, PdfWriter
 
@@ -40,9 +40,10 @@ from osis_document.models import Upload
 class Merger(Processor):
     type = PostProcessingType.MERGE.name
 
-    def process(self, upload_objects_uuids: list, output_filename=None, pages_dimension=None) -> List[UUID]:
+    def process(self, upload_objects_uuids: list, output_filename=None, pages_dimension=None, ) -> Dict[
+        str, List[UUID]]:
         input_files = Upload.objects.filter(
-            Q(uuid__in=upload_objects_uuids) | Q(output_files__uuid__in=upload_objects_uuids)
+            Q(uuid__in=upload_objects_uuids) | Q(post_processing_output_files__uuid__in=upload_objects_uuids)
         ).distinct('uuid')
         if len(input_files) != len(upload_objects_uuids):
             raise MissingFileException
@@ -64,12 +65,18 @@ class Merger(Processor):
         pdf_writer.write(path)
         pdf_writer.close()
         pdf_upload_object = self._create_upload_instance(path=path)
-        self._create_post_processing_instance(input_files=input_files, output_file=pdf_upload_object)
-        return [pdf_upload_object.uuid]
+        post_processing_object = self._create_post_processing_instance(
+            input_files=input_files,
+            output_file=pdf_upload_object
+        )
+        return {
+            'upload_objects': [pdf_upload_object.uuid],
+            'post_processing_objects': [post_processing_object.uuid]
+        }
 
     @staticmethod
     def _merge_and_change_pages_dimension(writer_instance: PdfWriter, pages: List[PageObject], dimension):
-        try :
+        try:
             expected_page_width = getattr(PaperSize, dimension).width
         except AttributeError:
             raise InvalidMergeFileDimension

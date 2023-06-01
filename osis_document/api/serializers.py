@@ -196,6 +196,10 @@ class TokenSerializer(serializers.ModelSerializer):
 
 
 class PostProcessing(serializers.Serializer):
+    async_post_processing = serializers.BooleanField(
+        help_text="Boolean that define if post processing is asynchronous ",
+        required=True,
+    )
     files_uuid = serializers.ListField(
         help_text="A list of files UUID",
         required=True,

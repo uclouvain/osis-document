@@ -38,9 +38,9 @@ from django.core.exceptions import FieldError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
 from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
-from osis_document.enums import FileStatus
+from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingProgress
 from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction
-from osis_document.models import Token, Upload
+from osis_document.models import Token, Upload, PostProcessing, PostProcessAsync
 
 
 def confirm_upload(token, upload_to, model_instance=None) -> UUID:
@@ -187,7 +187,7 @@ def post_process(
     post_processing_return = {}
     post_processing_return.setdefault(PostProcessingEnums.CONVERT_TO_PDF.name, {'input': [], 'output': []})
     post_processing_return.setdefault(PostProcessingEnums.MERGE_PDF.name, {'input': [], 'output': []})
-    intermediary_output = []
+    intermediary_output = {}
 
     processors = {
         PostProcessingEnums.CONVERT_TO_PDF.name: converter_registry,
@@ -198,8 +198,25 @@ def post_process(
         processor = processors.get(action_type, None)
         if not processor:
             raise InvalidPostProcessorAction
-        input = post_processing_return[action_type]["input"] = intermediary_output or uuid_list
+        input = post_processing_return[action_type]["input"] = intermediary_output[
+            'upload_objects'] if intermediary_output else uuid_list
         intermediary_output = processor.process(upload_objects_uuids=input, **post_process_params[action_type])
         post_processing_return[action_type]["output"] = intermediary_output
 
     return post_processing_return
+
+
+def create_post_process_async_object(
+        uuid_list: List[UUID],
+        post_process_actions: List[str],
+        post_process_params: Dict[str, Dict[str, str]],
+) -> None:
+    PostProcessAsync.objects.create(
+        status=PostProcessingStatus.PENDING.name,
+        data={'post_process_actions': post_process_actions,
+              'base_input': uuid_list,
+              'post_process_params': post_process_params},
+        results={
+            action: {'status': PostProcessingStatus.PENDING.name} for action in post_process_actions
+        }
+    )

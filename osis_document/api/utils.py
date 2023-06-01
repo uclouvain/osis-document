@@ -79,7 +79,7 @@ def get_raw_content_remotely(token: str):
         return None
 
 
-def get_remote_token(uuid, write_token=False):
+def get_remote_token(uuid, write_token=False, type_post_processing=None):
     """Given an uuid, return a writing or reading remote token."""
     import requests
 
@@ -89,13 +89,16 @@ def get_remote_token(uuid, write_token=False):
         uuid=uuid,
     )
     try:
-        response = requests.post(url, headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET})
+        response = requests.post(url,
+                                 json={'type_post_processing': type_post_processing},
+                                 headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
+                                 )
         if response.status_code == status.HTTP_404_NOT_FOUND:
             return UploadInvalidException.__class__.__name__
         json = response.json()
         if (
-            response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-            and json['detail'] == FileInfectedException.default_detail
+                response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+                and json['detail'] == FileInfectedException.default_detail
         ):
             return FileInfectedException.__class__.__name__
         return json.get('token')
@@ -103,15 +106,20 @@ def get_remote_token(uuid, write_token=False):
         return None
 
 
-def get_remote_tokens(uuids: List[str]) -> Dict[str, str]:
-    """Given a list of uuids, return a dictionary associating each uuid to a reading token."""
+def get_remote_tokens(uuids: List[str], type_post_processing=None) -> Dict[str, str]:
+    """Given a list of uuids and a type of post-processing,
+    return a dictionary associating each uuid to a reading token."""
     import requests
 
     url = "{base_url}read-tokens".format(base_url=settings.OSIS_DOCUMENT_BASE_URL)
     try:
+        data = {
+            'uuid': uuids,
+            'type_post_processing': type_post_processing
+        }
         response = requests.post(
             url,
-            json=uuids,
+            json=uuids if not type_post_processing else data,
             headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
         )
         if response.status_code == status.HTTP_201_CREATED:
@@ -149,11 +157,17 @@ def confirm_remote_upload(token, upload_to=None, related_model=None, related_mod
     return response.json().get('uuid')
 
 
-def launch_post_processing(uuid_list: List, post_processing_types: List, post_process_params: Dict):
+def launch_post_processing(
+        uuid_list: List,
+        async_post_processing: bool,
+        post_processing_types: List,
+        post_process_params: Dict
+):
     import requests
 
     url = "{}post-processing".format(settings.OSIS_DOCUMENT_BASE_URL)
-    data = {'post_process_types': post_processing_types,
+    data = {'async_post_processing': async_post_processing,
+            'post_process_types': post_processing_types,
             'files_uuid': uuid_list,
             'post_process_params': post_process_params
             }
@@ -162,7 +176,7 @@ def launch_post_processing(uuid_list: List, post_processing_types: List, post_pr
         json=data,
         headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
     )
-    return response.json()
+    return response.json() if not async_post_processing else response
 
 
 class CorsAllowOriginMixin(APIView):

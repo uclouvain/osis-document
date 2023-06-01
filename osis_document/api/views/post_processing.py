@@ -1,6 +1,6 @@
 from osis_document.api import serializers
 from osis_document.api.schema import DetailedAutoSchema
-from osis_document.utils import post_process
+from osis_document.utils import post_process, create_post_process_async_object
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -35,11 +35,19 @@ class PostProcessingView(APIView):
             )
             validated_data = input_serializer_data.is_valid(raise_exception=True)
             if validated_data:
-                uuids_result_dict = post_process(
-                    uuid_list=input_serializer_data.data["files_uuid"],
-                    post_process_actions=input_serializer_data.data["post_process_types"],
-                    post_process_params=input_serializer_data.data["post_process_params"],
-                )
-                return Response(data=uuids_result_dict, status=status.HTTP_201_CREATED)
+                if input_serializer_data.data["async_post_processing"] == True:
+                    create_post_process_async_object(
+                        uuid_list=input_serializer_data.data["files_uuid"],
+                        post_process_actions=input_serializer_data.data["post_process_types"],
+                        post_process_params=input_serializer_data.data["post_process_params"],
+                    )
+                    return Response(status=status.HTTP_202_ACCEPTED)
+                else:
+                    uuids_result_dict = post_process(
+                        uuid_list=input_serializer_data.data["files_uuid"],
+                        post_process_actions=input_serializer_data.data["post_process_types"],
+                        post_process_params=input_serializer_data.data["post_process_params"],
+                    )
+                    return Response(data=uuids_result_dict, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status.HTTP_400_BAD_REQUEST)

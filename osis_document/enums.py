@@ -84,3 +84,8 @@ class PostProcessingType(ChoiceEnum):
     MERGE = _('Merge')
     CONVERT = _('Convert')
 
+
+class PostProcessingStatus(ChoiceEnum):
+    PENDING = _('Pending')
+    FAILED = _('Failed')
+    DONE = _('Done')

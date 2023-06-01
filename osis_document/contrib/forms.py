@@ -78,6 +78,7 @@ class FileUploadField(SplitArrayField):
         self.upload_to = kwargs.pop('upload_to', None)
         self.related_model = kwargs.pop('related_model', None)
         self.post_processing = kwargs.pop('post_processing', [])
+        self.async_post_processing = kwargs.pop('async_post_processing', False)
         self.output_post_processing = kwargs.pop('output_post_processing', None)
         self.post_process_params = kwargs.pop('post_process_params', None)
         kwargs.setdefault(
@@ -93,6 +94,7 @@ class FileUploadField(SplitArrayField):
                 min_files=self.min_files,
                 max_files=self.max_files,
                 post_processing=self.post_processing,
+                async_post_processing=self.async_post_processing,
                 output_post_processing=self.output_post_processing,
                 post_process_params=self.post_process_params,
             ),
