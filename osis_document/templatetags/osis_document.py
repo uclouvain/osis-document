@@ -55,14 +55,13 @@ def document_editor(value, **attrs):
 
 
 @register.simple_tag
-def get_metadata(uuid):
+def get_metadata(uuid, type_post_processing=None):
     from osis_document.api.utils import get_remote_metadata, get_remote_token
-
-    return get_remote_metadata(get_remote_token(uuid))
+    return get_remote_metadata(get_remote_token(uuid=uuid, type_post_processing=type_post_processing))
 
 
 @register.simple_tag
-def get_file_url(uuid):
+def get_file_url(uuid, type_post_processing=None):
     from osis_document.api.utils import get_remote_token
+    return utils_get_file_url(get_remote_token(uuid=uuid, type_post_processing=type_post_processing))
 
-    return utils_get_file_url(get_remote_token(uuid))

@@ -33,10 +33,11 @@ from rest_framework import status
 from rest_framework.views import APIView
 
 
-def get_remote_metadata(token: str) -> Union[dict, None]:
+def get_remote_metadata(token: Union[str or Dict]) -> Union[dict, None]:
     """Given a token, return the remote metadata."""
     import requests
-
+    if isinstance(token, Dict):
+        return None
     url = "{}metadata/{}".format(settings.OSIS_DOCUMENT_BASE_URL, token)
     try:
         response = requests.get(url)
@@ -47,10 +48,11 @@ def get_remote_metadata(token: str) -> Union[dict, None]:
         return None
 
 
-def get_several_remote_metadata(tokens: List[str]) -> Dict[str, dict]:
+def get_several_remote_metadata(tokens: Union[List[str], Dict]) -> Dict[str, dict]:
     """Given a list of tokens, return a dictionary associating each token to upload metadata."""
     import requests
-
+    if isinstance(tokens, Dict):
+        return {}
     url = "{}metadata".format(settings.OSIS_DOCUMENT_BASE_URL)
     try:
         response = requests.post(
@@ -89,19 +91,20 @@ def get_remote_token(uuid, write_token=False, type_post_processing=None):
         uuid=uuid,
     )
     try:
-        response = requests.post(url,
-                                 json={'type_post_processing': type_post_processing},
-                                 headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
-                                 )
+        response = requests.post(
+            url,
+            json={'uuid': uuid, 'type_post_processing': type_post_processing},
+            headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
+        )
         if response.status_code == status.HTTP_404_NOT_FOUND:
             return UploadInvalidException.__class__.__name__
         json = response.json()
         if (
                 response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-                and json['detail'] == FileInfectedException.default_detail
+                and json.get('detail', '') == FileInfectedException.default_detail
         ):
             return FileInfectedException.__class__.__name__
-        return json.get('token')
+        return json.get('token') or json
     except HTTPError:
         return None
 
@@ -113,17 +116,18 @@ def get_remote_tokens(uuids: List[str], type_post_processing=None) -> Dict[str, 
 
     url = "{base_url}read-tokens".format(base_url=settings.OSIS_DOCUMENT_BASE_URL)
     try:
-        data = {
-            'uuid': uuids,
-            'type_post_processing': type_post_processing
-        }
+        data = {'uuid': uuids}
+        if type_post_processing:
+            data.update({'type_post_processing': type_post_processing})
         response = requests.post(
             url,
-            json=uuids if not type_post_processing else data,
+            json=data,
             headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
         )
         if response.status_code == status.HTTP_201_CREATED:
             return {uuid: item.get('token') for uuid, item in response.json().items() if 'error' not in item}
+        if response.status_code in [status.HTTP_206_PARTIAL_CONTENT, status.HTTP_500_INTERNAL_SERVER_ERROR]:
+            return response.json()
     except HTTPError:
         pass
     return {}
@@ -160,8 +164,8 @@ def confirm_remote_upload(token, upload_to=None, related_model=None, related_mod
 def launch_post_processing(
         uuid_list: List,
         async_post_processing: bool,
-        post_processing_types: List,
-        post_process_params: Dict
+        post_processing_types: List[str],
+        post_process_params: Dict[str, Dict[str, str]]
 ):
     import requests
 
