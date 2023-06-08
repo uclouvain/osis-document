@@ -40,7 +40,7 @@ class ConverterImageToPdf(Converter):
         try:
             image = Image.open(upload_input_object.file)
             image_pdf = image.convert('RGB')
-            new_filepath = Path(settings.OSIS_UPLOAD_FOLDER) / output_filename
+            new_filepath = Path(settings.MEDIA_ROOT) / output_filename
             image_pdf.save(new_filepath, quality=95, resolution=19.0, optimize=True)
             return new_filepath
         except Exception:

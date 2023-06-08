@@ -46,13 +46,13 @@ class ConverterTextDocumentToPdf(Converter):
                 f'lowriter '
                 f'--headless '
                 f'--convert-to pdf:writer_pdf_Export '
-                f'--outdir {settings.OSIS_UPLOAD_FOLDER} {upload_input_object.file.path}'
+                f'--outdir {settings.MEDIA_ROOT} {upload_input_object.file.path}'
             )
             result = subprocess.run(command, shell=True)
             if result.returncode:
                 raise ConversionError(result.stderr)
 
-            new_filepath = Path(settings.OSIS_UPLOAD_FOLDER) / output_filename
+            new_filepath = Path(settings.MEDIA_ROOT) / output_filename
             os.rename(f'{splitext(upload_input_object.file.path)[0]}.pdf', new_filepath)
             return new_filepath
         except Exception as e:

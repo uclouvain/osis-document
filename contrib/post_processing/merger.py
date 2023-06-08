@@ -60,7 +60,7 @@ class Merger(Processor):
                 )
             else:
                 pdf_writer.append_pages_from_reader(reader=reader)
-        path = Path(settings.OSIS_UPLOAD_FOLDER) / self._get_output_filename(output_filename)
+        path = Path(settings.MEDIA_ROOT) / self._get_output_filename(output_filename)
         pdf_writer.write(path)
         pdf_writer.close()
         pdf_upload_object = self._create_upload_instance(path=path)
