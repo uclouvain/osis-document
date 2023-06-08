@@ -68,7 +68,7 @@ class ConverterRegistry(Processor):
                     )
                     process_return['upload_objects'].append(new_instance.uuid)
 
-        if not process_return:
+        if not process_return['upload_objects']:
             raise FormatInvalidException
 
         if len(upload_objects_uuids) != len(process_return['upload_objects']):

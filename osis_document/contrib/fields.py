@@ -94,11 +94,7 @@ class FileField(ArrayField):
             for token in (getattr(model_instance, self.attname) or [])
         ]
         if self.post_processing:
-            data = self._post_processing(uuid_list=value)
-            if self.output_post_processing and not self.async_post_processing:
-                value = data[self.output_post_processing]["output"]
-            elif not self.async_post_processing:
-                value = data[self.post_processing[-1]]["output"]
+            self._post_processing(uuid_list=value)
         setattr(model_instance, self.attname, value)
         return value
 
@@ -115,7 +111,9 @@ class FileField(ArrayField):
 
     def _post_processing(self, uuid_list: list):
         from osis_document.api.utils import launch_post_processing
-        return launch_post_processing(async_post_processing=self.async_post_processing,
-                                      uuid_list=[uuid_list] if not isinstance(uuid_list, list) else uuid_list,
-                                      post_processing_types=self.post_processing,
-                                      post_process_params=self.post_process_params)
+        return launch_post_processing(
+            async_post_processing=self.async_post_processing,
+            uuid_list=[uuid_list] if not isinstance(uuid_list, list) else uuid_list,
+            post_processing_types=self.post_processing,
+            post_process_params=self.post_process_params
+        )

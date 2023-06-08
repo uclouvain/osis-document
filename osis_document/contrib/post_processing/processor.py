@@ -31,7 +31,7 @@ from django.core.files import File
 
 from osis_document.models import PostProcessing, Upload
 from osis_document.utils import calculate_hash
-
+from osis_document.enums import FileStatus
 
 class Processor:
     type: str
@@ -44,6 +44,7 @@ class Processor:
                 mimetype="application/pdf",
                 size=file.size,
                 metadata={'hash': calculate_hash(file), 'name': file.name},
+                status=FileStatus.UPLOADED.name
             )
             instance.file = path.name
             instance.file.file = file

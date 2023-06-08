@@ -37,8 +37,7 @@ from django.core import signing
 from django.core.exceptions import FieldError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
-from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
-from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingProgress
+from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType
 from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction
 from osis_document.models import Token, Upload, PostProcessing, PostProcessAsync
 
@@ -185,13 +184,13 @@ def post_process(
     from osis_document.contrib.post_processing.merger import merger
 
     post_processing_return = {}
-    post_processing_return.setdefault(PostProcessingEnums.CONVERT_TO_PDF.name, {'input': [], 'output': []})
-    post_processing_return.setdefault(PostProcessingEnums.MERGE_PDF.name, {'input': [], 'output': []})
+    post_processing_return.setdefault(PostProcessingType.CONVERT.name, {'input': [], 'output': []})
+    post_processing_return.setdefault(PostProcessingType.MERGE.name, {'input': [], 'output': []})
     intermediary_output = {}
 
     processors = {
-        PostProcessingEnums.CONVERT_TO_PDF.name: converter_registry,
-        PostProcessingEnums.MERGE_PDF.name: merger,
+        PostProcessingType.CONVERT.name: converter_registry,
+        PostProcessingType.MERGE.name: merger,
     }
 
     for action_type in post_process_actions:

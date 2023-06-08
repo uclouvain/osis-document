@@ -89,3 +89,9 @@ class PostProcessingStatus(ChoiceEnum):
     PENDING = _('Pending')
     FAILED = _('Failed')
     DONE = _('Done')
+
+
+class PageFormatEnums(Enum):
+    A3 = _('A3')
+    A4 = _('A4')
+    A5 = _('A5')
