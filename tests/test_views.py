@@ -378,11 +378,30 @@ class MetadataViewTestCase(APITestCase):
 
     def test_change_metadata(self):
         token = WriteTokenFactory()
-        response = self.client.post(resolve_url('change-metadata', token=token.token), {'name': 'foobar'})
+        response = self.client.post(
+            resolve_url('change-metadata', token=token.token),
+            {'name': 'foobar', 'new_property': 'value'},
+        )
         self.assertEqual(response.status_code, 200)
         upload = token.upload
         upload.refresh_from_db()
         self.assertEqual(upload.metadata['name'], 'foobar')
+        self.assertEqual(upload.metadata['new_property'], 'value')
+
+    def test_change_metadata_hash_is_forbidden(self):
+        token = WriteTokenFactory()
+        original_hash = token.upload.metadata['hash']
+        response = self.client.post(
+            resolve_url('change-metadata', token=token.token),
+            {
+                'name': 'foobar',
+                'hash': 'new_hash',
+            },
+        )
+        self.assertEqual(response.status_code, 403)
+        upload = token.upload
+        upload.refresh_from_db()
+        self.assertEqual(upload.metadata['hash'], original_hash)
 
 
 @override_settings(ROOT_URLCONF='osis_document.urls', OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
