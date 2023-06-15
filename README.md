@@ -247,7 +247,7 @@ To perform post-processing actions on files, use the utility function
 or do both at the same time.
 
 To do this, set the `post_process_type` parameter with the appropriate
-values from the `PostProcessingEnums` enumeration and provide the uuids of
+values from the `PostProcessingType` enumeration and provide the uuids of
 the files.
 
 To define the name(s) of the output file(s) or other parameters for the post-processing, use the
@@ -255,25 +255,24 @@ To define the name(s) of the output file(s) or other parameters for the post-pro
 
 ```python
 from osis_document.utils import post_process
-from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
-from osis_document.contrib.post_processing.post_processing_enums import PageFormatEnums
+from osis_document.enums import PostProcessingType, PageFormatEnums
 
 post_process(uuid_list=[],
-             post_process_actions=[PostProcessingEnums.CONVERT_TO_PDF.name, PostProcessingEnums.MERGE_PDF.name],
+             post_process_actions=[PostProcessingType.CONVERT.name, PostProcessingType.MERGE.name],
              post_process_params={
-               PostProcessingEnums.CONVERT_TO_PDF.name:{'output_filename': 'conversion_file_name'},
-               PostProcessingEnums.MERGE_PDF.name:{'pages_dimension': PageFormatEnums.A4.name,
+               PostProcessingType.CONVERT.name:{'output_filename': 'conversion_file_name'},
+               PostProcessingType.MERGE.name:{'pages_dimension': PageFormatEnums.A4.name,
                                                    'output_filename': 'merge_file_name'}}
              )
 ``` 
 ### Post-processing output template
 ```python
 output={
-  'convert_to_pdf': {
+  'convert': {
     'input':[object_uuid, ...],
     'output':[upload_object_uuid, ...]
   },
-  'merge_pdf': {
+  'merge': {
     'input':[object_uuid, ...],
     'output':[upload_object_uuid]
   }
@@ -285,10 +284,10 @@ class ModelName(models.Model):
     ...
     model_field_name = FileField(
         ...
-        post_processing=[PostProcessingEnums.CONVERT_TO_PDF.name, PostProcessingEnums.MERGE_PDF.name],
+        post_processing=[PostProcessingType.CONVERT.name, PostProcessingType.MERGE.name],
         post_process_params={
-            PostProcessingEnums.CONVERT_TO_PDF.name: {'output_filename': 'convert_filename'},
-            PostProcessingEnums.MERGE_PDF.name: {
+            PostProcessingType.CONVERT.name: {'output_filename': 'convert_filename'},
+            PostProcessingType.MERGE.name: {
                 'pages_dimension': PageFormatEnums.A4.name,
                 'output_filename': 'merge_filename'
             }

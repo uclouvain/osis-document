@@ -183,6 +183,21 @@ def launch_post_processing(
     return response.json() if not async_post_processing else response
 
 
+def get_progress_async_post_processing(uuid: str, wanted_post_process: str = None):
+    import requests
+
+    url = "{base_url}get-progress-async-post-processing/{uuid}".format(
+        base_url=settings.OSIS_DOCUMENT_BASE_URL,
+        uuid=uuid
+    )
+    response = requests.post(
+        url,
+        json={'uuid': uuid, 'wanted_post_process': wanted_post_process},
+        headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
+    )
+    return response.json()
+
+
 class CorsAllowOriginMixin(APIView):
     ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin"
     ACCESS_CONTROL_ALLOW_METHODS = "Access-Control-Allow-Methods"

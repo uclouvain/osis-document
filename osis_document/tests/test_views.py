@@ -31,7 +31,6 @@ from django.core.files.base import ContentFile, File
 from django.shortcuts import resolve_url
 from django.test import TestCase, override_settings
 from django.utils.datetime_safe import datetime
-from osis_document.api.utils import get_remote_token
 from osis_document.enums import FileStatus, TokenAccess, DocumentError, PostProcessingStatus, PostProcessingType
 from osis_document.models import Token, Upload
 from osis_document.tests import QueriesAssertionsMixin
@@ -367,10 +366,12 @@ class GetTokenViewWithAsyncPostProcessingTestCase(APITestCase):
         request_data = {'uuid': self.base_input_object[0], 'type_post_processing': PostProcessingType.MERGE.name}
         response = self.client.post(resolve_url('read-token', pk=self.text.uuid), data=request_data)
         self.assertEqual(response.status_code, 206)
+        self.assertIsNotNone(response.data.get('async_post_process_uuid'))
 
         request_data = {'uuid': self.base_input_object[0], 'type_post_processing': None}
         response = self.client.post(resolve_url('read-token', pk=self.text.uuid), data=request_data)
         self.assertEqual(response.status_code, 206)
+        self.assertIsNotNone(response.data.get('async_post_process_uuid'))
 
     def test_read_token_with_failed_async_post_processing(self):
         result_dict = {
@@ -410,12 +411,14 @@ class GetTokenViewWithAsyncPostProcessingTestCase(APITestCase):
         self.assertEqual(response.status_code, 422)
         self.assertIsNotNone(response.data.get('errors'))
         self.assertIsNone(response.data.get('token'))
+        self.assertIsNotNone(response.data.get('async_post_process_uuid'))
 
         request_data = {'uuid': self.text.uuid, 'type_post_processing': None}
         response = self.client.post(resolve_url('read-token', pk=self.text.uuid), data=request_data)
         self.assertEqual(response.status_code, 422)
         self.assertIsNotNone(response.data.get('errors'))
         self.assertIsNone(response.data.get('token'))
+        self.assertIsNotNone(response.data.get('async_post_process_uuid'))
 
     def test_read_token_with_done_async_post_processing(self):
         merge = MergePostProcessingFactory()
@@ -626,10 +629,12 @@ class GetTokenListViewWithAsyncPostProcessingTestCase(APITestCase):
         request_data = {'uuids': [self.text.uuid, self.img.uuid], 'type_post_processing': PostProcessingType.MERGE.name}
         response = self.client.post(resolve_url('read-tokens'), data=request_data)
         self.assertEqual(response.status_code, 206)
+        self.assertIsNotNone(response.data.get('async_post_process_uuid'))
 
         request_data = {'uuids': [self.text.uuid, self.img.uuid], 'type_post_processing': None}
         response = self.client.post(resolve_url('read-tokens'), data=request_data)
         self.assertEqual(response.status_code, 206)
+        self.assertIsNotNone(response.data.get('async_post_process_uuid'))
 
     def test_read_token_with_failed_async_post_processing(self):
         result_dict = {
@@ -673,12 +678,14 @@ class GetTokenListViewWithAsyncPostProcessingTestCase(APITestCase):
         self.assertEqual(response.status_code, 422)
         self.assertIsNone(response.data.get('token'))
         self.assertIsNotNone(response.data.get('errors'))
+        self.assertIsNotNone(response.data.get('async_post_process_uuid'))
 
         request_data = {'uuids': [self.text.uuid, self.img.uuid], 'type_post_processing': None}
         response = self.client.post(resolve_url('read-tokens'), data=request_data)
         self.assertEqual(response.status_code, 422)
         self.assertIsNone(response.data.get('token'))
         self.assertIsNotNone(response.data.get('errors'))
+        self.assertIsNotNone(response.data.get('async_post_process_uuid'))
 
     def test_read_token_with_done_async_post_processing(self):
         merge = MergePostProcessingFactory()

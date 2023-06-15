@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from audioop import reverse
 from typing import Dict
 
 from rest_framework import generics, status
@@ -119,7 +120,6 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
                     wanted_post_process and post_process_results['status'] == PostProcessingStatus.DONE.name
             )
             if some_post_process_done:
-                output_post_processing_upload = Upload.objects.filter(uuid__in=post_process_results['upload_objects'])
                 results = {
                     'data': {
                         'upload_id': self.get_post_processing_instance_from_result(
@@ -135,6 +135,8 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
                 PostProcessingStatus.FAILED.name
             ]:
                 results["status"] = post_processing_async_object.status
+                results["links"] = reverse('osis_document:get-progress-post-processing', kwargs={'uuid': post_processing_async_object.uuid})
+                print(reverse('osis_document:get-progress-post-processing', kwargs={'uuid': post_processing_async_object.uuid}))
                 for action in post_processing_async_object.data['post_process_actions']:
                     if post_processing_async_object.status == PostProcessingStatus.FAILED.name and "errors" in \
                             post_processing_async_object.results[action]:
