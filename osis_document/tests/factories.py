@@ -25,13 +25,15 @@
 # ##############################################################################
 import string
 from pathlib import Path
+from typing import List, Set, Dict
+from uuid import UUID
 
 import factory
 from django.core.files import File
 from factory.fuzzy import FuzzyText
 
-from osis_document.enums import TokenAccess
-from osis_document.models import Token, Upload
+from osis_document.enums import TokenAccess, PostProcessingStatus, PostProcessingType
+from osis_document.models import Token, Upload, PostProcessAsync, PostProcessing
 from osis_document.utils import calculate_hash
 
 
@@ -111,3 +113,109 @@ class WriteTokenFactory(factory.django.DjangoModelFactory):
 
 class ReadTokenFactory(WriteTokenFactory):
     access = TokenAccess.READ.name
+
+
+class BasePostProcessingFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = PostProcessing
+
+
+class MergePostProcessingFactory(BasePostProcessingFactory):
+    type = PostProcessingType.MERGE.name
+
+
+class ConvertPostProcessingFactory(BasePostProcessingFactory):
+    type = PostProcessingType.CONVERT.name
+
+
+class BasePostProcessingAsyncFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = PostProcessAsync
+
+
+class PendingPostProcessingAsyncFactory:
+    def __init__(
+            self,
+            action: List[str],
+            base_input: List[UUID],
+            action_params: Dict[str, Dict[str, str]] or None,
+            result: Dict[str, List[UUID]],
+            **kwargs
+    ):
+        self.async_post_processing = BasePostProcessingAsyncFactory(**kwargs)
+
+        post_process_params = {}
+        for action_name in action:
+            post_process_params[action_name] = action_params[action_name]
+
+        self.async_post_processing.data = {
+            "base_input": [*base_input],
+            "post_process_params": post_process_params,
+            "post_process_actions": [*action]
+        }
+        self.async_post_processing.status = PostProcessingStatus.PENDING.name
+        self.async_post_processing.results = result
+        self.async_post_processing.save()
+
+    def __new__(cls, **kwargs):
+        obj = super().__new__(cls)
+        obj.__init__(**kwargs)
+        return obj.async_post_processing
+
+
+class FailedPostProcessingAsyncFactory:
+    def __init__(
+            self,
+            action: List[str],
+            base_input: List[UUID],
+            action_params: Dict[str, Dict[str, str]] or None,
+            result: Dict[str, List[UUID]],
+            **kwargs
+    ):
+        self.async_post_processing = BasePostProcessingAsyncFactory(**kwargs)
+
+        post_process_params = {}
+        for action_name in action:
+            post_process_params[action_name] = action_params[action_name]
+
+        self.async_post_processing.data = {
+            "base_input": [*base_input],
+            "post_process_params": post_process_params,
+            "post_process_actions": [*action]
+        }
+        self.async_post_processing.status = PostProcessingStatus.FAILED.name
+        self.async_post_processing.results = result
+        self.async_post_processing.save()
+
+    def __new__(cls, **kwargs):
+        obj = super().__new__(cls)
+        obj.__init__(**kwargs)
+        return obj.async_post_processing
+
+
+class DonePostProcessingAsyncFactory:
+    def __init__(
+            self,
+            action: List[str],
+            base_input: List[UUID],
+            action_params: Dict[str, Dict[str, str]] or None,
+            result: Dict[str, List[UUID]],
+            **kwargs
+    ):
+        self.async_post_processing = BasePostProcessingAsyncFactory(**kwargs)
+        post_process_params = {}
+        for action_name in action:
+            post_process_params[action_name] = action_params[action_name]
+        self.async_post_processing.data = {
+            "base_input": [*base_input],
+            "post_process_params": post_process_params,
+            "post_process_actions": [*action]
+        }
+        self.async_post_processing.status = PostProcessingStatus.DONE.name
+        self.async_post_processing.results = result
+        self.async_post_processing.save()
+
+    def __new__(cls, **kwargs):
+        obj = super().__new__(cls)
+        obj.__init__(**kwargs)
+        return obj.async_post_processing

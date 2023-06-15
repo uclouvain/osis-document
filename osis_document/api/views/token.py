@@ -29,6 +29,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
 from django.db.models import Prefetch, Exists
+from django.http import JsonResponse
 
 from osis_document.api import serializers
 from osis_document.api.permissions import APIKeyPermission
@@ -87,8 +88,8 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
                 return Response(
                     data={**post_processing_check,
                           'code': ASYNC_POST_PROCESS_FAILD},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    headers=self.get_success_headers(data=None),
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+
                 )
 
             upload_id = post_processing_check.get('data', {}).get('upload_id')
@@ -103,7 +104,9 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
             wanted_post_process=None
     ) -> Dict[str, str or Dict[str, str]] or None:
         results = {}
-        post_process_async_qs = PostProcessAsync.objects.filter(data__base_input__contains=request.data['uuid'])
+        post_process_async_qs = PostProcessAsync.objects.filter(
+            data__base_input__contains=request.data.get('uuid') or request.data.get('uuids')
+        )
         post_process_files_qs = upload.post_processing_input_files.all()
 
         if post_process_async_qs.exists():
@@ -113,7 +116,7 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
                 wanted_post_process or last_post_process]
 
             some_post_process_done = post_processing_async_object.status == PostProcessingStatus.DONE.name or (
-                wanted_post_process and post_process_results['status'] == PostProcessingStatus.DONE.name
+                    wanted_post_process and post_process_results['status'] == PostProcessingStatus.DONE.name
             )
             if some_post_process_done:
                 output_post_processing_upload = Upload.objects.filter(uuid__in=post_process_results['upload_objects'])
@@ -223,7 +226,7 @@ class GetTokenListSchema(AutoSchema):  # pragma: no cover
                 },
             },
         }
-        responses['500'] = {
+        responses['422'] = {
             'description': 'Data for failed asynchronous post processing',
             'content': {
                 'application/json': {
@@ -256,10 +259,10 @@ class GetTokenListView(GetTokenView):
     def create(self, request, *args, **kwargs):
         results = {
             upload: {'error': DocumentError.get_dict_error(DocumentError.UPLOAD_NOT_FOUND.name)}
-            for upload in request.data['uuid']
+            for upload in request.data['uuids']
         }
 
-        uploads = self.get_queryset().filter(uuid__in=request.data['uuid']).prefetch_related(
+        uploads = self.get_queryset().filter(uuid__in=request.data['uuids']).prefetch_related(
             Prefetch(
                 'post_processing_input_files',
             ))
@@ -282,8 +285,7 @@ class GetTokenListView(GetTokenView):
                 return Response(
                     data={**post_processing_check,
                           'code': ASYNC_POST_PROCESS_FAILD},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    headers=self.get_success_headers(data=None),
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 )
             if upload.status == FileStatus.INFECTED.name:
                 results[str(upload.pk)] = {'error': DocumentError.get_dict_error(DocumentError.INFECTED.name)}

@@ -116,7 +116,7 @@ def get_remote_tokens(uuids: List[str], type_post_processing=None) -> Dict[str, 
 
     url = "{base_url}read-tokens".format(base_url=settings.OSIS_DOCUMENT_BASE_URL)
     try:
-        data = {'uuid': uuids}
+        data = {'uuids': uuids}
         if type_post_processing:
             data.update({'type_post_processing': type_post_processing})
         response = requests.post(
