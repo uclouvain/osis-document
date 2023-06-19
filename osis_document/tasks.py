@@ -66,16 +66,21 @@ def make_pending_async_post_processing():
                     post_process_params=post_process_async.data["post_process_params"],
                 )
                 post_process_async.results[action]['upload_objects'] = output_data[action]['output']['upload_objects']
-                post_process_async.results[action]['post_processing_objects'] = output_data[action]['output']['post_processing_objects']
+                post_process_async.results[action]['post_processing_objects'] = output_data[action]['output'][
+                    'post_processing_objects']
                 post_process_async.results[action]['status'] = PostProcessingStatus.DONE.name
                 post_process_async.save()
                 intermediary_uuids_list = output_data[action]['output']['upload_objects']
             except Exception as e:
                 if hasattr(e, 'message'):
-                    post_process_async.results[action]['errors'] = {'messages': e.messages,
-                                                                    'params': str(e.params['value'])}
+                    post_process_async.results[action]['errors'] = {
+                        'messages': e.messages,
+                        'params': str(e.params['value'])
+                    }
                 else:
-                    post_process_async.results[action]['errors'] = {'messages': e.args or e.default_detail}
+                    post_process_async.results[action]['errors'] = {
+                        'messages': e.args or e.default_detail
+                    }
                 post_process_async.results[action]['status'] = PostProcessingStatus.FAILED.name
                 post_process_async.save()
                 break

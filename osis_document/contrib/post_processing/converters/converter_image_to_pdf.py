@@ -25,11 +25,11 @@
 # ##############################################################################
 from pathlib import Path
 from typing import List
-from xdrlib import ConversionError
 
 from PIL import Image
 from django.conf import settings
 
+from osis_document.exceptions import ConversionError
 from osis_document.models import Upload
 from .converter import Converter
 from ..converter_registry import converter_registry

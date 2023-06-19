@@ -156,15 +156,25 @@ class PostProcessing(models.Model):
         primary_key=True,
         default=uuid.uuid4,
     )
-    input_files = models.ManyToManyField(to='osis_document.Upload', verbose_name=_("Input"), related_name='post_processing_input_files')
+    input_files = models.ManyToManyField(
+        to='osis_document.Upload',
+        verbose_name=_("Input"),
+        related_name='post_processing_input_files'
+    )
     output_files = models.ManyToManyField(
-        to='osis_document.Upload', verbose_name=_("Output"), related_name='post_processing_output_files', blank=True
+        to='osis_document.Upload',
+        verbose_name=_("Output"),
+        related_name='post_processing_output_files',
+        blank=True
     )
     created_at = models.DateTimeField(
         verbose_name=_("Created at"),
         auto_now_add=True,
     )
-    type = models.CharField(max_length=255, choices=PostProcessingType.choices(), blank=False)
+    type = models.CharField(
+        max_length=255,
+        choices=PostProcessingType.choices(),
+        blank=False)
 
 
 class PostProcessAsync(models.Model):

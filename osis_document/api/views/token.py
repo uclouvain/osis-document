@@ -23,14 +23,13 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from audioop import reverse
 from typing import Dict
 
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
-from django.db.models import Prefetch, Exists
-from django.http import JsonResponse
+from django.db.models import Prefetch
+from django.urls import reverse
 
 from osis_document.api import serializers
 from osis_document.api.permissions import APIKeyPermission
@@ -135,13 +134,17 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
                 PostProcessingStatus.FAILED.name
             ]:
                 results["status"] = post_processing_async_object.status
-                results["links"] = reverse('osis_document:get-progress-post-processing', kwargs={'uuid': post_processing_async_object.uuid})
-                print(reverse('osis_document:get-progress-post-processing', kwargs={'uuid': post_processing_async_object.uuid}))
+                results["links"] = reverse(
+                    'osis_document:get-progress-post-processing',
+                    kwargs={'uuid': post_processing_async_object.uuid}
+                )
                 for action in post_processing_async_object.data['post_process_actions']:
                     if post_processing_async_object.status == PostProcessingStatus.FAILED.name and "errors" in \
                             post_processing_async_object.results[action]:
                         results['errors'] = post_processing_async_object.results[action]["errors"]
-                    results[action] = {'status': post_processing_async_object.results[action]['status']}
+                    results[action] = {
+                        'status': post_processing_async_object.results[action]['status']
+                    }
 
         elif post_process_files_qs.exists():
             last = False
@@ -155,9 +158,11 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
                         last = True
                     else:
                         last_post_process_found = intermediary_post_process.first()
-            results = {'data': {
-                'upload_id': last_post_process_found.output_files.all().first().uuid,
-                'access': self.token_access}
+            results = {
+                'data': {
+                    'upload_id': last_post_process_found.output_files.all().first().uuid,
+                    'access': self.token_access
+                }
             }
 
         return results
@@ -285,8 +290,10 @@ class GetTokenListView(GetTokenView):
                 )
             elif status_post_processing == PostProcessingStatus.FAILED.name:
                 return Response(
-                    data={**post_processing_check,
-                          'code': ASYNC_POST_PROCESS_FAILD},
+                    data={
+                        **post_processing_check,
+                        'code': ASYNC_POST_PROCESS_FAILD
+                    },
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 )
             if upload.status == FileStatus.INFECTED.name:

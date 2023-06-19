@@ -195,7 +195,7 @@ class TokenSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class PostProcessing(serializers.Serializer):
+class PostProcessingSerializer(serializers.Serializer):
     async_post_processing = serializers.BooleanField(
         help_text="Boolean that define if post processing is asynchronous ",
         required=True,
@@ -211,4 +211,15 @@ class PostProcessing(serializers.Serializer):
     post_process_params = serializers.DictField(
         help_text="A dict of params for post processing",
         required=False
+    )
+
+
+class GetProgressAsyncPostProcessingSerializer(serializers.Serializer):
+    uuid = serializers.UUIDField(
+        help_text="UUID of the PostProcessAsync object",
+        required=True,
+    )
+    wanted_post_process = serializers.CharField(
+        help_text="The name of the wanted type of post-processing",
+        required=False,
     )

@@ -11,11 +11,11 @@ from rest_framework.views import APIView
 
 class PostProcessingSchema(DetailedAutoSchema):
     serializer_mapping = {
-        'POST': (None, serializers.PostProcessing),
+        'POST': (None, serializers.PostProcessingSerializer),
     }
 
     def get_operation_id(self, path, method):
-        return 'postProcessing'
+        return 'request-post-processing'
 
     def get_operation(self, path, method):
         operation = super().get_operation(path, method)
@@ -31,7 +31,7 @@ class PostProcessingView(APIView):
 
     def post(self, *args, **kwargs):
         try:
-            input_serializer_data = serializers.PostProcessing(
+            input_serializer_data = serializers.PostProcessingSerializer(
                 data={
                     **self.request.data,
                 }
@@ -57,7 +57,17 @@ class PostProcessingView(APIView):
 
 
 class GetProgressAsyncPostProcessingSchema(AutoSchema):
-    pass
+    serializer_mapping = {
+        'POST': (None, serializers.GetProgressAsyncPostProcessingSerializer),
+    }
+
+    def get_operation_id(self, path, method):
+        return 'get-progress-post-processing'
+
+    def get_operation(self, path, method):
+        operation = super().get_operation(path, method)
+        operation['security'] = [{"ApiKeyAuth": []}]
+        return operation
 
 
 class GetProgressAsyncPostProcessingView(APIView):
@@ -66,24 +76,35 @@ class GetProgressAsyncPostProcessingView(APIView):
     permission_classes = []
 
     def post(self, *args, **kwargs):
-        async_post_process = PostProcessAsync.objects.get(uuid=self.request.data.get('uuid'))
-        wanted_post_processing = self.request.data.get('wanted_post_process')
-        result = {'progress': None,
-                  'wanted_post_process_status': None}
-        if async_post_process:
-            if async_post_process.status == PostProcessingStatus.DONE.name:
-                result['progress'] = 100
-                if wanted_post_processing:
-                    result['wanted_post_process_status'] = PostProcessingStatus.DONE.name
-            elif async_post_process.status in [PostProcessingStatus.PENDING.name, PostProcessingStatus.FAILED.name]:
-                if wanted_post_processing:
-                    result['wanted_post_process_status'] = async_post_process.results[wanted_post_processing]['status']
-                if async_post_process.status == PostProcessingStatus.FAILED.name:
-                    result['failed'] = True
-                result['progress'] = self.get_progress(async_post_process_object=async_post_process)
-            return Response(data=result, status=status.HTTP_202_ACCEPTED)
-        else:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        try:
+            input_serializer_data = serializers.GetProgressAsyncPostProcessingSerializer(
+                data={
+                    **self.request.data,
+                }
+            )
+            validated_data = input_serializer_data.is_valid(raise_exception=True)
+            if validated_data:
+                async_post_process = PostProcessAsync.objects.get(uuid=self.request.data.get('uuid'))
+                wanted_post_processing = self.request.data.get('wanted_post_process')
+                result = {
+                    'progress': None,
+                    'wanted_post_process_status': None
+                }
+                if async_post_process:
+                    if wanted_post_processing:
+                        result['wanted_post_process_status'] = async_post_process.results[wanted_post_processing][
+                            'status']
+                    if async_post_process.status == PostProcessingStatus.DONE.name:
+                        result['progress'] = 100
+                    else:
+                        if async_post_process.status == PostProcessingStatus.FAILED.name:
+                            result['failed'] = True
+                        result['progress'] = self.get_progress(async_post_process_object=async_post_process)
+                    return Response(data=result, status=status.HTTP_202_ACCEPTED)
+                else:
+                    return Response(status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status.HTTP_400_BAD_REQUEST)
 
     @staticmethod
     def get_progress(async_post_process_object: PostProcessAsync) -> int:
@@ -94,4 +115,3 @@ class GetProgressAsyncPostProcessingView(APIView):
             if async_post_process_object.results[action]["status"] == PostProcessingStatus.DONE.name:
                 result += pourcentage_par_action
         return result
-
