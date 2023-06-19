@@ -207,39 +207,6 @@ uploader.addEventListener('osisdocument:add', event => {
 
 Note that the `Uploader` component has the `osis-document-uploader` class.
 
-## File format conversion
-
-In order to use the file conversion `OSIS_UPLOAD_FOLDER` must be defined
-in the `.env` file that shows the whole path to the folder of the
-downloaded files in  OSIS-Document **and LibreOffice must be installed on
-the computer.**
-
-### Converter use
-Allowed Format : `Docx`, `Doc`, `Odt`, `txt`, `JPG`, and `PNG`
-
-```python
-from osis_document.contrib.post_processing.converter_registry import converter_registry
-
-output = converter_registry.process(upload_objects_uuid=List[UUID], output_filename='new_filename')
-```
-To convert a text file into a pdf use `ConverterTextDocumentToPdf`
-instead of ConverterImageToPdf
-
-## Files merge in PDF
-In order to use the pdf merging `OSIS_UPLOAD_FOLDER` must be defined in
-the `.env` file  that shows the whole path to the folder of the
-downloaded files in  OSIS-Document.
-
-If the files are not in the PDF format the correct conversion class must
-be used before merging.
-
-```python
-from osis_document.contrib.post_processing.merger import Merger
-from osis_document.contrib.post_processing.post_processing_enums import PageFormatEnums
-
-Merger().process(input_uuid_files=[], filename='new_filename', pages_dimension=PageFormatEnums.A4.name)
-``` 
-
 ## Post-processing files
 
 To perform post-processing actions on files, use the utility function
@@ -277,14 +244,47 @@ output={
     'output':[upload_object_uuid]
   }
 }
+```
+## File format conversion
+
+To use the file conversion LibreOffice must be installed on
+the computer.
+
+### Converter use
+Allowed Format :
+- `Docx` 
+- `Doc` 
+- `Odt` 
+- `txt` 
+- `JPG` 
+- `PNG`
+
+```python
+from osis_document.contrib.post_processing.converter_registry import converter_registry
+
+output = converter_registry.process(upload_objects_uuid=List[UUID], output_filename='new_filename')
+```
+
+## Files merge in PDF
+
+If the files are not in the PDF format the correct conversion class must
+be used before merging.
+
+```python
+from osis_document.contrib.post_processing.merger import Merger
+from osis_document.contrib.post_processing.post_processing_enums import PageFormatEnums
+
+Merger().process(input_uuid_files=[], filename='new_filename', pages_dimension=PageFormatEnums.A4.name)
 ``` 
-## Define post-processing actions in a FileField of a model
+
+### Define post-processing actions and post-processing type in a FileField of a model
 ```python
 class ModelName(models.Model):
     ...
     model_field_name = FileField(
         ...
         post_processing=[PostProcessingType.CONVERT.name, PostProcessingType.MERGE.name],
+        async_post_processing=Flase,
         post_process_params={
             PostProcessingType.CONVERT.name: {'output_filename': 'convert_filename'},
             PostProcessingType.MERGE.name: {
@@ -296,6 +296,22 @@ class ModelName(models.Model):
     )
     ...
 ``` 
+To configure an asynchronous post-processing, you must set `async_post_processing` to `True`
+
+The parameters available for post-processing are :
+
+- `CONVERT`:
+  - `output_filename` The name of the output file
+- `MERGE`:
+  - `pages_dimension` The page size of the output file (A3, A4, A5, etc..)
+  - `output_filename` The name of the output file
+
+### Asynchronous post-processing
+When form is submit, an instance of the `PostProcessAsync` model was created with status `PENDING`.
+This instance contains all the parameters necessary for the execution of the post-processing and stores the inputs and outputs of each post-processing action
+
+A celery task is configured to periodically run asynchronous post-processing with status `PENDING`.
+
 ## Add a widget to edit a PDF
 
 ```html
