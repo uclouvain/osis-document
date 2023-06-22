@@ -1,4 +1,4 @@
-@startuml
+@startuml post_processing_sync_sequence
 'https://plantuml.com/sequence-diagram
 actor user as user
 participant osis as osis

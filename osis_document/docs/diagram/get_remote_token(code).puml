@@ -1,0 +1,147 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+:get_remote_token(
+    uuid,
+    write_token,
+    type_post_processing
+);
+
+
+
+partition get_remote_token
+start
+:url = "{base_url}{token_type}-token/{uuid}".format(
+   base_url=settings.OSIS_DOCUMENT_BASE_URL,
+   token_type='write' if write_token else 'read',
+   uuid=uuid,
+);
+:response = requests.post(
+    url,
+    json={'uuid': uuid, 'type_post_processing': type_post_processing},
+    headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
+);
+
+
+
+    partition GetTokenView.create
+    start
+
+
+
+        if (write_token.value) then(True)
+           :request.data['upload_id'] =
+               upload.pk
+           request.data['access'] =
+               self.token_access;
+        else (False)
+            if (upload.status == FileStatus.INFECTED.name) then(True)
+                :raise FileInfectedException;
+                stop
+            else (False)
+                :post_processing_check =
+                    self.check_post_processing(
+                        uuid,
+                        type_post_processing
+                    );
+            endif
+
+
+
+            partition check_post_processing {
+                if (post_process ?) then(False)
+                :results = {};
+                else (True)
+                    if (type_post_processing) then(sync)
+                        if (wanted_post_process ?) then(True)
+                        :results['data']['upload_id']=
+                            wanted_post_process.output_files.uuid;
+                        else (False)
+                        :results['data']['upload_id'] =
+                            last_post_process_found.output_files.uuid;
+                        endif
+
+                    else (async)
+                        if (some_process_done ?) then(True)
+                        :results['data']['upload_id']=
+                            get_post_processing_instance_from_result(
+                                upload,
+                                async_result
+                            );
+                        else (False)
+                            if (status ?) then(PENDING)
+
+                            else (FAILED)
+                                :results['errors'] =
+                                post_processing_async_object.errors;
+                            endif
+                            :results[__action__]['status'] =
+                                    post_processing_async_object.results[__action__]['status'];
+                        endif
+                    endif
+                endif
+                :return results;
+            }
+
+
+            :status_post_processing = post_processing_check.get('status');
+            if (status_post_processing == PostProcessingStatus.PENDING.name) then(True)
+                :return Response(
+                    data=post_processing_check,
+                    status=status.HTTP_206_PARTIAL_CONTENT,
+                    headers=self.get_success_headers(data=None),
+                );
+                stop
+            elseif (status_post_processing == PostProcessingStatus.FAILED.name) then(True)
+                :return Response(
+                    data={
+                        **post_processing_check,
+                        code: ASYNC_POST_PROCESS_FAILD
+                    },
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                );
+                stop
+            else (Flase)
+                :upload_id =
+                    post_processing_check.get('data', {}).get('upload_id');
+                    :request.data['upload_id'] = upload_id or upload.pk
+                    request.data['access'] = self.token_access;
+            endif
+
+        endif
+        :return super().create(request, *args, **kwargs);
+        stop
+    }
+
+
+    if (except HTTPError) then(True)
+        :return None;
+        stop
+    else (False)
+        if (response.status_code == status.HTTP_404_NOT_FOUND) then(True)
+            :return UploadInvalidException.__class__.__name__;
+            stop
+        else (False)
+            :json = response.json();
+             if(response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+                                                __and__
+            json.get('detail', '') == FileInfectedException.default_detail) then(True)
+            :return FileInfectedException.__class__.__name__;
+            stop
+            else (False)
+                if (json.get('token')) then(True)
+                :return json.get('token') ;
+                stop
+                else (False)
+                :return json;
+                stop
+                endif
+            endif
+        endif
+    endif
+}
+
+
+
+@enduml
