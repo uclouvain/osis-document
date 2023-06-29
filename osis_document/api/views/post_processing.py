@@ -80,9 +80,10 @@ class GetProgressAsyncPostProcessingView(APIView):
             input_serializer_data = serializers.GetProgressAsyncPostProcessingSerializer(
                 data=self.request.data,
             )
-            validated_data = input_serializer_data.is_valid(raise_exception=True)
-            if validated_data:
-                async_post_process = PostProcessAsync.objects.get(uuid=validated_data['uuid'])
+
+            if input_serializer_data.is_valid(raise_exception=True):
+                validated_data = input_serializer_data.validated_data
+                async_post_process = PostProcessAsync.objects.get(uuid=validated_data['pk'])
                 wanted_post_processing = validated_data['wanted_post_process']
                 result = {
                     'progress': None,

@@ -160,7 +160,7 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
             results["status"] = post_processing_async_object.status
             results["links"] = reverse(
                 'osis_document:get-progress-post-processing',
-                kwargs={'uuid': post_processing_async_object.uuid}
+                kwargs={'pk': post_processing_async_object.uuid}
             )
             for action in post_processing_async_object.data['post_process_actions']:
                 if post_processing_async_object.status == PostProcessingStatus.FAILED.name and "errors" in \

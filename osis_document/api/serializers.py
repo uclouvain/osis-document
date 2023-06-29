@@ -215,7 +215,7 @@ class PostProcessingSerializer(serializers.Serializer):
 
 
 class GetProgressAsyncPostProcessingSerializer(serializers.Serializer):
-    uuid = serializers.UUIDField(
+    pk = serializers.UUIDField(
         help_text="UUID of the PostProcessAsync object",
         required=True,
     )
