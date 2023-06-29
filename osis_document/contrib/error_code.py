@@ -1,5 +1,4 @@
 """
-
+Used as an error code when an API request for token retrieval is made on a post-processing that is in FAILED state
 """
-#TODO Add Documentation : expliquer dans quel cas c'est utilisé
-ASYNC_POST_PROCESS_FAILD = 'ASYNC_POST_PROCESS_FAILD'
+ASYNC_POST_PROCESS_FAILED = 'ASYNC_POST_PROCESS_FAILED'

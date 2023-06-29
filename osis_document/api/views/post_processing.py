@@ -36,20 +36,20 @@ class PostProcessingView(APIView):
                     **self.request.data,
                 }
             )
-            validated_data = input_serializer_data.is_valid(raise_exception=True)
-            if validated_data:
-                if input_serializer_data.data["async_post_processing"] == True:
+            if input_serializer_data.is_valid(raise_exception=True):
+                validated_data = input_serializer_data.data
+                if validated_data["async_post_processing"]:
                     create_post_process_async_object(
-                        uuid_list=input_serializer_data.data["files_uuid"],
-                        post_process_actions=input_serializer_data.data["post_process_types"],
-                        post_process_params=input_serializer_data.data["post_process_params"],
+                        uuid_list=validated_data["files_uuid"],
+                        post_process_actions=validated_data["post_process_types"],
+                        post_process_params=validated_data["post_process_params"],
                     )
                     return Response(status=status.HTTP_202_ACCEPTED)
                 else:
                     uuids_result_dict = post_process(
-                        uuid_list=input_serializer_data.data["files_uuid"],
-                        post_process_actions=input_serializer_data.data["post_process_types"],
-                        post_process_params=input_serializer_data.data["post_process_params"],
+                        uuid_list=validated_data["files_uuid"],
+                        post_process_actions=validated_data["post_process_types"],
+                        post_process_params=validated_data["post_process_params"],
                     )
                     return Response(data=uuids_result_dict, status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -78,31 +78,22 @@ class GetProgressAsyncPostProcessingView(APIView):
     def post(self, *args, **kwargs):
         try:
             input_serializer_data = serializers.GetProgressAsyncPostProcessingSerializer(
-                data={
-                    **self.request.data,
-                }
+                data=self.request.data,
             )
             validated_data = input_serializer_data.is_valid(raise_exception=True)
             if validated_data:
-                async_post_process = PostProcessAsync.objects.get(uuid=self.request.data.get('uuid'))
-                wanted_post_processing = self.request.data.get('wanted_post_process')
+                async_post_process = PostProcessAsync.objects.get(uuid=validated_data['uuid'])
+                wanted_post_processing = validated_data['wanted_post_process']
                 result = {
                     'progress': None,
                     'wanted_post_process_status': None
                 }
-                if async_post_process:
-                    if wanted_post_processing:
-                        result['wanted_post_process_status'] = async_post_process.results[wanted_post_processing][
-                            'status']
-                    if async_post_process.status == PostProcessingStatus.DONE.name:
-                        result['progress'] = 100
-                    else:
-                        if async_post_process.status == PostProcessingStatus.FAILED.name:
-                            result['failed'] = True
-                        result['progress'] = self.get_progress(async_post_process_object=async_post_process)
-                    return Response(data=result, status=status.HTTP_202_ACCEPTED)
-                else:
-                    return Response(status=status.HTTP_404_NOT_FOUND)
+                if wanted_post_processing:
+                    result['wanted_post_process_status'] = async_post_process.results[wanted_post_processing]['status']
+                if async_post_process.status == PostProcessingStatus.FAILED.name:
+                    result['failed'] = True
+                result['progress'] = self.get_progress(async_post_process_object=async_post_process)
+                return Response(data=result, status=status.HTTP_202_ACCEPTED)
         except Exception as e:
             return Response({'error': str(e)}, status.HTTP_400_BAD_REQUEST)
 

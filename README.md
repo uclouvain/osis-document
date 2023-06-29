@@ -356,31 +356,31 @@ results_exemple = {
 ### Get token of a post-processed file
 To get the token of one post-processed file, you must use the function `get_remote_token`, or use the function `get_remote_tokens` if you want the token of many files.
 
-Depending on the value of `type_post_processing`, on the status of an asynchronous post-processing and on the function used, there can be several possibilities.
+Depending on the value of `wanted_post_process`, on the status of an asynchronous post-processing and on the function used, there can be several possibilities.
 
 #### function get_remote_token()
 ```python
 from osis_document.api.utils import get_remote_token
 
-get_remote_token(uuid='UUID', write_token=False, type_post_processing=None)
+get_remote_token(uuid='UUID', write_token=False, wanted_post_process=None)
 ```
 
 ![get_remote_token activity diagram](osis_document/docs/img/get_remote_token.png)
 
-If the post-process status is `DONE`, there can be 3 possibilities:
-- If `type_post_processing` == `None` -> Return a token for the output file of the last post_processing's action.
-- If `type_post_processing` == `PostProcessingType.ACTION.name` -> Return a token for the output file of the specified post-processing action
-- If `type_post_processing` == `Original` -> Return a token for the base input file (ToDo)
+If the post-process status is `DONE` or if the post-processing done is synchronous, there can be 3 possibilities:
+- If `wanted_post_process` == `None` -> Return a token for the output file of the last post_processing's action.
+- If `wanted_post_process` == `PostProcessingWanted.ACTION.name` -> Return a token for the output file of the specified post-processing action
+- If `wanted_post_process` == `Original` -> Return a token for the base input file
 
 If post-process status is `FAILED`, there can be 3 possibilities:
-- If `type_post_processing` == `None` -> Return HTTP_422 and a dict containing errors from post-processing process
-- If `type_post_processing` == `PostProcessingType.ACTION.name` and action's status is `DONE` -> Return a token for the output file of the specified post-processing action
-- If `type_post_processing` == `Original` -> Return a token for the base input file (ToDo)
+- If `wanted_post_process` == `None` -> Return HTTP_422 and a dict containing errors from post-processing process
+- If `wanted_post_process` == `PostProcessingWanted.ACTION.name` and action's status is `DONE` -> Return a token for the output file of the specified post-processing action
+- If `wanted_post_process` == `Original` -> Return a token for the base input file
 
 If post-process status is `PENDING`, there can be 3 possibilities:
-- If `type_post_processing` == `None` -> Return HTTP_206 and an url to get the progress of an asynchronous post-processing
-- If `type_post_processing` == `PostProcessingType.ACTION.name` and action's status is `DONE` -> Return a token for the output file of the specified post-processing action
-- If `type_post_processing` == `Original` -> Return a token for the base input file (ToDo)
+- If `wanted_post_process` == `None` -> Return HTTP_206 and an url to get the progress of an asynchronous post-processing
+- If `wanted_post_process` == `PostProcessingWanted.ACTION.name` and action's status is `DONE` -> Return a token for the output file of the specified post-processing action
+- If `wanted_post_process` == `Original` -> Return a token for the base input file
 
 
 #### function get_remotes_token()
@@ -388,7 +388,7 @@ If post-process status is `PENDING`, there can be 3 possibilities:
 ```python
 from osis_document.api.utils import get_remote_tokens
 
-get_remote_tokens(uuids=['UUID', ...], type_post_processing=None)
+get_remote_tokens(uuids=['UUID', ...], wanted_post_process=None)
 ```
 
 ![get_remote_tokens activity diagram](osis_document/docs/img/get_remote_tokens.png)

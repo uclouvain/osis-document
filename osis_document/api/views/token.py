@@ -23,19 +23,19 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from typing import Dict
+from typing import Dict, List
 
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
-from django.db.models import Prefetch
+from django.db.models import Prefetch, QuerySet
 from django.urls import reverse
 
 from osis_document.api import serializers
 from osis_document.api.permissions import APIKeyPermission
 from osis_document.api.utils import CorsAllowOriginMixin
-from osis_document.enums import FileStatus, DocumentError, PostProcessingStatus
-from osis_document.contrib.error_code import ASYNC_POST_PROCESS_FAILD
+from osis_document.enums import FileStatus, DocumentError, PostProcessingStatus, PostProcessingWanted
+from osis_document.contrib.error_code import ASYNC_POST_PROCESS_FAILED
 from osis_document.exceptions import FileInfectedException
 from osis_document.models import Upload, PostProcessing, PostProcessAsync
 
@@ -74,8 +74,8 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
             post_processing_check = self.check_post_processing(
                 request=request,
                 upload=upload,
-                wanted_post_process=request.data[
-                    "type_post_processing"] if 'type_post_processing' in request.data else None
+                wanted_post_process=request.data.get(
+                    "wanted_post_process")
             )
             status_post_processing = post_processing_check.get('status')
             if status_post_processing == PostProcessingStatus.PENDING.name:
@@ -87,7 +87,7 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
             elif status_post_processing == PostProcessingStatus.FAILED.name:
                 return Response(
                     data={**post_processing_check,
-                          'code': ASYNC_POST_PROCESS_FAILD},
+                          'code': ASYNC_POST_PROCESS_FAILED},
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY,
 
                 )
@@ -100,75 +100,108 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
     def check_post_processing(
             self,
             request,
-            upload,
-            wanted_post_process=None
+            upload: Upload,
+            wanted_post_process: str = None
     ) -> Dict[str, str or Dict[str, str]] or None:
+        """ Given an Upload object and a type of post-processing,
+        returns a dictionary whose content depends on whether a post-processing is found and on its state."""
         results = {}
-        post_process_async_qs = PostProcessAsync.objects.filter(
-            data__base_input__contains=request.data.get('uuid') or request.data.get('uuids')
-        )
-        post_process_files_qs = upload.post_processing_input_files.all()
-
-        if post_process_async_qs.exists():
-            post_processing_async_object = post_process_async_qs.get()
-            last_post_process = post_processing_async_object.data['post_process_actions'][-1]
-            post_process_results = post_processing_async_object.results[
-                wanted_post_process or last_post_process]
-
-            some_post_process_done = post_processing_async_object.status == PostProcessingStatus.DONE.name or (
-                    wanted_post_process and post_process_results['status'] == PostProcessingStatus.DONE.name
+        if wanted_post_process != PostProcessingWanted.ORIGINAL.name:
+            post_process_async_qs = PostProcessAsync.objects.filter(
+                data__base_input__contains=request.data.get('uuid') or request.data.get('uuids')
             )
-            if some_post_process_done:
-                results = {
-                    'data': {
-                        'upload_id': self.get_post_processing_instance_from_result(
-                            upload=upload,
-                            async_result=post_process_results
-                        ),
-                        'access': self.token_access},
-                    'status': PostProcessingStatus.DONE.name
-                }
+            post_process_files_qs = upload.post_processing_input_files.all()
 
-            elif post_processing_async_object.status in [
-                PostProcessingStatus.PENDING.name,
-                PostProcessingStatus.FAILED.name
-            ]:
-                results["status"] = post_processing_async_object.status
-                results["links"] = reverse(
-                    'osis_document:get-progress-post-processing',
-                    kwargs={'uuid': post_processing_async_object.uuid}
+            if post_process_async_qs.exists():
+                results = self.check_post_processing_async(
+                    async_qs=post_process_async_qs,
+                    upload=upload,
+                    wanted_post_process=wanted_post_process
                 )
-                for action in post_processing_async_object.data['post_process_actions']:
-                    if post_processing_async_object.status == PostProcessingStatus.FAILED.name and "errors" in \
-                            post_processing_async_object.results[action]:
-                        results['errors'] = post_processing_async_object.results[action]["errors"]
-                    results[action] = {
-                        'status': post_processing_async_object.results[action]['status']
-                    }
+            elif post_process_files_qs.exists():
+                results = self.check_post_processing_sync(
+                    sync_qs=post_process_files_qs,
+                    wanted_post_process=wanted_post_process
+                )
+        return results
 
-        elif post_process_files_qs.exists():
-            last = False
-            last_post_process_found = post_process_files_qs.first()
-            if last_post_process_found.type != wanted_post_process:
-                while not last:
-                    intermediary_post_process = PostProcessing.objects.filter(
-                        input_files=last_post_process_found.output_files.first()
-                    )
-                    if not intermediary_post_process.exists() or last_post_process_found.type == wanted_post_process:
-                        last = True
-                    else:
-                        last_post_process_found = intermediary_post_process.first()
+    def check_post_processing_async(
+            self,
+            async_qs: QuerySet,
+            upload: Upload,
+            wanted_post_process: str
+    ) -> Dict[str, str or Dict[str, str]]:
+        """Given an Upload object and a type of post-processing and a QuerySet of PostProcessAsync,
+        returns a dictionary whose content depends on its state."""
+        results = {}
+        post_processing_async_object = async_qs.get()
+        last_post_process = post_processing_async_object.data['post_process_actions'][-1]
+        post_process_results = post_processing_async_object.results[
+            wanted_post_process or last_post_process]
+
+        some_post_process_done = post_processing_async_object.status == PostProcessingStatus.DONE.name or (
+                wanted_post_process and post_process_results['status'] == PostProcessingStatus.DONE.name
+        )
+        if some_post_process_done:
             results = {
                 'data': {
-                    'upload_id': last_post_process_found.output_files.all().first().uuid,
-                    'access': self.token_access
-                }
+                    'upload_id': self.get_output_upload_uuid_from_post_process_async_result(
+                        upload=upload,
+                        async_result=post_process_results
+                    ),
+                    'access': self.token_access},
+                'status': PostProcessingStatus.DONE.name
             }
 
+        elif post_processing_async_object.status in [
+            PostProcessingStatus.PENDING.name,
+            PostProcessingStatus.FAILED.name
+        ]:
+            results["status"] = post_processing_async_object.status
+            results["links"] = reverse(
+                'osis_document:get-progress-post-processing',
+                kwargs={'uuid': post_processing_async_object.uuid}
+            )
+            for action in post_processing_async_object.data['post_process_actions']:
+                if post_processing_async_object.status == PostProcessingStatus.FAILED.name and "errors" in \
+                        post_processing_async_object.results[action]:
+                    results['errors'] = post_processing_async_object.results[action]["errors"]
+                results[action] = {
+                    'status': post_processing_async_object.results[action]['status']
+                }
+        return results
+
+    def check_post_processing_sync(
+            self,
+            sync_qs: QuerySet,
+            wanted_post_process: str
+    ) -> Dict[str, Dict[str, str]]:
+        """Given a type of post-processing and a QuerySet of PostProcessing,
+        returns a dictionary whose content depends on its state."""
+        last = False
+        last_post_process_found = sync_qs.first()
+        if last_post_process_found.type != wanted_post_process:
+            while not last:
+                intermediary_post_process = PostProcessing.objects.filter(
+                    input_files=last_post_process_found.output_files.first()
+                )
+                if not intermediary_post_process.exists() or last_post_process_found.type == wanted_post_process:
+                    last = True
+                else:
+                    last_post_process_found = intermediary_post_process.first()
+        results = {
+            'data': {
+                'upload_id': last_post_process_found.output_files.all().first().uuid,
+                'access': self.token_access
+            }
+        }
         return results
 
     @staticmethod
-    def get_post_processing_instance_from_result(upload, async_result):
+    def get_output_upload_uuid_from_post_process_async_result(
+            upload: Upload,
+            async_result: Dict[str, List[str]]
+    ) -> str:
         if len(async_result['upload_objects']) == 1:
             return async_result['upload_objects'][0]
         post_processing_list = PostProcessing.objects.filter(uuid__in=async_result['post_processing_objects'])
@@ -279,7 +312,7 @@ class GetTokenListView(GetTokenView):
             post_processing_check = self.check_post_processing(
                 request=request,
                 upload=upload,
-                wanted_post_process=request.data.get('type_post_processing')
+                wanted_post_process=request.data.get('wanted_post_process')
             )
             status_post_processing = post_processing_check.get('status')
             if status_post_processing == PostProcessingStatus.PENDING.name:
@@ -292,13 +325,13 @@ class GetTokenListView(GetTokenView):
                 return Response(
                     data={
                         **post_processing_check,
-                        'code': ASYNC_POST_PROCESS_FAILD
+                        'code': ASYNC_POST_PROCESS_FAILED
                     },
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 )
             if upload.status == FileStatus.INFECTED.name:
                 results[str(upload.pk)] = {'error': DocumentError.get_dict_error(DocumentError.INFECTED.name)}
-            elif post_processing_check['data']:
+            elif post_processing_check.get('data'):
                 results.pop(str(upload.pk))
                 if post_processing_check['data'] not in data:
                     data.append(post_processing_check['data'])
@@ -311,6 +344,13 @@ class GetTokenListView(GetTokenView):
 
         for token in serializer.data:
             results[token['upload_id']] = token
+
+        if any(results[key].get('error') == DocumentError.get_dict_error(DocumentError.INFECTED.name) for key in results):
+            return Response(
+                data=results,
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                headers=self.get_success_headers(serializer.data),
+            )
 
         return Response(
             data=results,

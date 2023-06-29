@@ -180,6 +180,10 @@ def post_process(
         post_process_actions: List[str],
         post_process_params: Dict[str, Dict[str, str]],
 ) -> Dict[str, Dict[str, List[UUID]]]:
+    """
+    Given a list of uuids and a list of post-processing actions and a dictionary of params for each post-processing
+    action, return a dictionary containing uuid of input and output for each post-processing action.
+    """
     from osis_document.contrib.post_processing.converter_registry import converter_registry
     from osis_document.contrib.post_processing.merger import merger
 
@@ -210,6 +214,10 @@ def create_post_process_async_object(
         post_process_actions: List[str],
         post_process_params: Dict[str, Dict[str, str]],
 ) -> None:
+    """
+    Create a PostProcessingAsync object with the list of uuid, the list of post-processing actions and the
+    post-processing params dictionary
+    """
     PostProcessAsync.objects.create(
         status=PostProcessingStatus.PENDING.name,
         data={'post_process_actions': post_process_actions,

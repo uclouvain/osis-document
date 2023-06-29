@@ -1,6 +1,7 @@
 @startuml
 'https://plantuml.com/activity-diagram-beta
-
+scale max 1024 width
+skinparam dpi 300
 start
 :get_remote_tokens(
     [uuids],

@@ -1,6 +1,7 @@
 @startuml
 'https://plantuml.com/activity-diagram-beta
-
+scale max 1024 width
+skinparam dpi 300
 start
 :get_remote_token(
     uuid,
@@ -78,7 +79,7 @@ start
            elseif (Le statut du post-processing est égual a FAILED ?) then(True)
                 :Retourne une Réponse 206 ayant comme data le dictionnaire
                         de retour de la fonction 'check_post_processing'
-                       + un code d'erreur (ASYNC_POST_PROCESS_FAILD);
+                       + un code d'erreur (ASYNC_POST_PROCESS_FAILED);
 
                 stop
            else (Flase)

@@ -31,7 +31,6 @@ from django.utils.datetime_safe import datetime
 
 from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType
 from osis_document.models import Token, Upload, PostProcessAsync
-from osis_document.exceptions import MissingFileException
 from osis_document.tasks import cleanup_old_uploads, make_pending_async_post_processing
 from osis_document.tests.factories import WriteTokenFactory, PdfUploadFactory, PdfUploadFactory, \
     CorrectPDFUploadFactory, TextDocumentUploadFactory, ImageUploadFactory, PendingPostProcessingAsyncFactory, \
@@ -162,6 +161,7 @@ class MakePendingAsyncPostProcessTaskTestCase(TestCase):
         make_pending_async_post_processing()
         pending_post_process.refresh_from_db()
         self.assertEqual(len(PostProcessAsync.objects.filter(status=PostProcessingStatus.PENDING.name)), 0)
+        self.assertEqual(len(PostProcessAsync.objects.filter(status=PostProcessingStatus.DONE.name)), 2)
         self.assertEqual(pending_post_process.status, PostProcessingStatus.DONE.name)
         for action in self.action_list:
             self.assertEqual(pending_post_process.results[action]['status'], PostProcessingStatus.DONE.name)

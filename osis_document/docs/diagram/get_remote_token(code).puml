@@ -97,7 +97,7 @@ start
                 :return Response(
                     data={
                         **post_processing_check,
-                        code: ASYNC_POST_PROCESS_FAILD
+                        code: ASYNC_POST_PROCESS_FAILED
                     },
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 );

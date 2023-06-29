@@ -81,8 +81,12 @@ def get_raw_content_remotely(token: str):
         return None
 
 
-def get_remote_token(uuid, write_token=False, type_post_processing=None):
-    """Given an uuid, return a writing or reading remote token."""
+def get_remote_token(uuid, write_token=False, wanted_post_process=None):
+    """
+    Given an uuid, return a writing or reading remote token.
+    The wanted_post_process parameter is used to specify which post-processing action you want the output files for
+    (example : PostProcessingWanted.CONVERT.name)
+    """
     import requests
 
     url = "{base_url}{token_type}-token/{uuid}".format(
@@ -93,7 +97,7 @@ def get_remote_token(uuid, write_token=False, type_post_processing=None):
     try:
         response = requests.post(
             url,
-            json={'uuid': uuid, 'type_post_processing': type_post_processing},
+            json={'uuid': uuid, 'wanted_post_process': wanted_post_process},
             headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
         )
         if response.status_code == status.HTTP_404_NOT_FOUND:
@@ -109,16 +113,20 @@ def get_remote_token(uuid, write_token=False, type_post_processing=None):
         return None
 
 
-def get_remote_tokens(uuids: List[str], type_post_processing=None) -> Dict[str, str]:
+def get_remote_tokens(uuids: List[str], wanted_post_process=None) -> Dict[str, str]:
     """Given a list of uuids and a type of post-processing,
-    return a dictionary associating each uuid to a reading token."""
+    return a dictionary associating each uuid to a reading token.
+    The wanted_post_process parameter is used to specify which post-processing action you want the output files for
+    (example : PostProcessingWanted.CONVERT.name)
+    """
     import requests
+    import contextlib
 
     url = "{base_url}read-tokens".format(base_url=settings.OSIS_DOCUMENT_BASE_URL)
-    try:
+    with contextlib.suppress(HTTPError):
         data = {'uuids': uuids}
-        if type_post_processing:
-            data.update({'type_post_processing': type_post_processing})
+        if wanted_post_process:
+            data.update({'wanted_post_process': wanted_post_process})
         response = requests.post(
             url,
             json=data,
@@ -128,8 +136,6 @@ def get_remote_tokens(uuids: List[str], type_post_processing=None) -> Dict[str, 
             return {uuid: item.get('token') for uuid, item in response.json().items() if 'error' not in item}
         if response.status_code in [status.HTTP_206_PARTIAL_CONTENT, status.HTTP_500_INTERNAL_SERVER_ERROR]:
             return response.json()
-    except HTTPError:
-        pass
     return {}
 
 
@@ -184,6 +190,11 @@ def launch_post_processing(
 
 
 def get_progress_async_post_processing(uuid: str, wanted_post_process: str = None):
+    """Given an uuid and a type of post-processing,
+        returns an int corresponding to the post-processing progress percentage
+        The wanted_post_process parameter is used to specify the post-processing action you want to get progress to.
+        (example : PostProcessingType.CONVERT.name)
+    """
     import requests
 
     url = "{base_url}get-progress-async-post-processing/{uuid}".format(
