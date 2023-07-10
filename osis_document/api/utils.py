@@ -33,11 +33,9 @@ from rest_framework import status
 from rest_framework.views import APIView
 
 
-def get_remote_metadata(token: Union[str or Dict]) -> Union[dict, None]:
+def get_remote_metadata(token: str) -> Union[dict, None]:
     """Given a token, return the remote metadata."""
     import requests
-    if isinstance(token, Dict):
-        return None
     url = "{}metadata/{}".format(settings.OSIS_DOCUMENT_BASE_URL, token)
     try:
         response = requests.get(url)
@@ -48,11 +46,9 @@ def get_remote_metadata(token: Union[str or Dict]) -> Union[dict, None]:
         return None
 
 
-def get_several_remote_metadata(tokens: Union[List[str], Dict]) -> Dict[str, dict]:
+def get_several_remote_metadata(tokens: List[str]) -> Dict[str, dict]:
     """Given a list of tokens, return a dictionary associating each token to upload metadata."""
     import requests
-    if isinstance(tokens, Dict):
-        return {}
     url = "{}metadata".format(settings.OSIS_DOCUMENT_BASE_URL)
     try:
         response = requests.post(

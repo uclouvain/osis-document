@@ -214,7 +214,7 @@ class PostProcessingSerializer(serializers.Serializer):
     )
 
 
-class GetProgressAsyncPostProcessingSerializer(serializers.Serializer):
+class ProgressAsyncPostProcessingSerializer(serializers.Serializer):
     pk = serializers.UUIDField(
         help_text="UUID of the PostProcessAsync object",
         required=True,
@@ -222,4 +222,11 @@ class GetProgressAsyncPostProcessingSerializer(serializers.Serializer):
     wanted_post_process = serializers.CharField(
         help_text="The name of the wanted type of post-processing",
         required=False,
+    )
+
+
+class ProgressAsyncPostProcessingResponseSerializer(serializers.Serializer):
+    result = serializers.DictField(
+        help_text="A dictionary containing the status of the post-processing wanted, the percentage of progress of the post-processing and optionally a boolean if the post-processing failed",
+        required=True
     )

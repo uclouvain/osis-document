@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 class PostProcessingSchema(DetailedAutoSchema):
     serializer_mapping = {
-        'POST': (None, serializers.PostProcessingSerializer),
+        'POST': serializers.PostProcessingSerializer,
     }
 
     def get_operation_id(self, path, method):
@@ -58,7 +58,7 @@ class PostProcessingView(APIView):
 
 class GetProgressAsyncPostProcessingSchema(AutoSchema):
     serializer_mapping = {
-        'POST': (None, serializers.GetProgressAsyncPostProcessingSerializer),
+        'POST': serializers.ProgressAsyncPostProcessingSerializer,
     }
 
     def get_operation_id(self, path, method):
@@ -77,7 +77,7 @@ class GetProgressAsyncPostProcessingView(APIView):
 
     def post(self, *args, **kwargs):
         try:
-            input_serializer_data = serializers.GetProgressAsyncPostProcessingSerializer(
+            input_serializer_data = serializers.ProgressAsyncPostProcessingSerializer(
                 data=self.request.data,
             )
 

@@ -23,7 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -102,7 +102,7 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
             request,
             upload: Upload,
             wanted_post_process: str = None
-    ) -> Dict[str, str or Dict[str, str]] or None:
+    ) -> Optional[Dict[str, Union[str or Dict[str, str]]]]:
         """ Given an Upload object and a type of post-processing,
         returns a dictionary whose content depends on whether a post-processing is found and on its state."""
         results = {}
@@ -127,10 +127,10 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
 
     def check_post_processing_async(
             self,
-            async_qs: QuerySet,
+            async_qs: QuerySet[PostProcessAsync],
             upload: Upload,
             wanted_post_process: str
-    ) -> Dict[str, str or Dict[str, str]]:
+    ) -> Optional[Dict[str, Union[str, Dict[str, str]]]]:
         """Given an Upload object and a type of post-processing and a QuerySet of PostProcessAsync,
         returns a dictionary whose content depends on its state."""
         results = {}
@@ -143,15 +143,17 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
                 wanted_post_process and post_process_results['status'] == PostProcessingStatus.DONE.name
         )
         if some_post_process_done:
-            results = {
-                'data': {
-                    'upload_id': self.get_output_upload_uuid_from_post_process_async_result(
-                        upload=upload,
-                        async_result=post_process_results
-                    ),
-                    'access': self.token_access},
-                'status': PostProcessingStatus.DONE.name
-            }
+            wanted_upload_id = self.get_output_upload_uuid_from_post_process_async_result
+            if wanted_upload_id:
+                results = {
+                    'data': {
+                        'upload_id': wanted_upload_id(
+                            upload=upload,
+                            async_result=post_process_results
+                        ),
+                        'access': self.token_access},
+                    'status': PostProcessingStatus.DONE.name
+                }
 
         elif post_processing_async_object.status in [
             PostProcessingStatus.PENDING.name,
@@ -204,11 +206,12 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
     ) -> str:
         if len(async_result['upload_objects']) == 1:
             return async_result['upload_objects'][0]
-        post_processing_list = PostProcessing.objects.filter(uuid__in=async_result['post_processing_objects'])
-        for post_processing in post_processing_list:
-            if upload in post_processing.input_files.all():
-                return post_processing.output_files.first().uuid
-
+        post_processing_list = PostProcessing.objects.filter(
+            uuid__in=async_result['post_processing_objects'],
+            input_files__uuid__exact=upload.pk
+        )
+        if post_processing_list.exists():
+            return post_processing_list.get().output_files.first().uuid
 
 class GetTokenListSchema(AutoSchema):  # pragma: no cover
     def get_operation_id(self, path, method):
@@ -345,7 +348,8 @@ class GetTokenListView(GetTokenView):
         for token in serializer.data:
             results[token['upload_id']] = token
 
-        if any(results[key].get('error') == DocumentError.get_dict_error(DocumentError.INFECTED.name) for key in results):
+        if any(results[key].get('error') == DocumentError.get_dict_error(DocumentError.INFECTED.name) for key in
+               results):
             return Response(
                 data=results,
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,

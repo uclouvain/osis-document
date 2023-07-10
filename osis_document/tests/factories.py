@@ -149,7 +149,7 @@ class PendingPostProcessingAsyncFactory:
             post_process_params[action_name] = action_params[action_name]
 
         self.async_post_processing.data = {
-            "base_input": [*base_input],
+            "base_input": base_input,
             "post_process_params": post_process_params,
             "post_process_actions": [*action]
         }
@@ -179,7 +179,7 @@ class FailedPostProcessingAsyncFactory:
             post_process_params[action_name] = action_params[action_name]
 
         self.async_post_processing.data = {
-            "base_input": [*base_input],
+            "base_input": base_input,
             "post_process_params": post_process_params,
             "post_process_actions": [*action]
         }
@@ -207,7 +207,7 @@ class DonePostProcessingAsyncFactory:
         for action_name in action:
             post_process_params[action_name] = action_params[action_name]
         self.async_post_processing.data = {
-            "base_input": [*base_input],
+            "base_input": base_input,
             "post_process_params": post_process_params,
             "post_process_actions": [*action]
         }
