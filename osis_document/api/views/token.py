@@ -23,21 +23,22 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from datetime import timedelta
 from typing import Dict, List, Optional, Union
 
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.schemas.openapi import AutoSchema
 from django.db.models import Prefetch, QuerySet
 from django.urls import reverse
-
+from django.utils.timezone import now
 from osis_document.api import serializers
 from osis_document.api.permissions import APIKeyPermission
 from osis_document.api.utils import CorsAllowOriginMixin
-from osis_document.enums import FileStatus, DocumentError, PostProcessingStatus, PostProcessingWanted
 from osis_document.contrib.error_code import ASYNC_POST_PROCESS_FAILED
+from osis_document.enums import FileStatus, DocumentError, PostProcessingStatus, PostProcessingWanted
 from osis_document.exceptions import FileInfectedException
 from osis_document.models import Upload, PostProcessing, PostProcessAsync
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.schemas.openapi import AutoSchema
 
 
 class GetTokenSchema(AutoSchema):  # pragma: no cover
@@ -95,6 +96,8 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
             upload_id = post_processing_check.get('data', {}).get('upload_id')
             request.data['upload_id'] = upload_id or upload.pk
             request.data['access'] = self.token_access
+            if request.data.get('custom_ttl'):
+                request.data['expires_at'] = now() + timedelta(seconds=self.request.data.get('custom_ttl'))
         return super().create(request, *args, **kwargs)
 
     def check_post_processing(
@@ -212,6 +215,7 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
         )
         if post_processing_list.exists():
             return post_processing_list.get().output_files.first().uuid
+
 
 class GetTokenListSchema(AutoSchema):  # pragma: no cover
     def get_operation_id(self, path, method):
@@ -340,6 +344,10 @@ class GetTokenListView(GetTokenView):
                     data.append(post_processing_check['data'])
             else:
                 data.append({'upload_id': upload.pk, 'access': self.token_access})
+
+        if self.request.data.get('custom_ttl'):
+            for token_data in data:
+                token_data.update({'expires_at': now() + timedelta(seconds=self.request.data.get('custom_ttl'))})
 
         serializer = self.get_serializer(data=data, many=True)
         serializer.is_valid(raise_exception=True)

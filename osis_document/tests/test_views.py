@@ -24,6 +24,7 @@
 #
 # ##############################################################################
 import uuid
+from datetime import timedelta
 from pathlib import Path
 from unittest import mock
 
@@ -32,6 +33,7 @@ from django.shortcuts import resolve_url
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.datetime_safe import datetime
+from django.utils.timezone import now
 from osis_document.enums import FileStatus, TokenAccess, DocumentError, PostProcessingStatus, PostProcessingType, \
     PostProcessingWanted
 from osis_document.models import Token, Upload
@@ -312,6 +314,22 @@ class GetTokenViewTestCase(APITestCase, URLPatternsTestCase):
         token = response.json()
         self.assertEqual(token['access'], TokenAccess.READ.name)
         self.assertEqual(token['expires_at'], "2021-06-10T00:00:00")
+
+    def test_read_token_with_custom_ttl(self):
+        start_time = now()
+        default_ttl = 900
+        upload = PdfUploadFactory()
+        request_data = {'uuid': upload.uuid,
+                        'wanted_post_process': PostProcessingWanted.ORIGINAL.name,
+                        'custom_ttl': 1800
+                        }
+        response = self.client.post(reverse('osis_document:read-token', kwargs={
+            'pk': upload.uuid, }), data=request_data, follow=False)
+        self.assertEqual(response.status_code, 201)
+        token = response.json()
+        self.assertEqual(token['access'], TokenAccess.READ.name)
+        self.assertTrue((start_time + timedelta(seconds=default_ttl)) < datetime.fromisoformat(token['expires_at']) < (
+            now() + timedelta(seconds=request_data.get('custom_ttl'))))
 
     def test_upload_not_found(self):
         response = self.client.post(
@@ -619,6 +637,22 @@ class GetTokenListViewTestCase(QueriesAssertionsMixin, APITestCase):
         self.assertEqual(len(tokens), 2)
         self.assertEqual(tokens[uploads_uuids[0]]['access'], TokenAccess.READ.name)
         self.assertEqual(tokens[uploads_uuids[1]]['access'], TokenAccess.READ.name)
+
+    def test_read_token_with_custom_ttl(self):
+        start_time = now()
+        default_ttl = 900
+        uploads_uuids = [str(PdfUploadFactory().pk), str(PdfUploadFactory().pk)]
+        request_data = {'uuids': uploads_uuids,
+                        'wanted_post_process': PostProcessingWanted.ORIGINAL.name,
+                        'custom_ttl': 3600
+                        }
+        response = self.client.post(resolve_url('read-tokens'), data=request_data)
+        self.assertEqual(response.status_code, 201)
+        tokens = response.json()
+        for token in tokens:
+            self.assertEqual(tokens[token]['access'], TokenAccess.READ.name)
+            self.assertTrue((start_time + timedelta(seconds=default_ttl)) < datetime.fromisoformat(tokens[token]['expires_at']) < (
+                now() + timedelta(seconds=request_data.get('custom_ttl'))))
 
     def test_read_tokens_with_upload_not_found(self):
         uploads_uuids = [str(uuid.uuid4())]

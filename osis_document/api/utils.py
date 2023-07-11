@@ -77,9 +77,10 @@ def get_raw_content_remotely(token: str):
         return None
 
 
-def get_remote_token(uuid, write_token=False, wanted_post_process=None):
+def get_remote_token(uuid, write_token=False, wanted_post_process=None, custom_ttl=None):
     """
     Given an uuid, return a writing or reading remote token.
+    The custom_ttl parameter is used to define the validity period of the token
     The wanted_post_process parameter is used to specify which post-processing action you want the output files for
     (example : PostProcessingWanted.CONVERT.name)
     """
@@ -93,7 +94,7 @@ def get_remote_token(uuid, write_token=False, wanted_post_process=None):
     try:
         response = requests.post(
             url,
-            json={'uuid': uuid, 'wanted_post_process': wanted_post_process},
+            json={'uuid': uuid, 'wanted_post_process': wanted_post_process, 'custom_ttl': custom_ttl},
             headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
         )
         if response.status_code == status.HTTP_404_NOT_FOUND:
@@ -109,9 +110,10 @@ def get_remote_token(uuid, write_token=False, wanted_post_process=None):
         return None
 
 
-def get_remote_tokens(uuids: List[str], wanted_post_process=None) -> Dict[str, str]:
-    """Given a list of uuids and a type of post-processing,
+def get_remote_tokens(uuids: List[str], wanted_post_process=None, custom_ttl=None) -> Dict[str, str]:
+    """Given a list of uuids, a type of post-processing and a custom TTL in second,
     return a dictionary associating each uuid to a reading token.
+    The custom_ttl parameter is used to define the validity period of the token
     The wanted_post_process parameter is used to specify which post-processing action you want the output files for
     (example : PostProcessingWanted.CONVERT.name)
     """
@@ -123,6 +125,8 @@ def get_remote_tokens(uuids: List[str], wanted_post_process=None) -> Dict[str, s
         data = {'uuids': uuids}
         if wanted_post_process:
             data.update({'wanted_post_process': wanted_post_process})
+        if custom_ttl:
+            data.update({'custom_ttl': custom_ttl})
         response = requests.post(
             url,
             json=data,

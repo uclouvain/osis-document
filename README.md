@@ -207,6 +207,13 @@ uploader.addEventListener('osisdocument:add', event => {
 
 Note that the `Uploader` component has the `osis-document-uploader` class.
 
+## Set a custom validity period for a Token
+
+To generate a token with a validity period other than the default 15 minutes, you must use the "custom_ttl" parameter of one of the get_remote_tokens or get_remote_token functions
+
+This optional parameter only accepts numbers and corresponds to the duration in seconds of the validity period
+
+
 ## Post-processing files
 
 To perform post-processing actions manually on files, use the utility function
