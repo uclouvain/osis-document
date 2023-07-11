@@ -227,11 +227,13 @@ class GetTokenListSchema(AutoSchema):  # pragma: no cover
         return {
             'content': {
                 ct: {
-                    'type': 'array',
-                    'items': {
-                        'type': 'string',
-                        'format': 'uuid',
-                        'description': 'The uuid of the persisted file upload',
+                    'schema': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'string',
+                            'format': 'uuid',
+                            'description': 'The uuid of the persisted file upload',
+                        },
                     },
                 }
                 for ct in self.request_media_types
@@ -244,15 +246,14 @@ class GetTokenListSchema(AutoSchema):  # pragma: no cover
             'description': 'The tokens of several uploads',
             'content': {
                 'application/json': {
-                    'type': 'object',
-                    'properties': {
-                        'type': 'string',
-                    },
-                    'additionalProperties': {
-                        'oneOf': [
-                            {'$ref': '#/components/schemas/Token'},
-                            {'$ref': '#/components/schemas/ErrorWithStatus'},
-                        ],
+                    'schema': {
+                        'type': 'object',
+                        'additionalProperties': {
+                            'oneOf': [
+                                {'$ref': '#/components/schemas/Token'},
+                                {'$ref': '#/components/schemas/ErrorWithStatus'},
+                            ],
+                        },
                     },
                 },
             },

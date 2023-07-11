@@ -25,10 +25,9 @@
 # ##############################################################################
 import sys
 from io import BytesIO
-from tempfile import TemporaryFile
 
 import filetype
-from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
@@ -94,7 +93,12 @@ class SaveEditorView(CorsAllowOriginMixin, APIView):
             writer.write(temp_bytes)
             temp_bytes.seek(0)
             file = InMemoryUploadedFile(
-                temp_bytes, None, file.name, file.content_type, sys.getsizeof(temp_bytes), None
+                temp_bytes,
+                None,
+                file.name,
+                file.content_type,
+                sys.getsizeof(temp_bytes),
+                None,
             )
 
         # Process file: calculate hash and save it to db
@@ -103,7 +107,7 @@ class SaveEditorView(CorsAllowOriginMixin, APIView):
         fileguess = filetype.guess(bytesa)
         if fileguess.mime != file.content_type or file.content_type != 'application/pdf':
             raise MimeMismatch
-        upload.file = file
+        upload.file.save(upload.file.name, file)
         upload.size = file.size
         upload.metadata['hash'] = calculate_hash(file)
         upload.save()

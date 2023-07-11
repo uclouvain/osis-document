@@ -209,6 +209,21 @@ def get_progress_async_post_processing(uuid: str, wanted_post_process: str = Non
     return response.json()
 
 
+def change_remote_metadata(token, metadata):
+    """Update metadata of a remote document and return the updated metadata if successful."""
+    import requests
+
+    url = "{}change-metadata/{}".format(settings.OSIS_DOCUMENT_BASE_URL, token)
+
+    response = requests.post(
+        url=url,
+        json=metadata,
+        headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
+    )
+
+    return response.json()
+
+
 class CorsAllowOriginMixin(APIView):
     ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin"
     ACCESS_CONTROL_ALLOW_METHODS = "Access-Control-Allow-Methods"
