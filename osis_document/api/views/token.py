@@ -96,8 +96,9 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
             upload_id = post_processing_check.get('data', {}).get('upload_id')
             request.data['upload_id'] = upload_id or upload.pk
             request.data['access'] = self.token_access
-            if request.data.get('custom_ttl'):
-                request.data['expires_at'] = now() + timedelta(seconds=self.request.data.get('custom_ttl'))
+            custom_ttl = request.data.get('custom_ttl')
+            if custom_ttl:
+                request.data['expires_at'] = now() + timedelta(seconds=custom_ttl)
         return super().create(request, *args, **kwargs)
 
     def check_post_processing(
@@ -345,9 +346,11 @@ class GetTokenListView(GetTokenView):
             else:
                 data.append({'upload_id': upload.pk, 'access': self.token_access})
 
-        if self.request.data.get('custom_ttl'):
+        custom_ttl = self.request.data.get('custom_ttl')
+        if custom_ttl:
+            datetime_now = now()
             for token_data in data:
-                token_data.update({'expires_at': now() + timedelta(seconds=self.request.data.get('custom_ttl'))})
+                token_data.update({'expires_at': datetime_now + timedelta(seconds=custom_ttl)})
 
         serializer = self.get_serializer(data=data, many=True)
         serializer.is_valid(raise_exception=True)
