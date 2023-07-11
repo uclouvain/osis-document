@@ -161,7 +161,7 @@ class MetadataSerializer(serializers.Serializer):
 
 
 class ChangeMetadataSerializer(serializers.Serializer):
-    name = serializers.CharField(help_text="The file's new name")
+    pass
 
 
 class RotateImageSerializer(serializers.Serializer):
