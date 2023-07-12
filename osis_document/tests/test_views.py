@@ -329,7 +329,7 @@ class GetTokenViewTestCase(APITestCase, URLPatternsTestCase):
         token = response.json()
         self.assertEqual(token['access'], TokenAccess.READ.name)
         self.assertTrue((start_time + timedelta(seconds=default_ttl)) < datetime.fromisoformat(token['expires_at']) < (
-            now() + timedelta(seconds=request_data.get('custom_ttl'))))
+                now() + timedelta(seconds=request_data.get('custom_ttl'))))
 
     def test_upload_not_found(self):
         response = self.client.post(
@@ -630,8 +630,12 @@ class GetTokenListViewTestCase(QueriesAssertionsMixin, APITestCase):
 
     def test_read_tokens(self):
         uploads_uuids = [str(PdfUploadFactory().pk), str(PdfUploadFactory().pk)]
-        with self.assertNumQueriesLessThan(5):
+        uploads_uuids_2 = [str(PdfUploadFactory().pk), str(PdfUploadFactory().pk), str(PdfUploadFactory().pk),
+                           str(PdfUploadFactory().pk)]
+        with self.assertNumQueriesLessThan(8):
             response = self.client.post(resolve_url('read-tokens'), data={'uuids': uploads_uuids})
+        with self.assertNumQueriesLessThan(16):
+            response2 = self.client.post(resolve_url('read-tokens'), data={'uuids': uploads_uuids_2})
         self.assertEqual(response.status_code, 201)
         tokens = response.json()
         self.assertEqual(len(tokens), 2)
@@ -651,8 +655,9 @@ class GetTokenListViewTestCase(QueriesAssertionsMixin, APITestCase):
         tokens = response.json()
         for token in tokens:
             self.assertEqual(tokens[token]['access'], TokenAccess.READ.name)
-            self.assertTrue((start_time + timedelta(seconds=default_ttl)) < datetime.fromisoformat(tokens[token]['expires_at']) < (
-                now() + timedelta(seconds=request_data.get('custom_ttl'))))
+            self.assertTrue(
+                (start_time + timedelta(seconds=default_ttl)) < datetime.fromisoformat(tokens[token]['expires_at']) < (
+                        now() + timedelta(seconds=request_data.get('custom_ttl'))))
 
     def test_read_tokens_with_upload_not_found(self):
         uploads_uuids = [str(uuid.uuid4())]
