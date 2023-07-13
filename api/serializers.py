@@ -23,19 +23,33 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import mimetypes
+
 from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.utils.translation import gettext_lazy as _
-from osis_document.models import Token, Upload
+from osis_document.models import Token, Upload, OsisDocumentFileExtensionValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 
-class RequestUploadSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Upload
-        fields = ['file']
+class RequestUploadSerializer(serializers.Serializer):
+    file = serializers.FileField(validators=[OsisDocumentFileExtensionValidator()], required=True)
+
+    def validate(self, attrs):
+        from pathlib import Path
+        from osis_document.exceptions import MimeMismatch
+        import magic
+
+        file_object = attrs['file']
+        extension = mimetypes.guess_extension(mimetypes.guess_type(file_object.name, strict=True)[0], strict=True)[1:]
+        file_object.file.seek(0)
+        mime_type = magic.from_buffer(file_object.read(4096), mime=True)
+
+        if mime_type != file_object.content_type and Path(file_object.name).suffix != extension:
+            raise MimeMismatch
+        return super().validate(attrs)
 
 
 class RequestUploadResponseSerializer(serializers.Serializer):
@@ -176,6 +190,7 @@ class TokenListSerializer(serializers.ListSerializer):
 class TokenSerializer(serializers.ModelSerializer):
     token = serializers.CharField(read_only=True)
     upload_id = serializers.UUIDField(required=True)
+    expires_at = serializers.DateTimeField(required=False)
 
     class Meta:
         model = Token
@@ -197,7 +212,11 @@ class TokenSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class PostProcessing(serializers.Serializer):
+class PostProcessingSerializer(serializers.Serializer):
+    async_post_processing = serializers.BooleanField(
+        help_text="Boolean that define if post processing is asynchronous ",
+        required=True,
+    )
     files_uuid = serializers.ListField(
         help_text="A list of files UUID",
         required=True,
@@ -209,4 +228,22 @@ class PostProcessing(serializers.Serializer):
     post_process_params = serializers.DictField(
         help_text="A dict of params for post processing",
         required=False
+    )
+
+
+class ProgressAsyncPostProcessingSerializer(serializers.Serializer):
+    pk = serializers.UUIDField(
+        help_text="UUID of the PostProcessAsync object",
+        required=True,
+    )
+    wanted_post_process = serializers.CharField(
+        help_text="The name of the wanted type of post-processing",
+        required=False,
+    )
+
+
+class ProgressAsyncPostProcessingResponseSerializer(serializers.Serializer):
+    result = serializers.DictField(
+        help_text="A dictionary containing the status of the post-processing wanted, the percentage of progress of the post-processing and optionally a boolean if the post-processing failed",
+        required=True
     )

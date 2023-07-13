@@ -24,14 +24,14 @@
 #
 # ##############################################################################
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 from uuid import UUID
 
 from django.core.files import File
 
 from osis_document.models import PostProcessing, Upload
 from osis_document.utils import calculate_hash
-
+from osis_document.enums import FileStatus
 
 class Processor:
     type: str
@@ -44,6 +44,7 @@ class Processor:
                 mimetype="application/pdf",
                 size=file.size,
                 metadata={'hash': calculate_hash(file), 'name': file.name},
+                status=FileStatus.UPLOADED.name
             )
             instance.file = path.name
             instance.file.file = file
@@ -58,5 +59,5 @@ class Processor:
         instance.output_files.add(output_file)
         return instance
 
-    def process(self, upload_objects_uuids: List[UUID], output_filename: str = None) -> List[UUID]:
+    def process(self, upload_objects_uuids: List[UUID], output_filename: str = None) -> Dict[str, List[UUID]]:
         raise NotImplemented
