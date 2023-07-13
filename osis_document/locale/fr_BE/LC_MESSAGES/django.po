@@ -118,3 +118,11 @@ msgstr "Transféré le"
 
 msgid "Write"
 msgstr "Ecriture"
+
+msgid "Expired token."
+msgstr "Jeton expiré."
+
+msgid "You cannot access the file because the url's validity period has expired."
+msgstr "Vous ne pouvez pas accéder au fichier car la période de validitée de l'url est dépassée."
+
+
