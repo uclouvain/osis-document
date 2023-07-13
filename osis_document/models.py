@@ -28,11 +28,12 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models.functions import Now
 from django.utils.translation import gettext_lazy as _
 
-from .enums import FileStatus, TokenAccess, PostProcessingType
+from .enums import FileStatus, TokenAccess, PostProcessingType, PostProcessingStatus
 
 
 class UploadManager(models.Manager):
@@ -155,12 +156,48 @@ class PostProcessing(models.Model):
         primary_key=True,
         default=uuid.uuid4,
     )
-    input_files = models.ManyToManyField(to='osis_document.Upload', verbose_name=_("Input"), related_name='input_files')
+    input_files = models.ManyToManyField(
+        to='osis_document.Upload',
+        verbose_name=_("Input"),
+        related_name='post_processing_input_files'
+    )
     output_files = models.ManyToManyField(
-        to='osis_document.Upload', verbose_name=_("Output"), related_name='output_files'
+        to='osis_document.Upload',
+        verbose_name=_("Output"),
+        related_name='post_processing_output_files',
+        blank=True
     )
     created_at = models.DateTimeField(
         verbose_name=_("Created at"),
         auto_now_add=True,
     )
-    type = models.CharField(max_length=255, choices=PostProcessingType.choices(), blank=False)
+    type = models.CharField(
+        max_length=255,
+        choices=PostProcessingType.choices(),
+        blank=False)
+
+
+class PostProcessAsync(models.Model):
+    uuid = models.UUIDField(
+        verbose_name=_("UUID"),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    status = models.CharField(
+        verbose_name=_("Status"),
+        max_length=255,
+        choices=PostProcessingStatus.choices(),
+        default=PostProcessingStatus.PENDING.name,
+    )
+    data = models.JSONField(
+        verbose_name=_("Data Post Processing"),
+        default=dict,
+        blank=False,
+        encoder=DjangoJSONEncoder
+    )
+    results = models.JSONField(
+        verbose_name=_("Result Post Processing"),
+        default=dict,
+        blank=True,
+        encoder=DjangoJSONEncoder
+    )

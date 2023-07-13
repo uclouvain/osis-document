@@ -84,3 +84,20 @@ class PostProcessingType(ChoiceEnum):
     MERGE = _('Merge')
     CONVERT = _('Convert')
 
+
+class PostProcessingWanted(ChoiceEnum):
+    MERGE = _('Merge')
+    CONVERT = _('Convert')
+    ORIGINAL = _('Original')
+
+
+class PostProcessingStatus(ChoiceEnum):
+    PENDING = _('Pending')
+    FAILED = _('Failed')
+    DONE = _('Done')
+
+
+class PageFormatEnums(Enum):
+    A3 = _('A3')
+    A4 = _('A4')
+    A5 = _('A5')

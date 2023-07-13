@@ -74,6 +74,7 @@ class FileUploadWidget(SplitArrayWidget):
         self.min_files = kwargs.pop('min_files', None)
         self.max_files = kwargs.pop('max_files', None)
         self.post_processing = kwargs.pop('post_processing', None)
+        self.async_post_processing = kwargs.pop('async_post_processing', None)
         self.output_post_processing = kwargs.pop('output_post_processing', None)
         self.post_process_params = kwargs.pop('post_process_params', None)
         if kwargs.get('size', None) is None:
@@ -131,6 +132,8 @@ class FileUploadWidget(SplitArrayWidget):
             attrs['data-min-files'] = self.min_files
         if self.post_processing is not None:
             attrs['post_processing'] = self.post_processing
+        if self.async_post_processing is not None:
+            attrs['async_post_processing'] = self.async_post_processing
         if self.output_post_processing is not None:
             attrs['output_post_processing'] = self.output_post_processing
         if self.post_process_params is not None:
