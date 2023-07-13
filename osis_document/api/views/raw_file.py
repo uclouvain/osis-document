@@ -28,8 +28,8 @@ import hashlib
 from datetime import datetime
 
 from django.conf import settings
-from django.http import FileResponse, HttpResponseRedirect
-from django.urls import reverse
+from django.http import FileResponse
+from django.template.response import TemplateResponse
 from django.utils.translation import gettext_lazy as _
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import FileStatus
@@ -60,9 +60,11 @@ class RawFileView(CorsAllowOriginMixin, APIView):
     schema = RawFileSchema()
 
     def get(self, *args, **kwargs):
-        token = Token.objects.get(token=self.kwargs['token'])
+        token = Token.objects.filter(token=self.kwargs['token']).first()
+        if not token:
+            return Response({'error': _("Resource not found")}, status.HTTP_404_NOT_FOUND)
         if token.expires_at < datetime.now():
-            return HttpResponseRedirect(reverse('expired_token'))
+            return TemplateResponse(request=self.request, template='expired_token.html', status=403)
         upload = Upload.objects.from_token(self.kwargs['token'])
         if not upload:
             return Response({'error': _("Resource not found")}, status.HTTP_404_NOT_FOUND)
