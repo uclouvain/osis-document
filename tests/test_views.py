@@ -30,6 +30,7 @@ from unittest import mock
 from django.core.files.base import ContentFile, File
 from django.shortcuts import resolve_url
 from django.test import TestCase, override_settings
+from django.urls import reverse
 from django.utils.datetime_safe import datetime
 from osis_document.enums import FileStatus, TokenAccess, DocumentError
 from osis_document.models import Token, Upload
@@ -449,42 +450,56 @@ class RotateViewTestCase(APITestCase):
         self.assertEqual(response.status_code, 200)
 
 
-@override_settings(ROOT_URLCONF='osis_document.urls', OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+@override_settings( OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class FileViewTestCase(TestCase):
+    from django.urls import path, include
+
+    app_name = 'osis_document'
+    urlpatterns = [
+        path('', include('osis_document.urls', namespace="osis_document")),
+    ]
+
     @override_settings(OSIS_DOCUMENT_DOMAIN_LIST=[])
-    def test_get_file(self):
+    def test_get_file_valid_token(self):
         token = ReadTokenFactory()
-        response = self.client.get(resolve_url('raw-file', token=token.token))
+        response = self.client.get(reverse('osis_document:raw-file', kwargs={'token': token.token, }))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.has_header('Content-Security-Policy'))
 
     @override_settings(OSIS_DOCUMENT_DOMAIN_LIST=['127.0.0.1'])
     def test_get_file_with_csp(self):
         token = ReadTokenFactory()
-        response = self.client.get(resolve_url('raw-file', token=token.token))
+        response = self.client.get(reverse('osis_document:raw-file', kwargs={'token': token.token, }))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header('Content-Security-Policy'))
         self.assertNotIn('attachment', response['Content-Disposition'])
 
     def test_get_file_as_attachement(self):
         token = ReadTokenFactory()
-        response = self.client.get(resolve_url('raw-file', token=token.token) + '?dl=1')
+        response = self.client.get(reverse('osis_document:raw-file', kwargs={'token': token.token, }) + '?dl=1')
         self.assertEqual(response.status_code, 200)
         self.assertIn('attachment', response['Content-Disposition'])
 
     def test_get_file_bad_hash(self):
         token = ReadTokenFactory(upload__metadata={'hash': 'badvalue'})
-        response = self.client.get(resolve_url('raw-file', token=token.token))
+        response = self.client.get(reverse('osis_document:raw-file', kwargs={'token': token.token, }))
         self.assertEqual(response.status_code, 409)
 
     def test_get_file_bad_token(self):
-        response = self.client.get(resolve_url('raw-file', token='token'))
+        response = self.client.get(reverse('osis_document:raw-file', kwargs={'token': 'token', }))
         self.assertEqual(response.status_code, 404)
 
     def test_get_file_infected(self):
         token = ReadTokenFactory(upload__status=FileStatus.INFECTED.name)
-        response = self.client.get(resolve_url('raw-file', token=token.token))
+        response = self.client.get(reverse('osis_document:raw-file', kwargs={'token': token.token, }))
         self.assertEqual(response.status_code, 500)
+
+    def test_get_file_expired_token(self):
+        from datetime import timedelta
+        date_expiration = datetime.now() - timedelta(seconds=60)
+        token = ReadTokenFactory(expires_at=date_expiration)
+        response = self.client.get(reverse('osis_document:raw-file', kwargs={'token': token.token, }), follow=False)
+        self.assertEqual(response.status_code, 403)
 
 
 @override_settings(ROOT_URLCONF="osis_document.urls", OSIS_DOCUMENT_API_SHARED_SECRET='foobar')

@@ -25,14 +25,16 @@
 # ##############################################################################
 
 import hashlib
+from datetime import datetime
 
 from django.conf import settings
 from django.http import FileResponse
+from django.template.response import TemplateResponse
 from django.utils.translation import gettext_lazy as _
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import FileStatus
 from osis_document.exceptions import FileInfectedException
-from osis_document.models import Upload
+from osis_document.models import Upload, Token
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
@@ -58,6 +60,11 @@ class RawFileView(CorsAllowOriginMixin, APIView):
     schema = RawFileSchema()
 
     def get(self, *args, **kwargs):
+        token = Token.objects.filter(token=self.kwargs['token']).first()
+        if not token:
+            return Response({'error': _("Resource not found")}, status.HTTP_404_NOT_FOUND)
+        if token.expires_at < datetime.now():
+            return TemplateResponse(request=self.request, template='expired_token.html', status=403)
         upload = Upload.objects.from_token(self.kwargs['token'])
         if not upload:
             return Response({'error': _("Resource not found")}, status.HTTP_404_NOT_FOUND)

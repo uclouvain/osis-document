@@ -118,3 +118,10 @@ msgstr ""
 
 msgid "Write"
 msgstr ""
+
+msgid "Expired token."
+msgstr ""
+
+msgid "You cannot access the file because the url's validity period has expired."
+msgstr ""
+
