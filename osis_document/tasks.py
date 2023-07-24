@@ -23,11 +23,11 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import time
 from datetime import timedelta
-from celery.schedules import crontab
 
-from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 
 try:
@@ -59,6 +59,7 @@ def make_pending_async_post_processing():
     for post_process_async in qs:
         current_processing_uuids = [uuid for uuid in post_process_async.data['base_input']]
         for action in post_process_async.data["post_process_actions"]:
+            time.sleep(5)
             try:
                 output_data = post_process(
                     uuid_list=current_processing_uuids,

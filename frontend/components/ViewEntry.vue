@@ -44,6 +44,24 @@
         </div>
       </div>
     </div>
+    <div
+        v-else-if="inPostProcessing"
+        class="media-body"
+    >
+      <div class="progress" style="text-align: center">
+        <div
+            class="progress-bar progress-bar-striped active"
+            role="progressbar"
+            aria-valuenow="0"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            :style="{width: postProcessingProgress.toString() + `%`}"
+        >
+          <span class="sr-only">{{ $t('view_entry.loading') }}</span>
+        </div>
+        <span class="align-items-center">Avancement du post processing : {{ postProcessingProgress }} %</span>
+      </div>
+    </div>
     <!-- error -->
     <template v-else-if="error">
       <div class="media-body">
@@ -159,7 +177,7 @@
 import {doRequest, humanizedSize} from '../utils';
 import ViewingModal from './ViewingModal.vue';
 import {defineComponent} from 'vue';
-import type {FileUpload} from "../interfaces";
+import type {FileUpload, GetRemoteTokenResponse, PostProcessingProgressResult} from "../interfaces";
 
 export default defineComponent({
   name: 'ViewEntry',
@@ -185,6 +203,22 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    getProgressUrl: {
+      type: String,
+      required: true
+    },
+    postProcessStatus: {
+      type: String,
+      required: true
+    },
+    baseUuid: {
+      type: String,
+      required: true
+    },
+    wantedPostProcess: {
+      type: String,
+      required: true
+    },
   },
   emits: {
     updateToken(token: string) {
@@ -198,10 +232,15 @@ export default defineComponent({
     return {
       file: null as FileUpload | null,
       loading: true,
+      inPostProcessing: false,
+      postProcessingProgress: 0,
       error: '',
       name: '',
       extension: '',
       saved: false,
+      intervalProgress: setInterval(() => {
+      }, 300000),
+      token: {} as GetRemoteTokenResponse,
     };
   },
   computed: {
@@ -238,20 +277,77 @@ export default defineComponent({
   mounted() {
     void this.getFile();
   },
+  updated() {
+    if (this.inPostProcessing){
+      if ((this.getProgressUrl !== "" || this.getProgressUrl != undefined) && this.postProcessingProgress !== 100){
+        clearInterval(this.intervalProgress);
+        this.intervalProgress = setInterval(()=>{
+          this.getProgressPostProcessing()
+        }, 3000)
+      }
+      if (this.postProcessingProgress == 100 ) {
+        clearInterval(this.intervalProgress);
+        this.inPostProcessing = false
+        this.getFile()
+      }
+    }
+  },
+  unmounted() {
+    clearInterval(this.intervalProgress);
+  },
   methods: {
     humanizedSize,
     getFile: async function () {
       if (this.value === 'FileInfectedException') {
         this.error = this.$t('view_entry.file_infected');
-      } else {
+      }
+      else if (this.value === 'None' && this.postProcessingProgress !== 100){
+        this.inPostProcessing = true;
+        await this.getProgressPostProcessing();
+      }
+      else {
+        if (this.value === 'None'){
+          if (this.wantedPostProcess == '' || this.wantedPostProcess == undefined) {
+            this.token = await doRequest(`${this.baseUrl}read-token/${this.baseUuid}`, {
+              method: 'POST',
+              body: JSON.stringify({
+                uuid: this.baseUuid,
+              }),
+          }) as GetRemoteTokenResponse;
+          }
+          else{
+            this.token = await doRequest(`${this.baseUrl}read-token/${this.baseUuid}`,{
+              method: 'POST',
+              body: JSON.stringify({
+                uuid: this.baseUuid,
+                wanted_post_process: this.wantedPostProcess,
+              }),
+          }) as GetRemoteTokenResponse;
+          }
+        }
+        let url = (this.token.token !== '') ? `${this.baseUrl}metadata/${this.token.token}` : `${this.baseUrl}metadata/${this.value}`;
         try {
-          this.file = await doRequest(`${this.baseUrl}metadata/${this.value}`) as FileUpload;
+          this.file = await doRequest(url) as FileUpload;
           this.fullName = this.file.name;
         } catch (e) {
           this.error = (e as Error).message;
         }
       }
       this.loading = false;
+    },
+    getProgressPostProcessing :async function(){
+      if (this.postProcessingProgress !== 100 && this.getProgressUrl !== "") {
+        try {
+          let uuid = this.getProgressUrl.split('/').slice(-1)[0];
+          let url = this.baseUrl + (this.getProgressUrl.split('/').slice(3).join("/")) + '?' + 'pk=' + uuid.toString();
+          let result = await doRequest(`${url}`, {
+            method: 'GET',
+          }) as PostProcessingProgressResult;
+          this.postProcessingProgress = result.progress;
+        } catch (e) {
+          this.error = (e as Error).message;
+        }
+      }
     },
     saveName: async function () {
       try {
