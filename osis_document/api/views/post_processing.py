@@ -4,8 +4,8 @@ from osis_document.enums import PostProcessingStatus
 from osis_document.models import PostProcessAsync
 from osis_document.utils import post_process, create_post_process_async_object
 from rest_framework import status
-from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.response import Response
+from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import APIView
 
 
@@ -58,7 +58,7 @@ class PostProcessingView(APIView):
 
 class GetProgressAsyncPostProcessingSchema(AutoSchema):
     serializer_mapping = {
-        'POST': serializers.ProgressAsyncPostProcessingSerializer,
+        'GET': serializers.ProgressAsyncPostProcessingSerializer,
     }
 
     def get_operation_id(self, path, method):
@@ -75,16 +75,16 @@ class GetProgressAsyncPostProcessingView(APIView):
     authentication_classes = []
     permission_classes = []
 
-    def post(self, *args, **kwargs):
+    def get(self, *args, **kwargs):
         try:
             input_serializer_data = serializers.ProgressAsyncPostProcessingSerializer(
-                data=self.request.data,
+                data=self.request.query_params,
             )
 
             if input_serializer_data.is_valid(raise_exception=True):
                 validated_data = input_serializer_data.validated_data
                 async_post_process = PostProcessAsync.objects.get(uuid=validated_data['pk'])
-                wanted_post_processing = validated_data['wanted_post_process']
+                wanted_post_processing = validated_data.get('wanted_post_process')
                 result = {
                     'progress': None,
                     'wanted_post_process_status': None

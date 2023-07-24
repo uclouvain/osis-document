@@ -90,9 +90,7 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
                     data={**post_processing_check,
                           'code': ASYNC_POST_PROCESS_FAILED},
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY,
-
                 )
-
             upload_id = post_processing_check.get('data', {}).get('upload_id')
             request.data['upload_id'] = upload_id or upload.pk
             request.data['access'] = self.token_access
@@ -164,10 +162,12 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
             PostProcessingStatus.FAILED.name
         ]:
             results["status"] = post_processing_async_object.status
-            results["links"] = reverse(
-                'osis_document:get-progress-post-processing',
-                kwargs={'pk': post_processing_async_object.uuid}
-            )
+            results['links'] = {
+                'progress': reverse(
+                    'osis_document:get-progress-post-processing',
+                    kwargs={'pk': post_processing_async_object.uuid}
+                )
+            }
             for action in post_processing_async_object.data['post_process_actions']:
                 if post_processing_async_object.status == PostProcessingStatus.FAILED.name and "errors" in \
                         post_processing_async_object.results[action]:
