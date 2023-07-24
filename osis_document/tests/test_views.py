@@ -282,10 +282,13 @@ class ConfirmUploadViewTestCase(APITestCase):
 @override_settings(OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
 class GetTokenViewTestCase(APITestCase, URLPatternsTestCase):
     from django.urls import path, include
+    from django.views.generic.base import RedirectView
 
     app_name = 'osis_document'
     urlpatterns = [
         path('', include('osis_document.urls', namespace="osis_document")),
+        path('home/', RedirectView.as_view(), name="home"),
+        path("accounts/", include("django.contrib.auth.urls")),
     ]
 
     def setUp(self):
@@ -315,6 +318,19 @@ class GetTokenViewTestCase(APITestCase, URLPatternsTestCase):
         self.assertEqual(token['access'], TokenAccess.READ.name)
         self.assertEqual(token['expires_at'], "2021-06-10T00:00:00")
 
+    def test_read_token_with_UUID_format(self):
+        from uuid import UUID
+        upload = PdfUploadFactory()
+        uuid = upload.uuid
+        self.assertEqual(type(uuid), UUID)
+        request_data = {'uuid': uuid,
+                        'wanted_post_process': PostProcessingWanted.ORIGINAL.name,
+                        'expires_at': datetime(2021, 6, 10)
+                        }
+        response = self.client.post(reverse('osis_document:read-token', kwargs={
+            'pk': upload.uuid, }), data=request_data, follow=False)
+        self.assertEqual(response.status_code, 201)
+
     def test_read_token_with_custom_ttl(self):
         start_time = now()
         default_ttl = 900
@@ -340,7 +356,7 @@ class GetTokenViewTestCase(APITestCase, URLPatternsTestCase):
         upload = PdfUploadFactory(status=FileStatus.INFECTED.name)
         request_data = {'uuid': upload.uuid, 'wanted_post_process': PostProcessingWanted.ORIGINAL.name}
         response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': upload.uuid, }),
-                                    data=request_data)
+                                    data=request_data, follow=False)
         self.assertEqual(response.status_code, 500)
 
 
