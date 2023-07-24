@@ -27,11 +27,10 @@ import uuid
 from datetime import date, datetime, timedelta
 from unittest import mock
 from unittest.mock import Mock, patch
-from pypdf import PaperSize, PageObject, PdfReader, PdfWriter
 
 from django.core.exceptions import FieldError
 from django.test import TestCase, override_settings
-from osis_document.enums import FileStatus , PageFormatEnums, PostProcessingType
+from osis_document.enums import FileStatus, PageFormatEnums, PostProcessingType
 from osis_document.exceptions import HashMismatch, FormatInvalidException, InvalidMergeFileDimension
 from osis_document.models import Upload, PostProcessing
 from osis_document.tests.factories import (
@@ -42,7 +41,9 @@ from osis_document.tests.factories import (
     BadExtensionUploadFactory,
     TextDocumentUploadFactory,
 )
-from osis_document.utils import confirm_upload, generate_filename, get_metadata, is_uuid, save_raw_upload, post_process
+from osis_document.utils import confirm_upload, generate_filename, get_metadata, is_uuid, save_raw_upload, post_process, \
+    stringify_uuid_and_check_uuid_validity
+from pypdf import PaperSize, PdfReader
 
 
 @override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
@@ -190,7 +191,8 @@ class PostProcessingTestCase(TestCase):
             uuid__in=uuid_output[PostProcessingType.CONVERT.name]["output"]['upload_objects']
         )
         self.assertTrue(
-            Upload.objects.filter(uuid__in=uuid_output[PostProcessingType.CONVERT.name]["output"]['upload_objects']).exists()
+            Upload.objects.filter(
+                uuid__in=uuid_output[PostProcessingType.CONVERT.name]["output"]['upload_objects']).exists()
         )
         self.assertTrue(
             PostProcessing.objects.filter(
@@ -216,7 +218,8 @@ class PostProcessingTestCase(TestCase):
             uuid__in=uuid_output[PostProcessingType.CONVERT.name]["output"]['upload_objects']
         )
         self.assertTrue(
-            Upload.objects.filter(uuid__in=uuid_output[PostProcessingType.CONVERT.name]["output"]['upload_objects']).exists()
+            Upload.objects.filter(
+                uuid__in=uuid_output[PostProcessingType.CONVERT.name]["output"]['upload_objects']).exists()
         )
         self.assertTrue(
             PostProcessing.objects.filter(
@@ -238,9 +241,11 @@ class PostProcessingTestCase(TestCase):
         uuid_output = post_process(
             uuid_list=uuid_list, post_process_actions=post_processing_types, post_process_params=post_process_params
         )
-        output_upload_object = Upload.objects.get(uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects'])
+        output_upload_object = Upload.objects.get(
+            uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects'])
         self.assertTrue(
-            Upload.objects.filter(uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects']).exists()
+            Upload.objects.filter(
+                uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects']).exists()
         )
         self.assertTrue(
             PostProcessing.objects.filter(
@@ -265,12 +270,15 @@ class PostProcessingTestCase(TestCase):
             post_process_actions=post_processing_types,
             post_process_params=post_process_params,
         )
-        output_upload_object = Upload.objects.get(uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects'])
+        output_upload_object = Upload.objects.get(
+            uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects'])
         self.assertTrue(
-            Upload.objects.filter(uuid__in=uuid_output[PostProcessingType.CONVERT.name]["output"]['upload_objects']).exists()
+            Upload.objects.filter(
+                uuid__in=uuid_output[PostProcessingType.CONVERT.name]["output"]['upload_objects']).exists()
         )
         self.assertTrue(
-            Upload.objects.filter(uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects']).exists()
+            Upload.objects.filter(
+                uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects']).exists()
         )
         self.assertEqual(output_upload_object.file.name, f'{output_filename}.pdf')
 
@@ -300,7 +308,7 @@ class PostProcessingTestCase(TestCase):
         post_process_params = {
             PostProcessingType.CONVERT.name: {'output_filename': 'test_convert_before_merge'},
             PostProcessingType.MERGE.name: {'pages_dimension': file_dimension,
-                                                 'output_filename': 'test_merge_after_convert'},
+                                            'output_filename': 'test_merge_after_convert'},
         }
         uuid_list = [a_pdf_file.uuid, a_doc_pdf_file.uuid, a_image_file.uuid]
 
@@ -311,12 +319,15 @@ class PostProcessingTestCase(TestCase):
         )
 
         self.assertTrue(
-            Upload.objects.filter(uuid__in=uuid_output[PostProcessingType.CONVERT.name]["output"]['upload_objects']).exists()
+            Upload.objects.filter(
+                uuid__in=uuid_output[PostProcessingType.CONVERT.name]["output"]['upload_objects']).exists()
         )
         self.assertTrue(
-            Upload.objects.filter(uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects']).exists()
+            Upload.objects.filter(
+                uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects']).exists()
         )
-        output_upload_object = Upload.objects.get(uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects'])
+        output_upload_object = Upload.objects.get(
+            uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects'])
         self.assertEqual(output_upload_object.file.name, 'test_merge_after_convert.pdf')
         pdf_reader = PdfReader(stream=output_upload_object.file.path)
         for page in pdf_reader.pages:
@@ -330,7 +341,7 @@ class PostProcessingTestCase(TestCase):
         post_process_params = {
             PostProcessingType.CONVERT.name: {'output_filename': 'test_convert_before_merge'},
             PostProcessingType.MERGE.name: {'pages_dimension': file_dimension,
-                                                 'output_filename': 'test_merge_after_convert'},
+                                            'output_filename': 'test_merge_after_convert'},
         }
         uuid_list = [a_pdf_file.uuid, a_doc_pdf_file.uuid]
 
@@ -359,3 +370,35 @@ class PostProcessingTestCase(TestCase):
         self.assertFalse(
             PostProcessing.objects.filter(input_files__in=uuid_list)
         )
+
+
+class StringifyUuidAndCheckUuidValidity(TestCase):
+    def test_valid_string_input(self):
+        input_uuid = '24f9f6cb-4cfd-4be7-8c92-6bdd66676bd2'
+        check_result = stringify_uuid_and_check_uuid_validity(input_uuid)
+        self.assertTrue(check_result.get('uuid_valid'))
+        self.assertTrue(check_result.get('uuid_stringify') == input_uuid)
+        self.assertEqual(type(check_result.get('uuid_stringify')), str)
+
+    def test_invalid_string_input(self):
+        input_uuid = '24f9f6cb-4cfd-4be7-8c92-6bdd66'
+        check_result = stringify_uuid_and_check_uuid_validity(input_uuid)
+        self.assertFalse(check_result.get('uuid_valid'))
+        self.assertEqual(check_result.get('uuid_stringify'), '')
+
+    def test_invalid_int_input(self):
+        input_uuid = 100000
+        with self.assertRaises(expected_exception=TypeError):
+            stringify_uuid_and_check_uuid_validity(input_uuid)
+
+    def test_invalid_bool_input(self):
+        input_uuid = True
+        with self.assertRaises(expected_exception=TypeError):
+            stringify_uuid_and_check_uuid_validity(input_uuid)
+
+    def test_valid_UUID_input(self):
+        input_uuid = uuid.uuid4()
+        check_result = stringify_uuid_and_check_uuid_validity(input_uuid)
+        self.assertTrue(check_result.get('uuid_valid'))
+        self.assertTrue(check_result.get('uuid_stringify') == str(input_uuid))
+        self.assertEqual(type(check_result.get('uuid_stringify')), str)
