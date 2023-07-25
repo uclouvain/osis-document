@@ -7,10 +7,10 @@
         :value="value"
         :base-url="baseUrl"
         :is-editable="false"
-        :getProgressUrl="getProgressUrl"
-        :postProcessStatus="postProcessStatus"
-        :baseUuid="baseUuid"
-        :wantedPostProcess="wantedPostProcess"
+        :get-progress-url="getProgressUrl"
+        :post-process-status="postProcessStatus"
+        :base-uuid="baseUuid"
+        :wanted-post-process="wantedPostProcess"
     />
   </ul>
 </template>
@@ -34,19 +34,19 @@ export default defineComponent({
     },
     postProcessStatus:{
       type : String,
-      required: true
+      required: true,
     },
     getProgressUrl:{
       type : String,
-      required: true
+      required: true,
     },
     baseUuid:{
       type : String,
-      required: true
+      required: true,
     },
     wantedPostProcess:{
       type : String,
-      required: true
+      required: true,
     },
   },
 });

@@ -66,7 +66,10 @@ test('mount simple visualizer', async () => {
 
 test('mount visualizer without values', async () => {
   spy.mockClear();
-  document.body.innerHTML = `<div class="osis-document-visualizer" data-base-url="/api"></div>`;
+  document.body.innerHTML = `<div class="osis-document-visualizer" data-base-url="/api" data-post-process-status="DONE"
+    data-get-progress-url="get-progress-async-post-processing/UUID"
+    data-base-uuid="UUID"
+    data-wanted-post-process="None"></div>`;
 
   // Executes main file
   await import('./main');
@@ -75,10 +78,10 @@ test('mount visualizer without values', async () => {
   expect(spy).toHaveBeenCalledWith(visualizer, {
     baseUrl: '/api',
     values: [],
-    postProcessingStatus: '',
-    getProgressUrl: '',
-    baseUuid: '',
-    wantedPostProcess: '',
+    postProcessStatus: 'DONE',
+    getProgressUrl: 'get-progress-async-post-processing/UUID',
+    baseUuid: 'UUID',
+    wantedPostProcess: 'None',
   });
 });
 

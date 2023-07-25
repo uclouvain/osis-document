@@ -38,7 +38,9 @@
             aria-valuenow="0"
             aria-valuemin="0"
             aria-valuemax="100"
-            :style="{width: `100%`}"
+            :style="{
+              width: `100%`
+            }"
         >
           <span class="sr-only">{{ $t('view_entry.loading') }}</span>
         </div>
@@ -48,14 +50,19 @@
         v-else-if="inPostProcessing"
         class="media-body"
     >
-      <div class="progress" style="text-align: center">
+      <div
+          class="progress"
+          style="text-align: center"
+      >
         <div
             class="progress-bar progress-bar-striped active"
             role="progressbar"
             aria-valuenow="0"
             aria-valuemin="0"
             aria-valuemax="100"
-            :style="{width: postProcessingProgress.toString() + `%`}"
+            :style="{
+              width: postProcessingProgress.toString() + `%`
+            }"
         >
           <span class="sr-only">{{ $t('view_entry.loading') }}</span>
         </div>
@@ -205,19 +212,19 @@ export default defineComponent({
     },
     getProgressUrl: {
       type: String,
-      required: true
+      required: true,
     },
     postProcessStatus: {
       type: String,
-      required: true
+      required: true,
     },
     baseUuid: {
       type: String,
-      required: true
+      required: true,
     },
     wantedPostProcess: {
       type: String,
-      required: true
+      required: true,
     },
   },
   emits: {
@@ -238,9 +245,8 @@ export default defineComponent({
       name: '',
       extension: '',
       saved: false,
-      intervalProgress: setInterval(() => {
-      }, 300000),
-      getRemoteTokenResponse: {token: '',} as GetRemoteTokenResponse,
+      intervalProgress: setInterval(() => undefined, 300000),
+      getRemoteTokenResponse: {token: ''} as GetRemoteTokenResponse,
     };
   },
   computed: {
@@ -279,16 +285,16 @@ export default defineComponent({
   },
   updated() {
     if (this.inPostProcessing){
-      if ((this.getProgressUrl !== "" || this.getProgressUrl != undefined) && this.postProcessingProgress !== 100){
+      if ((this.getProgressUrl !== "" || this.getProgressUrl !== undefined) && this.postProcessingProgress !== 100){
         clearInterval(this.intervalProgress);
         this.intervalProgress = setInterval(()=>{
-          this.getProgressPostProcessing()
-        }, 3000)
+          void this.getProgressPostProcessing();
+        }, 3000);
       }
-      if (this.postProcessingProgress == 100 ) {
+      if (this.postProcessingProgress === 100 ) {
         clearInterval(this.intervalProgress);
-        this.inPostProcessing = false
-        this.getFile()
+        this.inPostProcessing = false;
+        void this.getFile();
       }
     }
   },
@@ -307,7 +313,7 @@ export default defineComponent({
       }
       else {
         if (this.value === 'None'){
-          if (this.wantedPostProcess == '' || this.wantedPostProcess == undefined) {
+          if (this.wantedPostProcess === '' || this.wantedPostProcess === undefined) {
             this.getRemoteTokenResponse = await doRequest(`${this.baseUrl}read-token/${this.baseUuid}`, {
               method: 'POST',
               body: JSON.stringify({
@@ -325,7 +331,7 @@ export default defineComponent({
           }) as GetRemoteTokenResponse;
           }
         }
-        let url = (this.getRemoteTokenResponse.token !== '') ? `${this.baseUrl}metadata/${this.getRemoteTokenResponse.token}` : `${this.baseUrl}metadata/${this.value}`;
+        const url = (this.getRemoteTokenResponse.token !== '') ? `${this.baseUrl}metadata/${this.getRemoteTokenResponse.token}` : `${this.baseUrl}metadata/${this.value}`;
         try {
           this.file = await doRequest(url) as FileUpload;
           this.fullName = this.file.name;
@@ -338,9 +344,9 @@ export default defineComponent({
     getProgressPostProcessing :async function(){
       if (this.postProcessingProgress !== 100 && this.getProgressUrl !== "") {
         try {
-          let uuid = this.getProgressUrl.split('/').slice(-1)[0];
-          let url = this.baseUrl + (this.getProgressUrl.split('/').slice(3).join("/")) + '?' + 'pk=' + uuid.toString();
-          let result = await doRequest(`${url}`, {
+          const uuid = this.getProgressUrl.split('/').slice(-1)[0];
+          const url = this.baseUrl + (this.getProgressUrl.split('/').slice(3).join("/")) + '?' + 'pk=' + uuid.toString();
+          const result = await doRequest(`${url}`, {
             method: 'GET',
           }) as PostProcessingProgressResult;
           this.postProcessingProgress = result.progress;

@@ -46,14 +46,7 @@ const documentMetadata = {
   mimetype: 'application/vnd.oasis.opendocument.text',
   size: 82381,
   url: './placeholder.odt',
-  name: 'testdocument.odt',
-};
-
-const postProcessingProgress = {
-  progress: 50,
-  wanted_post_process_status: 'PENDING',
-  error: '',
-  failed: false,
+  name: 'test document.odt',
 };
 
 const getRemoteTokenResponse = {
@@ -61,7 +54,7 @@ const getRemoteTokenResponse = {
   expires_at: '2023-07-24T14:46:07.839585',
   token: 'ImU3NTFjYTFlLTJhOWYtNDA2Yi1hNDIwLTlmY2FlYTJkNTlmOCI:1qNuiR:6EpSvOF0hfZTSx1WewDsM3WlT5F-tyola0H-qijV3ZE',
   upload_id: 'e751ca1e-2a9f-406b-a420-9fcaea2d59f8',
-}
+};
 
 afterEach(() => {
   fetchMock.restore();
@@ -93,7 +86,7 @@ describe('progress of post-processing is correctly displayed', () => {
     });
     await flushPromises();
     expect(wrapper.text()).toContain('Avancement du post processing : 50 %');
-    expect(wrapper.vm.inPostProcessing).toBe(true)
+    expect(wrapper.vm.inPostProcessing).toBe(true);
   });
   it('should have hidde progress_bar of post-processing progress', async () => {
     fetchMock.post('/read-token/'+props.baseUuid.toString(), getRemoteTokenResponse);
@@ -111,12 +104,12 @@ describe('progress of post-processing is correctly displayed', () => {
       },
     });
     await flushPromises();
-    expect(wrapper.html()).not.contain('<div class="progress" style="text-align: center">')
-    expect(wrapper.html()).contain("<div>testdocument.odt</div><small><span class=\"text-nowrap\">80.45 KB</span> (application/vnd.oasis.opendocument.text)</small>")
-    expect(wrapper.vm.error).toBe('')
-    expect(wrapper.vm.inPostProcessing).toBe(false)
-    expect(wrapper.vm.loading).toBe(false)
-    expect(wrapper.vm.file).not.toBe(null)
+    expect(wrapper.html()).not.contain('<div class="progress" style="text-align: center">');
+    expect(wrapper.html()).contain("<div>testdocument.odt</div><small><span class=\"text-nowrap\">80.45 KB</span> (application/vnd.oasis.opendocument.text)</small>");
+    expect(wrapper.vm.error).toBe('');
+    expect(wrapper.vm.inPostProcessing).toBe(false);
+    expect(wrapper.vm.loading).toBe(false);
+    expect(wrapper.vm.file).not.toBe(null);
   });
 });
 
