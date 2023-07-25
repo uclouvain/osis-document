@@ -30,19 +30,38 @@ import fetchMock from 'fetch-mock';
 import {afterEach, describe, expect, it, test} from "vitest";
 import ViewingModal from "./ViewingModal.vue";
 import {nextTick} from "vue";
+import {uuid} from 'vue-uuid';
 
 const props = {
   value: 'dummytoken',
   id: '2',
   baseUrl: '/',
+  postProcessStatus: 'DONE',
+  getProgressUrl: 'get-progress-async-post-processing/UUID',
+  baseUuid: uuid.v4(),
+  wantedPostProcess: 'None',
 };
 
 const documentMetadata = {
   mimetype: 'application/vnd.oasis.opendocument.text',
   size: 82381,
   url: './placeholder.odt',
-  name: 'test document.odt',
+  name: 'testdocument.odt',
 };
+
+const postProcessingProgress = {
+  progress: 50,
+  wanted_post_process_status: 'PENDING',
+  error: '',
+  failed: false,
+};
+
+const getRemoteTokenResponse = {
+  access: 'READ',
+  expires_at: '2023-07-24T14:46:07.839585',
+  token: 'ImU3NTFjYTFlLTJhOWYtNDA2Yi1hNDIwLTlmY2FlYTJkNTlmOCI:1qNuiR:6EpSvOF0hfZTSx1WewDsM3WlT5F-tyola0H-qijV3ZE',
+  upload_id: 'e751ca1e-2a9f-406b-a420-9fcaea2d59f8',
+}
 
 afterEach(() => {
   fetchMock.restore();
@@ -51,6 +70,54 @@ afterEach(() => {
 it('should mount', () => {
   const wrapper = mount(ViewEntry, {props});
   expect(wrapper.text()).toContain('view_entry.loading');
+});
+
+describe('progress of post-processing is correctly displayed', () => {
+  it('should show progress_bar of post-processing progress', async () => {
+    const wrapper = mount(ViewEntry, {
+      props: {
+        ...props,
+        value: 'None',
+        isEditable: false,
+      },
+      data() {
+        return {
+          loading: true,
+          inPostProcessing: false,
+          postProcessingProgress: 50,
+          error: '',
+          name: '',
+          extension: '',
+        };
+      },
+    });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Avancement du post processing : 50 %');
+    expect(wrapper.vm.inPostProcessing).toBe(true)
+  });
+  it('should have hidde progress_bar of post-processing progress', async () => {
+    fetchMock.post('/read-token/'+props.baseUuid.toString(), getRemoteTokenResponse);
+    fetchMock.get('/metadata/ImU3NTFjYTFlLTJhOWYtNDA2Yi1hNDIwLTlmY2FlYTJkNTlmOCI:1qNuiR:6EpSvOF0hfZTSx1WewDsM3WlT5F-tyola0H-qijV3ZE', documentMetadata);
+    const wrapper = mount(ViewEntry, {
+      props: {
+        ...props,
+        value: 'None',
+        isEditable: false,
+      },
+      data() {
+        return {
+          postProcessingProgress: 100,
+        };
+      },
+    });
+    await flushPromises();
+    expect(wrapper.html()).not.contain('<div class="progress" style="text-align: center">')
+    expect(wrapper.html()).contain("<div>testdocument.odt</div><small><span class=\"text-nowrap\">80.45 KB</span> (application/vnd.oasis.opendocument.text)</small>")
+    expect(wrapper.vm.error).toBe('')
+    expect(wrapper.vm.inPostProcessing).toBe(false)
+    expect(wrapper.vm.loading).toBe(false)
+    expect(wrapper.vm.file).not.toBe(null)
+  });
 });
 
 describe('file is correctly displayed', () => {
@@ -89,7 +156,7 @@ describe('file is correctly displayed', () => {
     expect(wrapper.find('.btn-danger').exists()).toBe(true);
   });
 
-  it('should show error bu not deletable', async () => {
+  it('should show error but not deletable', async () => {
     fetchMock.get('/metadata/dummytoken', 404);
     const wrapper = mount(ViewEntry, {props: {...props, isEditable: false}});
     await flushPromises();

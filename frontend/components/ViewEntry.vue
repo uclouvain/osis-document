@@ -240,7 +240,7 @@ export default defineComponent({
       saved: false,
       intervalProgress: setInterval(() => {
       }, 300000),
-      token: {} as GetRemoteTokenResponse,
+      getRemoteTokenResponse: {token: '',} as GetRemoteTokenResponse,
     };
   },
   computed: {
@@ -308,7 +308,7 @@ export default defineComponent({
       else {
         if (this.value === 'None'){
           if (this.wantedPostProcess == '' || this.wantedPostProcess == undefined) {
-            this.token = await doRequest(`${this.baseUrl}read-token/${this.baseUuid}`, {
+            this.getRemoteTokenResponse = await doRequest(`${this.baseUrl}read-token/${this.baseUuid}`, {
               method: 'POST',
               body: JSON.stringify({
                 uuid: this.baseUuid,
@@ -316,7 +316,7 @@ export default defineComponent({
           }) as GetRemoteTokenResponse;
           }
           else{
-            this.token = await doRequest(`${this.baseUrl}read-token/${this.baseUuid}`,{
+            this.getRemoteTokenResponse = await doRequest(`${this.baseUrl}read-token/${this.baseUuid}`,{
               method: 'POST',
               body: JSON.stringify({
                 uuid: this.baseUuid,
@@ -325,7 +325,7 @@ export default defineComponent({
           }) as GetRemoteTokenResponse;
           }
         }
-        let url = (this.token.token !== '') ? `${this.baseUrl}metadata/${this.token.token}` : `${this.baseUrl}metadata/${this.value}`;
+        let url = (this.getRemoteTokenResponse.token !== '') ? `${this.baseUrl}metadata/${this.getRemoteTokenResponse.token}` : `${this.baseUrl}metadata/${this.value}`;
         try {
           this.file = await doRequest(url) as FileUpload;
           this.fullName = this.file.name;
