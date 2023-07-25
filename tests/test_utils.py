@@ -200,7 +200,7 @@ class PostProcessingTestCase(TestCase):
             ).exists()
         )
         self.assertTrue(output_upload_object.size > a_image.size)
-        self.assertEqual(output_upload_object.file.name, f'{output_filename}.pdf')
+        self.assertEqual(f'{output_upload_object.metadata.get("name")}.pdf', f'{output_filename}.pdf')
 
     def test_convert_text_document_with_correct_extension(self):
         a_text_document = TextDocumentUploadFactory()
@@ -227,7 +227,7 @@ class PostProcessingTestCase(TestCase):
             ).exists()
         )
         self.assertTrue(output_upload_object.size >= a_text_document.size)
-        self.assertEqual(output_upload_object.file.name, f'{output_filename}.pdf')
+        self.assertEqual(f'{output_upload_object.metadata.get("name")}.pdf', f'{output_filename}.pdf')
 
     def test_merge_with_correct_file_extensions(self):
         file1 = CorrectPDFUploadFactory()
@@ -253,8 +253,7 @@ class PostProcessingTestCase(TestCase):
             ).exists()
         )
         self.assertEqual(Upload.objects.all().__len__(), 3)
-        # self.assertTrue(file1.size + file2.size <= output_upload_object.size + (file2.size / 10))
-        self.assertEqual(output_upload_object.file.name, f'{output_filename}.pdf')
+        self.assertEqual(f'{output_upload_object.metadata.get("name")}.pdf', f'{output_filename}.pdf')
 
     def test_with_convert_and_merge(self):
         a_image = ImageUploadFactory()
@@ -280,7 +279,7 @@ class PostProcessingTestCase(TestCase):
             Upload.objects.filter(
                 uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects']).exists()
         )
-        self.assertEqual(output_upload_object.file.name, f'{output_filename}.pdf')
+        self.assertEqual(f'{output_upload_object.metadata.get("name")}.pdf', f'{output_filename}.pdf')
 
     def test_merge_with_bad_file_extensions(self):
         file1 = ImageUploadFactory()
@@ -328,7 +327,7 @@ class PostProcessingTestCase(TestCase):
         )
         output_upload_object = Upload.objects.get(
             uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects'])
-        self.assertEqual(output_upload_object.file.name, 'test_merge_after_convert.pdf')
+        self.assertEqual(f'{output_upload_object.metadata.get("name")}.pdf', 'test_merge_after_convert.pdf')
         pdf_reader = PdfReader(stream=output_upload_object.file.path)
         for page in pdf_reader.pages:
             self.assertTrue(page.mediabox.width == expected_page_width)

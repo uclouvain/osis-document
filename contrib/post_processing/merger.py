@@ -27,7 +27,6 @@ import uuid
 from pathlib import Path
 from typing import List, Dict
 from uuid import UUID
-from pypdf import PaperSize, PageObject, PdfReader, PdfWriter
 
 from django.conf import settings
 from django.db.models import Q
@@ -35,6 +34,7 @@ from osis_document.contrib.post_processing.processor import Processor
 from osis_document.enums import PostProcessingType
 from osis_document.exceptions import FormatInvalidException, MissingFileException, InvalidMergeFileDimension
 from osis_document.models import Upload
+from pypdf import PaperSize, PageObject, PdfReader, PdfWriter
 
 
 class Merger(Processor):
@@ -64,7 +64,7 @@ class Merger(Processor):
         path = Path(settings.MEDIA_ROOT) / self._get_output_filename(output_filename)
         pdf_writer.write(path)
         pdf_writer.close()
-        pdf_upload_object = self._create_upload_instance(path=path)
+        pdf_upload_object = self._create_upload_instance(path=path, filename=output_filename)
         post_processing_object = self._create_post_processing_instance(
             input_files=input_files,
             output_file=pdf_upload_object
@@ -93,8 +93,8 @@ class Merger(Processor):
 
     @staticmethod
     def _get_output_filename(output_filename: str = None):
-        if output_filename is not None:
-            return f"{output_filename}.pdf"
+        if output_filename:
+            return f"{output_filename}{uuid.uuid4()}.pdf"
         return f"merge_{uuid.uuid4()}.pdf"
 
 
