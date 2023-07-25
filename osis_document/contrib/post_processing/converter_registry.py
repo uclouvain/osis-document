@@ -23,15 +23,17 @@
 #  see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import uuid
 from os.path import splitext
 from typing import List, Optional, Dict
 from uuid import UUID
 
-from .converters.converter import Converter
 from osis_document.contrib.post_processing.processor import Processor
 from osis_document.enums import PostProcessingType
 from osis_document.exceptions import FormatInvalidException, MissingFileException
 from osis_document.models import Upload
+
+from .converters.converter import Converter
 
 
 class ConverterRegistry(Processor):
@@ -59,7 +61,7 @@ class ConverterRegistry(Processor):
                 if upload_object.mimetype in converter.get_supported_formats():
                     new_file_name = self._get_output_filename(output_filename, upload_object)
                     path = converter.convert(upload_input_object=upload_object, output_filename=new_file_name)
-                    new_instance = self._create_upload_instance(path)
+                    new_instance = self._create_upload_instance(path=path, filename=output_filename)
                     process_return['post_processing_objects'].append(
                         self._create_post_processing_instance(
                             input_files=[upload_object],
@@ -79,8 +81,8 @@ class ConverterRegistry(Processor):
     @staticmethod
     def _get_output_filename(output_filename: Optional[str], upload_input_object: Upload) -> str:
         if output_filename:
-            return output_filename + '.pdf'
-        return splitext(upload_input_object.metadata['name'])[0] + '.pdf'
+            return f'{output_filename}{uuid.uuid4()}.pdf'
+        return f'{splitext(upload_input_object.metadata["name"])[0]}{uuid.uuid4()}.pdf'
 
 
 converter_registry = ConverterRegistry()
