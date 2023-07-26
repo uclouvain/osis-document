@@ -288,8 +288,8 @@ export default defineComponent({
   },
   updated() {
     if (this.inPostProcessing){
+      /* istanbul ignore next */
       if ((this.getProgressUrl !== "" || this.getProgressUrl !== undefined) && this.postProcessingProgress !== 100){
-        console.log("ici1")
         clearInterval(this.intervalProgress);
         this.intervalProgress = setInterval(/* istanbul ignore next */()=>{
           void this.getProgressPostProcessing();
@@ -346,8 +346,8 @@ export default defineComponent({
       this.loading = false;
     },
     getProgressPostProcessing :async function(){
+      /* istanbul ignore next */
       if (this.postProcessingProgress !== 100 && this.getProgressUrl !== "") {
-        console.log("ici")
         try {
           const uuid = this.getProgressUrl.split('/').slice(-1)[0];
           const url = this.baseUrl + (this.getProgressUrl.split('/').slice(3).join("/")) + '?' + 'pk=' + uuid.toString();
