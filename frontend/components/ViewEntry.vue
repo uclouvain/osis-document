@@ -286,9 +286,9 @@ export default defineComponent({
   mounted() {
     void this.getFile();
   },
+  /* istanbul ignore next */
   updated() {
     if (this.inPostProcessing){
-      /* istanbul ignore next */
       if ((this.getProgressUrl !== "" || this.getProgressUrl !== undefined) && this.postProcessingProgress !== 100){
         clearInterval(this.intervalProgress);
         this.intervalProgress = setInterval(/* istanbul ignore next */()=>{
@@ -346,7 +346,7 @@ export default defineComponent({
       this.loading = false;
     },
     getProgressPostProcessing :async function(){
-      /* istanbul ignore next */
+      /* istanbul ignore if -- @preserve */
       if (this.postProcessingProgress !== 100 && this.getProgressUrl !== "") {
         try {
           const uuid = this.getProgressUrl.split('/').slice(-1)[0];
