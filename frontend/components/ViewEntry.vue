@@ -212,19 +212,19 @@ export default defineComponent({
     },
     getProgressUrl: {
       type: String,
-      required: true,
+      default: "",
     },
     postProcessStatus: {
       type: String,
-      required: true,
+      default: "",
     },
     baseUuid: {
       type: String,
-      required: true,
+      default: "",
     },
     wantedPostProcess: {
       type: String,
-      required: true,
+      default: "",
     },
   },
   emits: {
