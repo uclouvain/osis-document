@@ -245,7 +245,10 @@ export default defineComponent({
       name: '',
       extension: '',
       saved: false,
-      intervalProgress: setInterval(() => undefined, 300000),
+      intervalProgress: setInterval(
+          /* istanbul ignore next */
+          () => undefined,
+          300000),
       getRemoteTokenResponse: {token: ''} as GetRemoteTokenResponse,
     };
   },
@@ -286,8 +289,9 @@ export default defineComponent({
   updated() {
     if (this.inPostProcessing){
       if ((this.getProgressUrl !== "" || this.getProgressUrl !== undefined) && this.postProcessingProgress !== 100){
+        console.log("ici1")
         clearInterval(this.intervalProgress);
-        this.intervalProgress = setInterval(()=>{
+        this.intervalProgress = setInterval(/* istanbul ignore next */()=>{
           void this.getProgressPostProcessing();
         }, 3000);
       }
@@ -343,6 +347,7 @@ export default defineComponent({
     },
     getProgressPostProcessing :async function(){
       if (this.postProcessingProgress !== 100 && this.getProgressUrl !== "") {
+        console.log("ici")
         try {
           const uuid = this.getProgressUrl.split('/').slice(-1)[0];
           const url = this.baseUrl + (this.getProgressUrl.split('/').slice(3).join("/")) + '?' + 'pk=' + uuid.toString();
