@@ -73,18 +73,25 @@ it('should mount', () => {
 
 describe('progress of post-processing is correctly displayed', () => {
   it('should show progress_bar of post-processing progress', async () => {
+    fetchMock.get('http://localhost:8000/api/osis-document/get-progress-async-post-processing/UUID?wanted_post_process=MERGE', {
+      'progress': 50,
+      'wanted_post_process': 'DONE',
+    });
+    fetchMock.post('/read-token/'+props.baseUuid.toString(), getRemoteTokenResponse);
+    fetchMock.get('/metadata/ImU3NTFjYTFlLTJhOWYtNDA2Yi1hNDIwLTlmY2FlYTJkNTlmOCI:1qNuiR:6EpSvOF0hfZTSx1WewDsM3WlT5F-tyola0H-qijV3ZE', documentMetadata);
     const wrapper = mount(ViewEntry, {
       props: {
         ...props,
         value: '',
         isEditable: false,
         wantedPostProcess: 'MERGE',
+        baseUrl: '/',
       },
       data() {
         return {
           loading: true,
           inPostProcessing: false,
-          postProcessingProgress: 50,
+          postProcessingProgress: 0,
           error: '',
           name: '',
           extension: '',
@@ -92,12 +99,13 @@ describe('progress of post-processing is correctly displayed', () => {
       },
     });
     await flushPromises();
+    expect(wrapper.vm.loading).toBe(false);
     expect(wrapper.text()).toContain('Avancement du post processing : 50 %');
     expect(wrapper.vm.inPostProcessing).toBe(true);
   });
 
   it('should make get_progress request without wanted_post_process', async () => {
-    fetchMock.get('/api/osis-document/get-progress-async-post-processing/UUID?pk=UUID', getProgressResponse);
+    fetchMock.get('http://localhost:8000/api/osis-document/get-progress-async-post-processing/UUID', getProgressResponse);
     fetchMock.post('/read-token/'+props.baseUuid.toString(), getRemoteTokenResponse);
     fetchMock.get('/metadata/ImU3NTFjYTFlLTJhOWYtNDA2Yi1hNDIwLTlmY2FlYTJkNTlmOCI:1qNuiR:6EpSvOF0hfZTSx1WewDsM3WlT5F-tyola0H-qijV3ZE', documentMetadata);
     const wrapper = mount(ViewEntry, {
@@ -125,7 +133,7 @@ describe('progress of post-processing is correctly displayed', () => {
   });
 
   it('should make get_progress request with wanted_post_process for DONE post_process', async () => {
-    fetchMock.get('/api/osis-document/get-progress-async-post-processing/UUID?pk=UUID', {
+    fetchMock.get('http://localhost:8000/api/osis-document/get-progress-async-post-processing/UUID?wanted_post_process=MERGE', {
       'progress': 100,
       'wanted_post_process': 'DONE',
     });

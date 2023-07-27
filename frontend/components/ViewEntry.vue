@@ -317,23 +317,19 @@ export default defineComponent({
       }
       else {
         if (this.value === ''){
-          if (this.wantedPostProcess === '' || this.wantedPostProcess === undefined) {
-            this.getRemoteTokenResponse = await doRequest(`${this.baseUrl}read-token/${this.baseUuid}`, {
-              method: 'POST',
-              body: JSON.stringify({
+          let body = JSON.stringify({
                 uuid: this.baseUuid,
-              }),
-          }) as GetRemoteTokenResponse;
-          }
-          else{
-            this.getRemoteTokenResponse = await doRequest(`${this.baseUrl}read-token/${this.baseUuid}`,{
-              method: 'POST',
-              body: JSON.stringify({
+              });
+          if (this.wantedPostProcess === '' || this.wantedPostProcess === undefined) {
+            body = JSON.stringify({
                 uuid: this.baseUuid,
                 wanted_post_process: this.wantedPostProcess,
-              }),
-          }) as GetRemoteTokenResponse;
+              });
           }
+          this.getRemoteTokenResponse = await doRequest(`${this.baseUrl}read-token/${this.baseUuid}`,{
+            method: 'POST',
+            body: body,
+          }) as GetRemoteTokenResponse;
         }
         const url = (this.getRemoteTokenResponse.token !== '') ? `${this.baseUrl}metadata/${this.getRemoteTokenResponse.token}` : `${this.baseUrl}metadata/${this.value}`;
         try {
@@ -344,13 +340,19 @@ export default defineComponent({
         }
       }
       this.loading = false;
+      console.log('loading est false');
     },
     getProgressPostProcessing :async function(){
       /* istanbul ignore if -- @preserve */
       if (this.postProcessingProgress !== 100 && this.getProgressUrl !== "") {
         try {
-          const uuid = this.getProgressUrl.split('/').slice(-1)[0];
-          const url = this.baseUrl + (this.getProgressUrl.split('/').slice(3).join("/")) + '?' + 'pk=' + uuid.toString();
+          let url = '';
+          if (this.wantedPostProcess){
+            url = this.getProgressUrl + '?' + 'wanted_post_process=' + this.wantedPostProcess;
+          }
+          else {
+            url = this.getProgressUrl;
+          }
           const result = await doRequest(`${url}`, {
             method: 'GET',
           }) as PostProcessingProgressResult;

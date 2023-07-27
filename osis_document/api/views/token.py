@@ -26,6 +26,7 @@
 from datetime import timedelta
 from typing import Dict, List, Optional, Union
 
+from django.conf import settings
 from django.db.models import Prefetch, QuerySet
 from django.urls import reverse
 from django.utils.timezone import now
@@ -162,11 +163,12 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
             PostProcessingStatus.FAILED.name
         ]:
             results["status"] = post_processing_async_object.status
-            results['links'] = {
-                'progress': reverse(
+            url = reverse(
                     'osis_document:get-progress-post-processing',
                     kwargs={'pk': post_processing_async_object.uuid}
-                )
+                ).split('/')[3:]
+            results['links'] = {
+                'progress': f'{settings.OSIS_DOCUMENT_BASE_URL}{"/".join(url)}',
             }
             for action in post_processing_async_object.data['post_process_actions']:
                 if post_processing_async_object.status == PostProcessingStatus.FAILED.name and "errors" in \

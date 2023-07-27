@@ -78,7 +78,7 @@ class GetProgressAsyncPostProcessingView(APIView):
     def get(self, *args, **kwargs):
         try:
             input_serializer_data = serializers.ProgressAsyncPostProcessingSerializer(
-                data=self.request.query_params,
+                data={'pk': self.kwargs.get('pk'), },
             )
 
             if input_serializer_data.is_valid(raise_exception=True):
