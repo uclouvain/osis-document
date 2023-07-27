@@ -114,13 +114,45 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
             post_processing_controller_qs = PostProcessingController.objects.filter(
                 data__base_input__contains=request.data.get('uuid') or request.data.get('uuids')
             )
-
             if post_processing_controller_qs.exists():
-                results = self.check_post_processing_async(
-                    post_processing_controller_qs=post_processing_controller_qs,
-                    upload=upload,
-                    wanted_post_process=wanted_post_process
+                results = {}
+                post_processing_controller_object = post_processing_controller_qs.get()
+                last_post_process = post_processing_controller_object.data['post_process_actions'][-1]
+                post_process_results = post_processing_controller_object.results[
+                    wanted_post_process or last_post_process]
+
+                some_post_process_done = post_processing_controller_object.status == PostProcessingStatus.DONE.name or (
+                        wanted_post_process and post_process_results['status'] == PostProcessingStatus.DONE.name
                 )
+                if some_post_process_done:
+                    wanted_upload_id = self.get_output_upload_uuid_from_post_processing_controller_result
+                    if wanted_upload_id:
+                        results = {
+                            'data': {
+                                'upload_id': wanted_upload_id(
+                                    upload=upload,
+                                    async_result=post_process_results
+                                ),
+                                'access': self.token_access},
+                            'status': PostProcessingStatus.DONE.name
+                        }
+
+                elif post_processing_controller_object.status in [
+                    PostProcessingStatus.PENDING.name,
+                    PostProcessingStatus.FAILED.name
+                ]:
+                    results["status"] = post_processing_controller_object.status
+                    results["links"] = reverse(
+                        'osis_document:get-progress-post-processing',
+                        kwargs={'pk': post_processing_controller_object.uuid}
+                    )
+                    for action in post_processing_controller_object.data['post_process_actions']:
+                        if post_processing_controller_object.status == PostProcessingStatus.FAILED.name and "errors" in \
+                                post_processing_controller_object.results[action]:
+                            results['errors'] = post_processing_controller_object.results[action]["errors"]
+                        results[action] = {
+                            'status': post_processing_controller_object.results[action]['status']
+                        }
         return results
 
     def check_post_processing_async(
@@ -131,45 +163,7 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
     ) -> Optional[Dict[str, Union[str, Dict[str, str]]]]:
         """Given an Upload object and a type of post-processing and a QuerySet of PostProcessingController,
         returns a dictionary whose content depends on its state."""
-        results = {}
-        post_processing_controller_object = post_processing_controller_qs.get()
-        last_post_process = post_processing_controller_object.data['post_process_actions'][-1]
-        post_process_results = post_processing_controller_object.results[
-            wanted_post_process or last_post_process]
 
-        some_post_process_done = post_processing_controller_object.status == PostProcessingStatus.DONE.name or (
-                wanted_post_process and post_process_results['status'] == PostProcessingStatus.DONE.name
-        )
-        if some_post_process_done:
-            wanted_upload_id = self.get_output_upload_uuid_from_post_processing_controller_result
-            if wanted_upload_id:
-                results = {
-                    'data': {
-                        'upload_id': wanted_upload_id(
-                            upload=upload,
-                            async_result=post_process_results
-                        ),
-                        'access': self.token_access},
-                    'status': PostProcessingStatus.DONE.name
-                }
-
-        elif post_processing_controller_object.status in [
-            PostProcessingStatus.PENDING.name,
-            PostProcessingStatus.FAILED.name
-        ]:
-            results["status"] = post_processing_controller_object.status
-            results["links"] = reverse(
-                'osis_document:get-progress-post-processing',
-                kwargs={'pk': post_processing_controller_object.uuid}
-            )
-            for action in post_processing_controller_object.data['post_process_actions']:
-                if post_processing_controller_object.status == PostProcessingStatus.FAILED.name and "errors" in \
-                        post_processing_controller_object.results[action]:
-                    results['errors'] = post_processing_controller_object.results[action]["errors"]
-                results[action] = {
-                    'status': post_processing_controller_object.results[action]['status']
-                }
-        return results
 
     @staticmethod
     def get_output_upload_uuid_from_post_processing_controller_result(

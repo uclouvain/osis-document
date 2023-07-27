@@ -5,7 +5,8 @@ skinparam dpi 300
 start
 :get_remote_tokens(
     [uuids],
-    type_post_processing
+    wanted_post_process,
+    custom_ttl
 );
 
 
@@ -39,17 +40,7 @@ endif
                 if (l'upload possède un post-processing ?) then(False)
                 :Initialise un dictionnaire vide nomé Results;
                 else (True)
-                    if (Le post-processing est il de type asynchrone?) then(False)
-                        if (l'args wanted_post_process existe-il ?) then(True)
-                        :Ajout du fichier d'output du post-process spécifé par
-                        l'args wanted_post_process au dictionnaire results;
-                        else (False)
-                        :Ajout du fichier d'output du dernier post-process
-                                    trouvé au dictionnaire results;
-                        endif
-
-                    else (True)
-                        if (Le status du post-processing ou du post-process spécifé par
+                        if (Le status du postProcessingController ou du post-process spécifé par
            l'args wanted_post_process est-il égual à DONE ?) then(True)
                         :Récupération de l'uuid du fichier résultant du post-processing
                         ou du post-process spécifé par l'args wanted_post_process
@@ -67,7 +58,6 @@ endif
                             endwhile
                         endif
                     endif
-                endif
                 :Retourne le dictionnaire Results;
             }
 
