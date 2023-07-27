@@ -47,7 +47,7 @@ test('mount simple visualizer', async () => {
     data-post-process-status="DONE"
     data-get-progress-url="get-progress-async-post-processing/UUID"
     data-base-uuid="UUID"
-    data-wanted-post-process="None"
+    data-wanted-post-process=""
   ></div>`;
 
   // Executes main file
@@ -60,7 +60,7 @@ test('mount simple visualizer', async () => {
     postProcessStatus: 'DONE',
     getProgressUrl: 'get-progress-async-post-processing/UUID',
     baseUuid: 'UUID',
-    wantedPostProcess: 'None',
+    wantedPostProcess: '',
   });
 });
 

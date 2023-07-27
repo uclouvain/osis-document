@@ -58,7 +58,7 @@ const getRemoteTokenResponse = {
 
 const getProgressResponse= {
   'progress': 100,
-  'wanted_post_process': 'DONE'
+  'wanted_post_process': 'DONE',
 };
 
 afterEach(() => {
@@ -97,7 +97,7 @@ describe('progress of post-processing is correctly displayed', () => {
   });
 
   it('should make get_progress request without wanted_post_process', async () => {
-    fetchMock.get('/api/osis-document/get-progress-async-post-processing/UUID?pk=UUID', getProgressResponse)
+    fetchMock.get('/api/osis-document/get-progress-async-post-processing/UUID?pk=UUID', getProgressResponse);
     fetchMock.post('/read-token/'+props.baseUuid.toString(), getRemoteTokenResponse);
     fetchMock.get('/metadata/ImU3NTFjYTFlLTJhOWYtNDA2Yi1hNDIwLTlmY2FlYTJkNTlmOCI:1qNuiR:6EpSvOF0hfZTSx1WewDsM3WlT5F-tyola0H-qijV3ZE', documentMetadata);
     const wrapper = mount(ViewEntry, {
@@ -127,8 +127,8 @@ describe('progress of post-processing is correctly displayed', () => {
   it('should make get_progress request with wanted_post_process for DONE post_process', async () => {
     fetchMock.get('/api/osis-document/get-progress-async-post-processing/UUID?pk=UUID', {
       'progress': 100,
-      'wanted_post_process': 'DONE'
-    })
+      'wanted_post_process': 'DONE',
+    });
     fetchMock.post('/read-token/'+props.baseUuid.toString(), getRemoteTokenResponse);
     fetchMock.get('/metadata/ImU3NTFjYTFlLTJhOWYtNDA2Yi1hNDIwLTlmY2FlYTJkNTlmOCI:1qNuiR:6EpSvOF0hfZTSx1WewDsM3WlT5F-tyola0H-qijV3ZE', documentMetadata);
     const wrapper = mount(ViewEntry, {
@@ -137,7 +137,7 @@ describe('progress of post-processing is correctly displayed', () => {
         value: '',
         isEditable: false,
         baseUrl: '/',
-        wantedPostProcess: 'MERGE'
+        wantedPostProcess: 'MERGE',
       },
       data() {
         return {
@@ -158,15 +158,15 @@ describe('progress of post-processing is correctly displayed', () => {
   it('should make get_progress request with wanted_post_process for PENDING post_process', async () => {
     fetchMock.get('/api/osis-document/get-progress-async-post-processing/UUID?pk=UUID', {
       'progress': 50,
-      'wanted_post_process': 'PENDING'
-    })
+      'wanted_post_process': 'PENDING',
+    });
    const wrapper = mount(ViewEntry, {
       props: {
         ...props,
         value: '',
         isEditable: false,
         baseUrl: '/',
-        wantedPostProcess: 'MERGE'
+        wantedPostProcess: 'MERGE',
       },
       data() {
         return {
@@ -184,7 +184,7 @@ describe('progress of post-processing is correctly displayed', () => {
     expect(wrapper.vm.inPostProcessing).toBe(true);
   });
   it('should have hidde progress_bar of post-processing progress', async () => {
-    fetchMock.get('/get-progress-async-post-processing/UUID', getProgressResponse)
+    fetchMock.get('/get-progress-async-post-processing/UUID', getProgressResponse);
     fetchMock.post('/read-token/'+props.baseUuid.toString(), getRemoteTokenResponse);
     fetchMock.get('/metadata/ImU3NTFjYTFlLTJhOWYtNDA2Yi1hNDIwLTlmY2FlYTJkNTlmOCI:1qNuiR:6EpSvOF0hfZTSx1WewDsM3WlT5F-tyola0H-qijV3ZE', documentMetadata);
     const wrapper = mount(ViewEntry, {
