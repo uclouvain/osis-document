@@ -25,15 +25,14 @@
 # ##############################################################################
 import string
 from pathlib import Path
-from typing import List, Set, Dict
+from typing import List, Dict
 from uuid import UUID
 
 import factory
 from django.core.files import File
 from factory.fuzzy import FuzzyText
-
 from osis_document.enums import TokenAccess, PostProcessingStatus, PostProcessingType
-from osis_document.models import Token, Upload, PostProcessAsync, PostProcessing
+from osis_document.models import Token, Upload, PostProcessingController, PostProcessing
 from osis_document.utils import calculate_hash
 
 
@@ -130,7 +129,7 @@ class ConvertPostProcessingFactory(BasePostProcessingFactory):
 
 class BasePostProcessingAsyncFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = PostProcessAsync
+        model = PostProcessingController
 
 
 class PendingPostProcessingAsyncFactory:

@@ -28,12 +28,11 @@ from unittest import mock
 
 from django.test import TestCase, override_settings
 from django.utils.datetime_safe import datetime
-
 from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType
-from osis_document.models import Token, Upload, PostProcessAsync
-from osis_document.tasks import cleanup_old_uploads, make_pending_async_post_processing
-from osis_document.tests.factories import WriteTokenFactory, PdfUploadFactory, PdfUploadFactory, \
-    CorrectPDFUploadFactory, TextDocumentUploadFactory, ImageUploadFactory, PendingPostProcessingAsyncFactory, \
+from osis_document.models import Token, Upload, PostProcessingController
+from osis_document.tasks import cleanup_old_uploads, make_all_pending_async_post_processing
+from osis_document.tests.factories import WriteTokenFactory, PdfUploadFactory, \
+    TextDocumentUploadFactory, ImageUploadFactory, PendingPostProcessingAsyncFactory, \
     DonePostProcessingAsyncFactory, FailedPostProcessingAsyncFactory
 
 
@@ -105,13 +104,13 @@ class MakePendingAsyncPostProcessTaskTestCase(TestCase):
             result=result_dict
         )
         self.client.raise_request_exception = False
-        self.assertEqual(len(PostProcessAsync.objects.all()), 3)
-        self.assertEqual(len(PostProcessAsync.objects.filter(status=PostProcessingStatus.PENDING.name)), 1)
-        self.assertEqual(len(PostProcessAsync.objects.filter(status=PostProcessingStatus.FAILED.name)), 1)
-        make_pending_async_post_processing()
+        self.assertEqual(len(PostProcessingController.objects.all()), 3)
+        self.assertEqual(len(PostProcessingController.objects.filter(status=PostProcessingStatus.PENDING.name)), 1)
+        self.assertEqual(len(PostProcessingController.objects.filter(status=PostProcessingStatus.FAILED.name)), 1)
+        make_all_pending_async_post_processing()
         pending_post_process.refresh_from_db()
-        self.assertEqual(len(PostProcessAsync.objects.filter(status=PostProcessingStatus.PENDING.name)), 0)
-        self.assertEqual(len(PostProcessAsync.objects.filter(status=PostProcessingStatus.FAILED.name)), 2)
+        self.assertEqual(len(PostProcessingController.objects.filter(status=PostProcessingStatus.PENDING.name)), 0)
+        self.assertEqual(len(PostProcessingController.objects.filter(status=PostProcessingStatus.FAILED.name)), 2)
         self.assertEqual(pending_post_process.status, PostProcessingStatus.FAILED.name)
         self.assertEqual(pending_post_process.results['CONVERT']['status'], PostProcessingStatus.FAILED.name)
         self.assertEqual(pending_post_process.results['MERGE']['status'], PostProcessingStatus.PENDING.name)
@@ -133,13 +132,13 @@ class MakePendingAsyncPostProcessTaskTestCase(TestCase):
             result=result_dict
         )
         self.client.raise_request_exception = False
-        self.assertEqual(len(PostProcessAsync.objects.all()), 3)
-        self.assertEqual(len(PostProcessAsync.objects.filter(status=PostProcessingStatus.PENDING.name)), 1)
-        self.assertEqual(len(PostProcessAsync.objects.filter(status=PostProcessingStatus.FAILED.name)), 1)
-        make_pending_async_post_processing()
+        self.assertEqual(len(PostProcessingController.objects.all()), 3)
+        self.assertEqual(len(PostProcessingController.objects.filter(status=PostProcessingStatus.PENDING.name)), 1)
+        self.assertEqual(len(PostProcessingController.objects.filter(status=PostProcessingStatus.FAILED.name)), 1)
+        make_all_pending_async_post_processing()
         pending_post_process.refresh_from_db()
-        self.assertEqual(len(PostProcessAsync.objects.filter(status=PostProcessingStatus.PENDING.name)), 0)
-        self.assertEqual(len(PostProcessAsync.objects.filter(status=PostProcessingStatus.FAILED.name)), 2)
+        self.assertEqual(len(PostProcessingController.objects.filter(status=PostProcessingStatus.PENDING.name)), 0)
+        self.assertEqual(len(PostProcessingController.objects.filter(status=PostProcessingStatus.FAILED.name)), 2)
         self.assertEqual(pending_post_process.status, PostProcessingStatus.FAILED.name)
         self.assertEqual(pending_post_process.results['CONVERT']['status'], PostProcessingStatus.DONE.name)
         self.assertEqual(pending_post_process.results["bad_post_process_name"]['status'], PostProcessingStatus.FAILED.name)
@@ -156,12 +155,12 @@ class MakePendingAsyncPostProcessTaskTestCase(TestCase):
             action_params=self.action_param_dict,
             result=result_dict
         )
-        self.assertEqual(len(PostProcessAsync.objects.all()), 3)
-        self.assertEqual(len(PostProcessAsync.objects.filter(status=PostProcessingStatus.PENDING.name)), 1)
-        make_pending_async_post_processing()
+        self.assertEqual(len(PostProcessingController.objects.all()), 3)
+        self.assertEqual(len(PostProcessingController.objects.filter(status=PostProcessingStatus.PENDING.name)), 1)
+        make_all_pending_async_post_processing()
         pending_post_process.refresh_from_db()
-        self.assertEqual(len(PostProcessAsync.objects.filter(status=PostProcessingStatus.PENDING.name)), 0)
-        self.assertEqual(len(PostProcessAsync.objects.filter(status=PostProcessingStatus.DONE.name)), 2)
+        self.assertEqual(len(PostProcessingController.objects.filter(status=PostProcessingStatus.PENDING.name)), 0)
+        self.assertEqual(len(PostProcessingController.objects.filter(status=PostProcessingStatus.DONE.name)), 2)
         self.assertEqual(pending_post_process.status, PostProcessingStatus.DONE.name)
         for action in self.action_list:
             self.assertEqual(pending_post_process.results[action]['status'], PostProcessingStatus.DONE.name)

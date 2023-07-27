@@ -65,3 +65,7 @@ class InvalidPostProcessorAction(APIException):
 
 class InvalidMergeFileDimension(APIException):
     default_detail = _("Invalid dimension params given for merge action")
+
+
+class PostProcessingNotPending(APIException):
+    default_detail = _("This post-processing does not have status pending ")

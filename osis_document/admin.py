@@ -28,7 +28,7 @@ from django.template.defaultfilters import filesizeformat
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from osis_document.models import Token, Upload, PostProcessing, PostProcessAsync
+from osis_document.models import Token, Upload, PostProcessing, PostProcessingController
 
 
 class UploadAdmin(admin.ModelAdmin):
@@ -83,7 +83,7 @@ class PostProcessingAdmin(admin.ModelAdmin):
     ]
 
 
-class PostProcessAsyncAdmin(admin.ModelAdmin):
+class PostProcessingControllerAdmin(admin.ModelAdmin):
     list_display = [
         'uuid',
         'status',
@@ -95,4 +95,4 @@ class PostProcessAsyncAdmin(admin.ModelAdmin):
 admin.site.register(Upload, UploadAdmin)
 admin.site.register(Token, TokenAdmin)
 admin.site.register(PostProcessing, PostProcessingAdmin)
-admin.site.register(PostProcessAsync, PostProcessAsyncAdmin)
+admin.site.register(PostProcessingController, PostProcessingControllerAdmin)

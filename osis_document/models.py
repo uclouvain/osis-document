@@ -27,8 +27,8 @@ import uuid
 from datetime import timedelta
 
 from django.conf import settings
-from django.core.validators import FileExtensionValidator
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models.functions import Now
 from django.utils.translation import gettext_lazy as _
@@ -177,7 +177,7 @@ class PostProcessing(models.Model):
         blank=False)
 
 
-class PostProcessAsync(models.Model):
+class PostProcessingController(models.Model):
     uuid = models.UUIDField(
         verbose_name=_("UUID"),
         primary_key=True,
