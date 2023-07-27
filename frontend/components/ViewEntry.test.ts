@@ -76,7 +76,7 @@ describe('progress of post-processing is correctly displayed', () => {
     const wrapper = mount(ViewEntry, {
       props: {
         ...props,
-        value: 'None',
+        value: '',
         isEditable: false,
         wantedPostProcess: 'MERGE',
       },
@@ -103,7 +103,7 @@ describe('progress of post-processing is correctly displayed', () => {
     const wrapper = mount(ViewEntry, {
       props: {
         ...props,
-        value: 'None',
+        value: '',
         isEditable: false,
         baseUrl: '/',
       },
@@ -134,7 +134,7 @@ describe('progress of post-processing is correctly displayed', () => {
     const wrapper = mount(ViewEntry, {
       props: {
         ...props,
-        value: 'None',
+        value: '',
         isEditable: false,
         baseUrl: '/',
         wantedPostProcess: 'MERGE'
@@ -163,7 +163,7 @@ describe('progress of post-processing is correctly displayed', () => {
    const wrapper = mount(ViewEntry, {
       props: {
         ...props,
-        value: 'None',
+        value: '',
         isEditable: false,
         baseUrl: '/',
         wantedPostProcess: 'MERGE'
@@ -190,7 +190,7 @@ describe('progress of post-processing is correctly displayed', () => {
     const wrapper = mount(ViewEntry, {
       props: {
         ...props,
-        value: 'None',
+        value: '',
         isEditable: false,
       },
       data() {

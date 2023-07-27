@@ -311,12 +311,12 @@ export default defineComponent({
       if (this.value === 'FileInfectedException') {
         this.error = this.$t('view_entry.file_infected');
       }
-      else if (this.value === 'None' && this.postProcessingProgress !== 100){
+      else if (this.value === '' && this.postProcessingProgress !== 100){
         this.inPostProcessing = true;
         await this.getProgressPostProcessing();
       }
       else {
-        if (this.value === 'None'){
+        if (this.value === ''){
           if (this.wantedPostProcess === '' || this.wantedPostProcess === undefined) {
             this.getRemoteTokenResponse = await doRequest(`${this.baseUrl}read-token/${this.baseUuid}`, {
               method: 'POST',

@@ -43,7 +43,7 @@ def document_visualizer(values, wanted_post_process=None):
         token = get_remote_token(value, wanted_post_process=wanted_post_process)
         if isinstance(token, dict):
             return {
-                'values': None,
+                'values': '',
                 'base_uuid': str(value),
                 'wanted_post_process': wanted_post_process,
                 'post_process_status': token.get('status'),
