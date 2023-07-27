@@ -138,8 +138,18 @@ In addition, if the `upload_to` property is a function based on some instance at
 
 ## Rendering an uploaded file in a template
 
-To work with uploaded files in templates :
+To render files in a template, there are two possibilities :
 
+### Using VueJS
+
+```html
+{% load osis_document %}
+<div>
+  {% document_visualizer values=[files_uuid, ...] %}
+</div>
+```
+
+### Without using VueJS
 ```html
 {% load osis_document %}
 <ul>
@@ -216,7 +226,7 @@ This optional parameter only accepts numbers and corresponds to the duration in 
 
 ## Post-processing files
 
-To perform post-processing actions manually on files, use the utility function
+<strong> To manually post-process files from within the osis_document module </strong> , use the utility function
 `post_process`. This function allows you to convert files, merge files,
 or do both at the same time.
 
@@ -224,6 +234,8 @@ To do this, set the `post_process_type` parameter with the appropriate
 values from the `PostProcessingType` enumeration and provide the uuids of
 the files.
 
+<strong> If you want to use post-processing from a module other than Osis_document, you must use the API </strong> 
+(cf : Using API for post-processing)
 
 ```python
 from osis_document.utils import post_process
@@ -319,15 +331,25 @@ The parameters available for post-processing are :
   - `output_filename` The name of the output file
 
 ### Synchronous post-processing
-![sync post-processing sequence diagram](osis_document/docs/img/post_processing_sync_sequence.png)
+![sync post-processing sequence diagram](osis_document/docs/Django/img/post_processing_sync_sequence.png)
 
+To configure a synchronous post-processing, you must set `async_post_processing` to `False` in the model's FileField.
+
+Directly after form submission, the 'make_one_pending_post_processing' task is executed to perform synchronous post-processing
+
+One `PostProcessing` instance is created when a post-process action is completed (conversion of 2 file + merge = 3 `PostProcessing` instance)  
+
+During the synchronous process, the `PostProcessingController` instance is updated to keep the inputs/outputs of each post-processing actions.
+
+If an error occurs during the execution of an synchronous post-processing, the `results` field of `PostProcessingController`  is updated with the data relating to this error.
+The results dictionary will have the following format :
 
 ### Asynchronous post-processing
-![async post-processing sequence diagram](osis_document/docs/img/post_processing_async_sequence.png)
-![make_pending_post_processing_task sequence diagram](osis_document/docs/img/make_pending_post_processing_task_sequence.png)
+![async post-processing sequence diagram](osis_document/docs/Django/img/post_processing_async_sequence.png)
+![make_pending_post_processing_task sequence diagram](osis_document/docs/Django/img/make_pending_post_processing_task_sequence.png)
 To configure an asynchronous post-processing, you must set `async_post_processing` to `True` in the model's FileField.
 
-When form is submit, an instance of the `PostProcessAsync` model was created with status `PENDING`.
+When form is submit, an instance of the `PostProcessingController` model was created with status `PENDING`.
 This instance contains all the parameters necessary for the execution of the post-processing and stores the bases inputs. 
 
 No `PostProcessing` instance is created until the execution of the asynchronous post-processing is launched.
@@ -336,9 +358,9 @@ One `PostProcessing` instance is created when a post-process action is completed
 
 A celery task is configured to periodically run asynchronous post-processing with status `PENDING`.
 
-During the asynchronous process, the `PostProcessAsync` instance is updated to keep the inputs/outputs of each post-processing actions.
+During the asynchronous process, the `PostProcessingController` instance is updated to keep the inputs/outputs of each post-processing actions.
 
-If an error occurs during the execution of an asynchronous post-processing, the `results` field of `PostProcessAsync`  is updated with the data relating to this error.
+If an error occurs during the execution of an asynchronous post-processing, the `results` field of `PostProcessingController`  is updated with the data relating to this error.
 The results dictionary will have the following format :
 
 ```python
@@ -360,6 +382,32 @@ results_exemple = {
     }
 }
 ```
+
+### Using API for post-processing
+
+To use the post-processing mechanism from outside the Osis_document module, you need to use the following method: 
+
+```python
+launch_post_processing(
+    uuid_list: [UUID, UUID, ...],
+    async_post_processing: True / False ,
+    post_processing_types: [PostProcessingType.ACTION_NAME.name, ... ],
+    post_process_params: {
+        PostProcessingType.ACTION_NAME.name: {
+            'params_name': 'value',
+            'params_name': 'value',
+            ...,
+        }, ...
+    }
+)
+```
+This method initiates the execution of the synchronous or asynchronous post-processing API call. 
+
+If the post-processing is synchronous, the return of this method is the same dictionary as the return of the post_process method (see section Post-processing files), and if it is an asynchronous post-processing the return is a status_code meaning that the request has been carried out without errors.
+
+Post_processing_types values and post_process_params dictionary keys must come from the PostProcessingType enumeration.
+
+
 ### Get token of a post-processed file
 To get the token of one post-processed file, you must use the function `get_remote_token`, or use the function `get_remote_tokens` if you want the token of many files.
 
@@ -372,7 +420,7 @@ from osis_document.api.utils import get_remote_token
 get_remote_token(uuid='UUID', write_token=False, wanted_post_process=None)
 ```
 
-![get_remote_token activity diagram](osis_document/docs/img/get_remote_token.png)
+![get_remote_token activity diagram](osis_document/docs/Django/img/get_remote_token.png)
 
 If the post-process status is `DONE` or if the post-processing done is synchronous, there can be 3 possibilities:
 - If `wanted_post_process` == `None` -> Return a token for the output file of the last post_processing's action.
@@ -398,7 +446,7 @@ from osis_document.api.utils import get_remote_tokens
 get_remote_tokens(uuids=['UUID', ...], wanted_post_process=None)
 ```
 
-![get_remote_tokens activity diagram](osis_document/docs/img/get_remote_tokens.png)
+![get_remote_tokens activity diagram](osis_document/docs/Django/img/get_remote_tokens.png)
 
 The returns are of the same type as for the get_remote_token function except that the function will return a list of tokens instead of a single token
 
