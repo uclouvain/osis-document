@@ -40,8 +40,6 @@ class QueriesAssertionsMixin:
             msg = "\r\n%s" % json.dumps(context.captured_queries, indent=4)
         else:
             msg = None
-        for query in context.captured_queries:
-            print(query)
         self.assertLess(len(context.captured_queries), value, msg=msg)
 
     @contextmanager

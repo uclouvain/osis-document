@@ -33,6 +33,7 @@ from django.test import TestCase, override_settings
 from osis_document.enums import FileStatus, PageFormatEnums, PostProcessingType
 from osis_document.exceptions import HashMismatch, FormatInvalidException, InvalidMergeFileDimension
 from osis_document.models import Upload, PostProcessing
+from osis_document.tests import QueriesAssertionsMixin
 from osis_document.tests.factories import (
     PdfUploadFactory,
     WriteTokenFactory,
@@ -175,7 +176,7 @@ class ConfirmUploadTestCase(TestCase):
             confirm_upload(token.token, upload_to='path/')
 
 
-class PostProcessingTestCase(TestCase):
+class PostProcessingTestCase(QueriesAssertionsMixin, TestCase):
     def test_convert_img_with_correct_extension(self):
         a_image = ImageUploadFactory()
         post_processing_types = [PostProcessingType.CONVERT.name]

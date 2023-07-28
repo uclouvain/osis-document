@@ -529,8 +529,8 @@ class GetTokenViewWithPostProcessingControllerTestCase(QueriesAssertionsMixin, A
             result=result_dict
         )
 
-        request_data = {'uuid': self.text.uuid, 'wanted_post_process': PostProcessingType.CONVERT.name}
-        with self.assertNumQueriesLessThan(6):
+        request_data = {'wanted_post_process': PostProcessingType.CONVERT.name}
+        with self.assertNumQueriesLessThan(9):
             response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': self.text.uuid, }),
                                         data=request_data, follow=False)
         self.assertEqual(response.status_code, 201)
@@ -538,7 +538,7 @@ class GetTokenViewWithPostProcessingControllerTestCase(QueriesAssertionsMixin, A
         self.assertIsNotNone(response.data.get('token'))
 
         self.client.raise_request_exception = False
-        request_data = {'uuid': self.base_input_object[0], 'wanted_post_process': PostProcessingType.MERGE.name}
+        request_data = {'wanted_post_process': PostProcessingType.MERGE.name}
         with self.assertNumQueriesLessThan(6):
             response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': self.text.uuid, }),
                                         data=request_data, follow=False)
@@ -546,7 +546,7 @@ class GetTokenViewWithPostProcessingControllerTestCase(QueriesAssertionsMixin, A
         self.assertEqual(response.data['upload_id'], str(merge_output.uuid))
         self.assertIsNotNone(response.data.get('token'))
 
-        request_data = {'uuid': self.base_input_object[0], 'wanted_post_process': None}
+        request_data = {'wanted_post_process': None}
         with self.assertNumQueriesLessThan(6):
             response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': self.pdf.uuid, }),
                                         data=request_data, follow=False)
@@ -554,7 +554,7 @@ class GetTokenViewWithPostProcessingControllerTestCase(QueriesAssertionsMixin, A
         self.assertEqual(response.data['upload_id'], str(merge_output.uuid))
         self.assertIsNotNone(response.data.get('token'))
 
-        request_data = {'uuid': self.base_input_object[0], 'wanted_post_process': PostProcessingWanted.ORIGINAL.name}
+        request_data = {'wanted_post_process': PostProcessingWanted.ORIGINAL.name}
         with self.assertNumQueriesLessThan(5):
             response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': self.pdf.uuid, }),
                                         data=request_data, follow=False)
@@ -564,22 +564,10 @@ class GetTokenViewWithPostProcessingControllerTestCase(QueriesAssertionsMixin, A
 
     def test_read_token_with_bad_upload_uuid(self):
         wanted_post_process = None
-        request_data = {'uuid': uuid.uuid4(), 'wanted_post_process': wanted_post_process}
+        request_data = {'wanted_post_process': wanted_post_process}
         response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': uuid.uuid4(), }),
                                     data=request_data, follow=False)
         self.assertEqual(response.status_code, 404)
-
-    def test_read_token_query_count_for_done_post_process(self):
-        uploads_uuids = [str(PdfUploadFactory().pk), str(PdfUploadFactory().pk)]
-        uploads_uuids_2 = [str(PdfUploadFactory().pk), str(PdfUploadFactory().pk), str(PdfUploadFactory().pk),
-                           str(PdfUploadFactory().pk)]
-        with self.assertNumQueriesLessThan(6):
-            response = self.client.post(resolve_url('read-tokens'), data={'uuids': uploads_uuids})
-        self.assertEqual(response.status_code, 201)
-        tokens = response.json()
-        self.assertEqual(len(tokens), 2)
-        self.assertEqual(tokens[uploads_uuids[0]]['access'], TokenAccess.READ.name)
-        self.assertEqual(tokens[uploads_uuids[1]]['access'], TokenAccess.READ.name)
 
 
 @override_settings(ROOT_URLCONF="osis_document.urls", OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
@@ -644,7 +632,7 @@ class GetTokenListViewTestCase(QueriesAssertionsMixin, APITestCase):
 
 
 @override_settings(OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
-class GetTokenListViewWithPostProcessingControllerTestCase(APITestCase, URLPatternsTestCase):
+class GetTokenListViewWithPostProcessingControllerTestCase(QueriesAssertionsMixin, APITestCase, URLPatternsTestCase):
     from django.urls import path, include
 
     app_name = 'osis_document'
@@ -675,7 +663,7 @@ class GetTokenListViewWithPostProcessingControllerTestCase(APITestCase, URLPatte
         self.convert_img.output_files.add(self.convert_img_output)
         self.client.raise_request_exception = False
 
-    def test_read_token_with_pending_async_post_processing(self):
+    def test_read_tokens_with_pending_async_post_processing(self):
         result_dict = {
             PostProcessingType.CONVERT.name:
                 {
@@ -722,7 +710,7 @@ class GetTokenListViewWithPostProcessingControllerTestCase(APITestCase, URLPatte
             self.assertIn(response.data[token_dict_key].get('upload_id'), [str(self.text.uuid), str(self.img.uuid)])
             self.assertIsNone(response.data[token_dict_key].get('errors'))
 
-    def test_read_token_with_failed_async_post_processing(self):
+    def test_read_tokens_with_failed_async_post_processing(self):
         result_dict = {
             PostProcessingType.CONVERT.name:
                 {
@@ -783,7 +771,7 @@ class GetTokenListViewWithPostProcessingControllerTestCase(APITestCase, URLPatte
             self.assertIn(response.data[token_dict_key].get('upload_id'), [str(self.text.uuid), str(self.img.uuid)])
             self.assertIsNone(response.data[token_dict_key].get('errors'))
 
-    def test_read_token_with_done_async_post_processing(self):
+    def test_read_tokens_with_done_async_post_processing(self):
         merge = MergePostProcessingFactory()
         merge_output = CorrectPDFUploadFactory()
         merge.input_files.add(self.convert_text_output, self.convert_img_output)
@@ -811,32 +799,49 @@ class GetTokenListViewWithPostProcessingControllerTestCase(APITestCase, URLPatte
 
         request_data = {'uuids': [self.text.uuid, self.img.uuid],
                         'wanted_post_process': PostProcessingType.CONVERT.name}
-        response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+        with self.assertNumQueriesLessThan(13):
+            response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(response.data), len(request_data['uuids']))
         for token_dict_key in response.data:
             self.assertIsNotNone(response.data[token_dict_key].get('token'))
             self.assertIsNone(response.data[token_dict_key].get('errors'))
 
+        request_data = {'uuids': [self.text.uuid, self.img.uuid, self.pdf.uuid],
+                        'wanted_post_process': PostProcessingType.CONVERT.name}
+        with self.assertNumQueriesLessThan(15):
+            self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+
         request_data = {'uuids': [self.text.uuid, self.img.uuid], 'wanted_post_process': PostProcessingType.MERGE.name}
-        response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+        with self.assertNumQueriesLessThan(7):
+            response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(response.data), 1)
         for token_dict_key in response.data:
             self.assertIsNotNone(response.data[token_dict_key].get('token'))
             self.assertIsNone(response.data[token_dict_key].get('errors'))
 
+        request_data = {'uuids': [self.text.uuid, self.img.uuid, self.pdf.uuid], 'wanted_post_process': PostProcessingType.MERGE.name}
+        with self.assertNumQueriesLessThan(8):
+            self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+
         request_data = {'uuids': [self.text.uuid, self.img.uuid], 'wanted_post_process': None}
-        response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+        with self.assertNumQueriesLessThan(7):
+            response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(response.data), 1)
         for token_dict_key in response.data:
             self.assertIsNotNone(response.data[token_dict_key].get('token'))
             self.assertIsNone(response.data[token_dict_key].get('errors'))
+
+        request_data = {'uuids': [self.text.uuid, self.img.uuid, self.pdf.uuid], 'wanted_post_process': None}
+        with self.assertNumQueriesLessThan(8):
+            self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
 
         request_data = {'uuids': [self.text.uuid, self.img.uuid],
                         'wanted_post_process': PostProcessingWanted.ORIGINAL.name}
-        response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+        with self.assertNumQueriesLessThan(5):
+            response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(response.data), len(request_data['uuids']))
         for token_dict_key in response.data:
@@ -844,7 +849,12 @@ class GetTokenListViewWithPostProcessingControllerTestCase(APITestCase, URLPatte
             self.assertIn(response.data[token_dict_key].get('upload_id'), [str(self.text.uuid), str(self.img.uuid)])
             self.assertIsNone(response.data[token_dict_key].get('errors'))
 
-    def test_read_token_with_bad_upload_uuid(self):
+        request_data = {'uuids': [self.text.uuid, self.img.uuid, self.pdf.uuid],
+                        'wanted_post_process': PostProcessingWanted.ORIGINAL.name}
+        with self.assertNumQueriesLessThan(5):
+            self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+
+    def test_read_tokens_with_bad_upload_uuid(self):
         wanted_post_process = None
         request_data = {'uuids': [uuid.uuid4(), uuid.uuid4()], 'wanted_post_process': wanted_post_process}
         response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
