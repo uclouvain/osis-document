@@ -26,7 +26,6 @@
 from datetime import timedelta
 from typing import Dict, List, Optional, Union
 
-from django.db.models import Prefetch, QuerySet
 from django.urls import reverse
 from django.utils.timezone import now
 from osis_document.api import serializers
@@ -73,7 +72,6 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
             if upload.status == FileStatus.INFECTED.name:
                 raise FileInfectedException
             post_processing_check = self.check_post_processing(
-                request=request,
                 upload=upload,
                 wanted_post_process=request.data.get(
                     "wanted_post_process")
@@ -103,7 +101,6 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
 
     def check_post_processing(
             self,
-            request,
             upload: Upload,
             wanted_post_process: str = None
     ) -> Optional[Dict[str, Union[str or Dict[str, str]]]]:
@@ -111,12 +108,13 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
         returns a dictionary whose content depends on whether a post-processing is found and on its state."""
         results = {}
         if wanted_post_process != PostProcessingWanted.ORIGINAL.name:
-            post_processing_controller_qs = PostProcessingController.objects.filter(
-                data__base_input__contains=request.data.get('uuid') or request.data.get('uuids')
-            )
-            if post_processing_controller_qs.exists():
+            post_processing_controller_qs = [post_process_controler for post_process_controler in
+                                             PostProcessingController.objects.filter(
+                                                 data__base_input__contains=upload.uuid
+                                             )]
+            if post_processing_controller_qs:
                 results = {}
-                post_processing_controller_object = post_processing_controller_qs.get()
+                post_processing_controller_object = post_processing_controller_qs[0]
                 last_post_process = post_processing_controller_object.data['post_process_actions'][-1]
                 post_process_results = post_processing_controller_object.results[
                     wanted_post_process or last_post_process]
@@ -154,16 +152,6 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
                             'status': post_processing_controller_object.results[action]['status']
                         }
         return results
-
-    def check_post_processing_async(
-            self,
-            post_processing_controller_qs: QuerySet[PostProcessingController],
-            upload: Upload,
-            wanted_post_process: str
-    ) -> Optional[Dict[str, Union[str, Dict[str, str]]]]:
-        """Given an Upload object and a type of post-processing and a QuerySet of PostProcessingController,
-        returns a dictionary whose content depends on its state."""
-
 
     @staticmethod
     def get_output_upload_uuid_from_post_processing_controller_result(
@@ -273,15 +261,10 @@ class GetTokenListView(GetTokenView):
             for upload in request.data['uuids']
         }
 
-        uploads = self.get_queryset().filter(uuid__in=request.data['uuids']).prefetch_related(
-            Prefetch(
-                'post_processing_input_files',
-            ))
-
+        uploads = self.get_queryset().filter(uuid__in=request.data['uuids'])
         data = []
         for upload in uploads:
             post_processing_check = self.check_post_processing(
-                request=request,
                 upload=upload,
                 wanted_post_process=request.data.get('wanted_post_process')
             )
