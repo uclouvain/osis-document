@@ -48,7 +48,7 @@ class PostProcessingView(APIView):
                     return Response(status=status.HTTP_202_ACCEPTED)
                 else:
                     uuids_result_dict = make_one_pending_post_processing(
-                        post_processing_controller=post_processing_controller_instance
+                        uuid=post_processing_controller_instance.uuid
                     )
                     return Response(data=uuids_result_dict, status=status.HTTP_201_CREATED)
         except Exception as e:
