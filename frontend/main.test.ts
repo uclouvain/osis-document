@@ -41,7 +41,14 @@ vi.mock('./DocumentUploader.vue', () => ({
 const spy = vi.spyOn(exports, 'createApp').mockImplementation(createApp);
 
 test('mount simple visualizer', async () => {
-  document.body.innerHTML = `<div class="osis-document-visualizer" data-base-url="/api" data-values="foo,bar"></div>`;
+  document.body.innerHTML = `<div class="osis-document-visualizer"
+    data-base-url="/api"
+    data-values="foo,bar"
+    data-post-process-status="DONE"
+    data-get-progress-url="get-progress-async-post-processing/UUID"
+    data-base-uuid="UUID"
+    data-wanted-post-process=""
+  ></div>`;
 
   // Executes main file
   await import('./main');
@@ -50,6 +57,10 @@ test('mount simple visualizer', async () => {
   expect(spy).toHaveBeenCalledWith(visualizer, {
     baseUrl: '/api',
     values: ['foo', 'bar'],
+    postProcessStatus: 'DONE',
+    getProgressUrl: 'get-progress-async-post-processing/UUID',
+    baseUuid: 'UUID',
+    wantedPostProcess: '',
   });
 });
 
@@ -64,6 +75,10 @@ test('mount visualizer without values', async () => {
   expect(spy).toHaveBeenCalledWith(visualizer, {
     baseUrl: '/api',
     values: [],
+    postProcessStatus: '',
+    getProgressUrl: '',
+    baseUuid: '',
+    wantedPostProcess: '',
   });
 });
 

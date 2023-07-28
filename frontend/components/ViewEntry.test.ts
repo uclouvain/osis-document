@@ -30,11 +30,16 @@ import fetchMock from 'fetch-mock';
 import {afterEach, describe, expect, it, test} from "vitest";
 import ViewingModal from "./ViewingModal.vue";
 import {nextTick} from "vue";
+import {uuid} from 'vue-uuid';
 
 const props = {
   value: 'dummytoken',
   id: '2',
   baseUrl: '/',
+  postProcessStatus: 'DONE',
+  getProgressUrl: 'http://localhost:8000/api/osis-document/get-progress-async-post-processing/UUID',
+  baseUuid: uuid.v4(),
+  wantedPostProcess: '',
 };
 
 const documentMetadata = {
@@ -44,13 +49,185 @@ const documentMetadata = {
   name: 'test document.odt',
 };
 
+const getRemoteTokenResponse = {
+  access: 'READ',
+  expires_at: '2023-07-24T14:46:07.839585',
+  token: 'ImU3NTFjYTFlLTJhOWYtNDA2Yi1hNDIwLTlmY2FlYTJkNTlmOCI:1qNuiR:6EpSvOF0hfZTSx1WewDsM3WlT5F-tyola0H-qijV3ZE',
+  upload_id: 'e751ca1e-2a9f-406b-a420-9fcaea2d59f8',
+};
+
+const getProgressResponse= {
+  'progress': 100,
+  'wanted_post_process': 'DONE',
+};
+
 afterEach(() => {
   fetchMock.restore();
 });
 
 it('should mount', () => {
+  fetchMock.get('/metadata/dummytoken', documentMetadata);
   const wrapper = mount(ViewEntry, {props});
   expect(wrapper.text()).toContain('view_entry.loading');
+});
+
+describe('progress of post-processing is correctly displayed', () => {
+  it('should show progress_bar of post-processing progress', async () => {
+    fetchMock.get('http://localhost:8000/api/osis-document/get-progress-async-post-processing/UUID?wanted_post_process=MERGE', {
+      'progress': 50,
+      'wanted_post_process': 'DONE',
+    });
+    fetchMock.post('/read-token/'+props.baseUuid.toString(), getRemoteTokenResponse);
+    fetchMock.get('/metadata/ImU3NTFjYTFlLTJhOWYtNDA2Yi1hNDIwLTlmY2FlYTJkNTlmOCI:1qNuiR:6EpSvOF0hfZTSx1WewDsM3WlT5F-tyola0H-qijV3ZE', documentMetadata);
+    const wrapper = mount(ViewEntry, {
+      props: {
+        ...props,
+        value: '',
+        isEditable: false,
+        wantedPostProcess: 'MERGE',
+        baseUrl: '/',
+      },
+      data() {
+        return {
+          loading: true,
+          inPostProcessing: false,
+          postProcessingProgress: 0,
+          error: '',
+          name: '',
+          extension: '',
+        };
+      },
+    });
+    await flushPromises();
+    expect(wrapper.vm.loading).toBe(false);
+    expect(wrapper.text()).toContain('Avancement du post processing : 50 %');
+    expect(wrapper.vm.inPostProcessing).toBe(true);
+  });
+
+  it('should make get_progress request without wanted_post_process', async () => {
+    fetchMock.get('http://localhost:8000/api/osis-document/get-progress-async-post-processing/UUID', getProgressResponse);
+    fetchMock.post('/read-token/'+props.baseUuid.toString(), getRemoteTokenResponse);
+    fetchMock.get('/metadata/ImU3NTFjYTFlLTJhOWYtNDA2Yi1hNDIwLTlmY2FlYTJkNTlmOCI:1qNuiR:6EpSvOF0hfZTSx1WewDsM3WlT5F-tyola0H-qijV3ZE', documentMetadata);
+    const wrapper = mount(ViewEntry, {
+      props: {
+        ...props,
+        value: '',
+        isEditable: false,
+        baseUrl: '/',
+      },
+      data() {
+        return {
+          loading: true,
+          inPostProcessing: false,
+          postProcessingProgress: 50,
+          error: '',
+          name: '',
+          extension: '',
+        };
+      },
+    });
+    await flushPromises();
+    expect(wrapper.vm.loading).toBe(false);
+    expect(wrapper.vm.inPostProcessing).toBe(false);
+    expect(wrapper.vm.postProcessingProgress).toBe(100);
+  });
+
+  it('should make get_progress request with wanted_post_process for DONE post_process', async () => {
+    fetchMock.get('http://localhost:8000/api/osis-document/get-progress-async-post-processing/UUID?wanted_post_process=MERGE', {
+      'progress': 100,
+      'wanted_post_process': 'DONE',
+    });
+    fetchMock.post('/read-token/'+props.baseUuid.toString(), getRemoteTokenResponse);
+    fetchMock.get('/metadata/ImU3NTFjYTFlLTJhOWYtNDA2Yi1hNDIwLTlmY2FlYTJkNTlmOCI:1qNuiR:6EpSvOF0hfZTSx1WewDsM3WlT5F-tyola0H-qijV3ZE', documentMetadata);
+    const wrapper = mount(ViewEntry, {
+      props: {
+        ...props,
+        value: '',
+        isEditable: false,
+        baseUrl: '/',
+        wantedPostProcess: 'MERGE',
+      },
+      data() {
+        return {
+          loading: true,
+          inPostProcessing: false,
+          postProcessingProgress: 50,
+          error: '',
+          name: '',
+          extension: '',
+        };
+      },
+    });
+    await flushPromises();
+    expect(wrapper.vm.loading).toBe(false);
+    expect(wrapper.vm.inPostProcessing).toBe(false);
+  });
+
+  it('should make get_progress request with wanted_post_process for PENDING post_process', async () => {
+    fetchMock.get('/api/osis-document/get-progress-async-post-processing/UUID?pk=UUID', {
+      'progress': 50,
+      'wanted_post_process': 'PENDING',
+    });
+   const wrapper = mount(ViewEntry, {
+      props: {
+        ...props,
+        value: '',
+        isEditable: false,
+        baseUrl: '/',
+        wantedPostProcess: 'MERGE',
+      },
+      data() {
+        return {
+          loading: true,
+          inPostProcessing: false,
+          postProcessingProgress: 0,
+          error: '',
+          name: '',
+          extension: '',
+        };
+      },
+    });
+    await flushPromises();
+    expect(wrapper.vm.loading).toBe(false);
+    expect(wrapper.vm.inPostProcessing).toBe(true);
+  });
+  it('should have hidde progress_bar of post-processing progress', async () => {
+    fetchMock.get('/get-progress-async-post-processing/UUID', getProgressResponse);
+    fetchMock.post('/read-token/'+props.baseUuid.toString(), getRemoteTokenResponse);
+    fetchMock.get('/metadata/ImU3NTFjYTFlLTJhOWYtNDA2Yi1hNDIwLTlmY2FlYTJkNTlmOCI:1qNuiR:6EpSvOF0hfZTSx1WewDsM3WlT5F-tyola0H-qijV3ZE', documentMetadata);
+    const wrapper = mount(ViewEntry, {
+      props: {
+        ...props,
+        value: '',
+        isEditable: false,
+      },
+      data() {
+        return {
+          postProcessingProgress: 100,
+        };
+      },
+    });
+    await flushPromises();
+    expect(wrapper.html()).not.contain('<div class="progress" style="text-align: center">');
+    expect(wrapper.html()).contain('<div>test document.odt</div><small><span class="text-nowrap">80.45 KB</span> (application/vnd.oasis.opendocument.text)</small>');
+    expect(wrapper.vm.error).toBe('');
+    expect(wrapper.vm.inPostProcessing).toBe(false);
+    expect(wrapper.vm.loading).toBe(false);
+    expect(wrapper.vm.file).not.toBe(null);
+  });
+  it('should have hidde component', async () => {
+    fetchMock.get('/metadata/dummytoken', documentMetadata);
+    const wrapper = mount(ViewEntry, {
+      props: {
+        ...props,
+        isEditable: false,
+      },
+    });
+    await flushPromises();
+    wrapper.unmount();
+    expect(wrapper.html()).not.contain('<div class="progress" style="text-align: center">');
+    expect(wrapper.text()).not.toContain('Avancement du post processing : 50 %');
+  });
 });
 
 describe('file is correctly displayed', () => {
@@ -89,7 +266,7 @@ describe('file is correctly displayed', () => {
     expect(wrapper.find('.btn-danger').exists()).toBe(true);
   });
 
-  it('should show error bu not deletable', async () => {
+  it('should show error but not deletable', async () => {
     fetchMock.get('/metadata/dummytoken', 404);
     const wrapper = mount(ViewEntry, {props: {...props, isEditable: false}});
     await flushPromises();

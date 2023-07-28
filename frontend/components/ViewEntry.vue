@@ -38,10 +38,35 @@
             aria-valuenow="0"
             aria-valuemin="0"
             aria-valuemax="100"
-            :style="{width: `100%`}"
+            :style="{
+              width: `100%`
+            }"
         >
           <span class="sr-only">{{ $t('view_entry.loading') }}</span>
         </div>
+      </div>
+    </div>
+    <div
+        v-else-if="inPostProcessing"
+        class="media-body"
+    >
+      <div
+          class="progress"
+          style="text-align: center"
+      >
+        <div
+            class="progress-bar progress-bar-striped active"
+            role="progressbar"
+            aria-valuenow="0"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            :style="{
+              width: postProcessingProgress.toString() + `%`
+            }"
+        >
+          <span class="sr-only">{{ $t('view_entry.loading') }}</span>
+        </div>
+        <span class="align-items-center">Avancement du post processing : {{ postProcessingProgress }} %</span>
       </div>
     </div>
     <!-- error -->
@@ -159,7 +184,7 @@
 import {doRequest, humanizedSize} from '../utils';
 import ViewingModal from './ViewingModal.vue';
 import {defineComponent} from 'vue';
-import type {FileUpload} from "../interfaces";
+import type {FileUpload, GetRemoteTokenResponse, PostProcessingProgressResult} from "../interfaces";
 
 export default defineComponent({
   name: 'ViewEntry',
@@ -185,6 +210,22 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    getProgressUrl: {
+      type: String,
+      default: "",
+    },
+    postProcessStatus: {
+      type: String,
+      default: "",
+    },
+    baseUuid: {
+      type: String,
+      default: "",
+    },
+    wantedPostProcess: {
+      type: String,
+      default: "",
+    },
   },
   emits: {
     updateToken(token: string) {
@@ -198,10 +239,17 @@ export default defineComponent({
     return {
       file: null as FileUpload | null,
       loading: true,
+      inPostProcessing: false,
+      postProcessingProgress: 0,
       error: '',
       name: '',
       extension: '',
       saved: false,
+      intervalProgress: setInterval(
+          /* istanbul ignore next */
+          () => undefined,
+          300000),
+      getRemoteTokenResponse: {token: ''} as GetRemoteTokenResponse,
     };
   },
   computed: {
@@ -238,20 +286,81 @@ export default defineComponent({
   mounted() {
     void this.getFile();
   },
+  /* istanbul ignore next */
+  updated() {
+    if (this.inPostProcessing){
+      if ((this.getProgressUrl !== "" || this.getProgressUrl !== undefined) && this.postProcessingProgress !== 100){
+        clearInterval(this.intervalProgress);
+        this.intervalProgress = setInterval(/* istanbul ignore next */()=>{
+          void this.getProgressPostProcessing();
+        }, 3000);
+      }
+      if (this.postProcessingProgress === 100 ) {
+        clearInterval(this.intervalProgress);
+        this.inPostProcessing = false;
+        void this.getFile();
+      }
+    }
+  },
+  unmounted() {
+    clearInterval(this.intervalProgress);
+  },
   methods: {
     humanizedSize,
     getFile: async function () {
       if (this.value === 'FileInfectedException') {
         this.error = this.$t('view_entry.file_infected');
-      } else {
+      }
+      else if (this.value === '' && this.postProcessingProgress !== 100){
+        this.inPostProcessing = true;
+        await this.getProgressPostProcessing();
+      }
+      else {
+        if (this.value === ''){
+          let body = JSON.stringify({
+                uuid: this.baseUuid,
+              });
+          if (this.wantedPostProcess === '' || this.wantedPostProcess === undefined) {
+            body = JSON.stringify({
+                uuid: this.baseUuid,
+                wanted_post_process: this.wantedPostProcess,
+              });
+          }
+          this.getRemoteTokenResponse = await doRequest(`${this.baseUrl}read-token/${this.baseUuid}`,{
+            method: 'POST',
+            body: body,
+          }) as GetRemoteTokenResponse;
+        }
+        const url = (this.getRemoteTokenResponse.token !== '') ? `${this.baseUrl}metadata/${this.getRemoteTokenResponse.token}` : `${this.baseUrl}metadata/${this.value}`;
         try {
-          this.file = await doRequest(`${this.baseUrl}metadata/${this.value}`) as FileUpload;
+          this.file = await doRequest(url) as FileUpload;
           this.fullName = this.file.name;
         } catch (e) {
           this.error = (e as Error).message;
         }
       }
       this.loading = false;
+      console.log('loading est false');
+    },
+    getProgressPostProcessing :async function(){
+      /* istanbul ignore if -- @preserve */
+      if (this.postProcessingProgress !== 100 && this.getProgressUrl !== "") {
+        try {
+          let url = '';
+          if (this.wantedPostProcess){
+            url = this.getProgressUrl + '?' + 'wanted_post_process=' + this.wantedPostProcess;
+          }
+          else {
+            url = this.getProgressUrl;
+          }
+          const result = await doRequest(`${url}`, {
+            method: 'GET',
+          }) as PostProcessingProgressResult;
+          this.postProcessingProgress = result.progress;
+        } catch (e) {
+          this.error = (e as Error).message;
+        }
+      }
     },
     saveName: async function () {
       try {
