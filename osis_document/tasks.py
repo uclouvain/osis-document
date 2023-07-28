@@ -24,10 +24,9 @@
 #
 # ##############################################################################
 from datetime import timedelta
-from celery.schedules import crontab
 
-from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 
 try:

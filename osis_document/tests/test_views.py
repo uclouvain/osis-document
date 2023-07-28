@@ -1200,7 +1200,7 @@ class GetProgressAsyncPostProcessingViewTestCase(APITestCase, URLPatternsTestCas
         )
 
         request_data = {'pk': async_post_process.uuid, 'wanted_post_process': PostProcessingWanted.CONVERT.name}
-        response = self.client.post(reverse('osis_document:get-progress-post-processing', kwargs={
+        response = self.client.get(reverse('osis_document:get-progress-post-processing', kwargs={
             'pk': async_post_process.uuid
         }), data=request_data)
         self.assertEqual(response.status_code, 202)
@@ -1208,7 +1208,7 @@ class GetProgressAsyncPostProcessingViewTestCase(APITestCase, URLPatternsTestCas
         self.assertEqual(response.data.get('wanted_post_process_status'), PostProcessingStatus.DONE.name)
 
         request_data = {'pk': async_post_process.uuid, 'wanted_post_process': PostProcessingWanted.MERGE.name}
-        response = self.client.post(reverse('osis_document:get-progress-post-processing', kwargs={
+        response = self.client.get(reverse('osis_document:get-progress-post-processing', kwargs={
             'pk': async_post_process.uuid
         }), data=request_data)
         self.assertEqual(response.data.get('wanted_post_process_status'), PostProcessingStatus.PENDING.name)
@@ -1240,7 +1240,7 @@ class GetProgressAsyncPostProcessingViewTestCase(APITestCase, URLPatternsTestCas
         )
 
         request_data = {'pk': async_post_process.uuid, 'wanted_post_process': PostProcessingWanted.MERGE.name}
-        response = self.client.post(reverse('osis_document:get-progress-post-processing', kwargs={
+        response = self.client.get(reverse('osis_document:get-progress-post-processing', kwargs={
             'pk': async_post_process.uuid
         }), data=request_data)
         self.assertEqual(response.status_code, 202)
@@ -1248,7 +1248,7 @@ class GetProgressAsyncPostProcessingViewTestCase(APITestCase, URLPatternsTestCas
         self.assertEqual(response.data.get('wanted_post_process_status'), PostProcessingStatus.DONE.name)
 
         request_data = {'pk': async_post_process.uuid}
-        response = self.client.post(reverse('osis_document:get-progress-post-processing', kwargs={
+        response = self.client.get(reverse('osis_document:get-progress-post-processing', kwargs={
             'pk': async_post_process.uuid
         }), data=request_data)
         self.assertIsNone(response.data.get('wanted_post_process_status'))
@@ -1280,7 +1280,7 @@ class GetProgressAsyncPostProcessingViewTestCase(APITestCase, URLPatternsTestCas
         )
 
         request_data = {'pk': async_post_process.uuid, 'wanted_post_process': PostProcessingWanted.MERGE.name}
-        response = self.client.post(reverse('osis_document:get-progress-post-processing', kwargs={
+        response = self.client.get(reverse('osis_document:get-progress-post-processing', kwargs={
             'pk': str(async_post_process.uuid)
         }), data=request_data)
         self.assertEqual(response.status_code, 202)
@@ -1289,7 +1289,7 @@ class GetProgressAsyncPostProcessingViewTestCase(APITestCase, URLPatternsTestCas
 
     def test_get_progress_with_bad_uuid(self):
         request_data = {'pk': uuid.uuid4(), 'wanted_post_process': PostProcessingWanted.MERGE.name}
-        response = self.client.post(reverse('osis_document:get-progress-post-processing', kwargs={
+        response = self.client.get(reverse('osis_document:get-progress-post-processing', kwargs={
             'pk': uuid.uuid4()
         }), data=request_data)
         self.assertEqual(response.status_code, 400)

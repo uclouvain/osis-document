@@ -53,6 +53,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['frontend/test.setup.ts'],
+    minThreads:0,
+    maxThreads:1,
     coverage: {
       provider: 'istanbul',
       all: true,

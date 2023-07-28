@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "pdfjs-dist": "^3.5.141",
-    "tiny-emitter": "^2.1.0"
+    "tiny-emitter": "^2.1.0",
+    "vue-uuid": "^3.0.0"
   }
 }

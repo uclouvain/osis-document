@@ -34,6 +34,10 @@ it('should mount', () => {
     props: {
       baseUrl: '/',
       values: ['0123456798'],
+      postProcessStatus: 'DONE',
+      getProgressUrl: 'get-progress-async-post-processing/UUID',
+      baseUuid: 'UUID',
+      wantedPostProcess: 'None',
     },
   });
   expect(wrapper.html()).toMatchSnapshot();
