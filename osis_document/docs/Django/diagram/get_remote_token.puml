@@ -6,7 +6,8 @@ start
 :get_remote_token(
     uuid,
     write_token,
-    type_post_processing
+    type_post_processing,
+    custom_ttl,
 );
 
 
@@ -39,16 +40,6 @@ start
                 if (l'upload possède un post-processing ?) then(False)
                 :Initialise un dictionnaire vide nomé Results;
                 else (True)
-                    if (Le post-processing est il de type asynchrone?) then(False)
-                        if (l'args wanted_post_process existe-il ?) then(True)
-                        :Ajout du fichier d'output du post-process spécifé par
-                        l'args wanted_post_process au dictionnaire results;
-                        else (False)
-                        :Ajout du fichier d'output du dernier post-process
-                                    trouvé au dictionnaire results;
-                        endif
-
-                    else (True)
                         if (Le status du post-processing ou du post-process spécifé par
            l'args wanted_post_process est-il égual à DONE ?) then(True)
                         :Récupération de l'uuid du fichier résultant du post-processing
@@ -67,7 +58,6 @@ start
                             endwhile
                         endif
                     endif
-                endif
                 :Retourne le dictionnaire Results;
             }
 

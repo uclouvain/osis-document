@@ -39,7 +39,7 @@ from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
 from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType
 from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction
-from osis_document.models import Token, Upload, PostProcessAsync
+from osis_document.models import Token, Upload, PostProcessingController
 
 
 def confirm_upload(token, upload_to, model_instance=None) -> UUID:
@@ -209,16 +209,16 @@ def post_process(
     return post_processing_return
 
 
-def create_post_process_async_object(
+def create_post_processing_controller_object(
         uuid_list: List[UUID],
         post_process_actions: List[str],
         post_process_params: Dict[str, Dict[str, str]],
-) -> None:
+) -> UUID:
     """
-    Create a PostProcessingAsync object with the list of uuid, the list of post-processing actions and the
+    Create a PostProcessingController object with the list of uuid, the list of post-processing actions and the
     post-processing params dictionary
     """
-    PostProcessAsync.objects.create(
+    instance = PostProcessingController.objects.create(
         status=PostProcessingStatus.PENDING.name,
         data={'post_process_actions': post_process_actions,
               'base_input': uuid_list,
@@ -227,6 +227,7 @@ def create_post_process_async_object(
             action: {'status': PostProcessingStatus.PENDING.name} for action in post_process_actions
         }
     )
+    return instance
 
 
 def stringify_uuid_and_check_uuid_validity(uuid_input: Union[str, UUID]) -> Dict[str, Union[str, bool]]:

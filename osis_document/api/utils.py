@@ -209,7 +209,7 @@ def get_progress_async_post_processing(uuid: str, wanted_post_process: str = Non
     """
     import requests
 
-    url = "{base_url}get-progress-async-post-processing/{uuid}".format(
+    url = "{base_url}get-progress-post-processing/{uuid}".format(
         base_url=settings.OSIS_DOCUMENT_BASE_URL,
         uuid=uuid
     )

@@ -25,7 +25,7 @@
 # ##############################################################################
 from .editor import SaveEditorView
 from .metadata import MetadataView, ChangeMetadataView, MetadataListView
-from .post_processing import PostProcessingView, GetProgressAsyncPostProcessingView
+from .post_processing import PostProcessingView, GetProgressPostProcessingControllerView
 from .raw_file import RawFileView
 from .rotate import RotateImageView
 from .security import DeclareFileAsInfectedView
@@ -45,5 +45,5 @@ __all__ = [
     "DeclareFileAsInfectedView",
     'PostProcessingView',
     "SaveEditorView",
-    "GetProgressAsyncPostProcessingView",
+    "GetProgressPostProcessingControllerView",
 ]

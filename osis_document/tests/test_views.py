@@ -361,7 +361,7 @@ class GetTokenViewTestCase(APITestCase, URLPatternsTestCase):
 
 
 @override_settings(OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
-class GetTokenViewWithAsyncPostProcessingTestCase(APITestCase, URLPatternsTestCase):
+class GetTokenViewWithPostProcessingControllerTestCase(QueriesAssertionsMixin, APITestCase, URLPatternsTestCase):
     from django.urls import path, include
 
     app_name = 'osis_document'
@@ -529,107 +529,44 @@ class GetTokenViewWithAsyncPostProcessingTestCase(APITestCase, URLPatternsTestCa
             result=result_dict
         )
 
-        request_data = {'uuid': self.text.uuid, 'wanted_post_process': PostProcessingType.CONVERT.name}
-        response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': self.text.uuid, }),
-                                    data=request_data, follow=False)
+        request_data = {'wanted_post_process': PostProcessingType.CONVERT.name}
+        with self.assertNumQueriesLessThan(9):
+            response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': self.text.uuid, }),
+                                        data=request_data, follow=False)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['upload_id'], str(self.convert_text_output.uuid))
         self.assertIsNotNone(response.data.get('token'))
 
         self.client.raise_request_exception = False
-        request_data = {'uuid': self.base_input_object[0], 'wanted_post_process': PostProcessingType.MERGE.name}
-        response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': self.text.uuid, }),
-                                    data=request_data, follow=False)
+        request_data = {'wanted_post_process': PostProcessingType.MERGE.name}
+        with self.assertNumQueriesLessThan(6):
+            response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': self.text.uuid, }),
+                                        data=request_data, follow=False)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['upload_id'], str(merge_output.uuid))
         self.assertIsNotNone(response.data.get('token'))
 
-        request_data = {'uuid': self.base_input_object[0], 'wanted_post_process': None}
-        response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': self.pdf.uuid, }),
-                                    data=request_data, follow=False)
+        request_data = {'wanted_post_process': None}
+        with self.assertNumQueriesLessThan(6):
+            response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': self.pdf.uuid, }),
+                                        data=request_data, follow=False)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['upload_id'], str(merge_output.uuid))
         self.assertIsNotNone(response.data.get('token'))
 
-        request_data = {'uuid': self.base_input_object[0], 'wanted_post_process': PostProcessingWanted.ORIGINAL.name}
-        response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': self.pdf.uuid, }),
-                                    data=request_data, follow=False)
+        request_data = {'wanted_post_process': PostProcessingWanted.ORIGINAL.name}
+        with self.assertNumQueriesLessThan(5):
+            response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': self.pdf.uuid, }),
+                                        data=request_data, follow=False)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['upload_id'], str(self.base_input_object[0]))
         self.assertIsNotNone(response.data.get('token'))
 
     def test_read_token_with_bad_upload_uuid(self):
         wanted_post_process = None
-        request_data = {'uuid': uuid.uuid4(), 'wanted_post_process': wanted_post_process}
+        request_data = {'wanted_post_process': wanted_post_process}
         response = self.client.post(reverse('osis_document:read-token', kwargs={'pk': uuid.uuid4(), }),
                                     data=request_data, follow=False)
-        self.assertEqual(response.status_code, 404)
-
-
-@override_settings(ROOT_URLCONF="osis_document.urls", OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
-class GetTokenViewWithSyncPostProcessingTestCase(APITestCase):
-    def setUp(self):
-        self.client.defaults = {'HTTP_X_API_KEY': 'foobar'}
-        self.text = TextDocumentUploadFactory()
-        self.img = ImageUploadFactory()
-        self.action_list = [PostProcessingType.CONVERT.name, PostProcessingType.MERGE.name]
-        self.action_param_dict = {
-            PostProcessingType.CONVERT.name: {},
-            PostProcessingType.MERGE.name: {"output_filename": "a_test_merge_with_params_and_filename",
-                                            "pages_dimension": "A4"
-                                            }
-        }
-        self.convert_text = ConvertPostProcessingFactory()
-        self.convert_text_output = CorrectPDFUploadFactory()
-        self.convert_text.input_files.add(self.text)
-        self.convert_text.output_files.add(self.convert_text_output)
-        self.convert_img = ConvertPostProcessingFactory()
-        self.convert_img_output = CorrectPDFUploadFactory()
-        self.convert_img.input_files.add(self.img)
-        self.convert_img.output_files.add(self.convert_img_output)
-        self.merge = MergePostProcessingFactory()
-        self.merge_output = CorrectPDFUploadFactory()
-        self.merge.input_files.add(self.convert_text_output, self.convert_img_output)
-        self.merge.output_files.add(self.merge_output)
-
-    def test_read_token_with_MERGE_for_wanted_post_process(self):
-        wanted_post_process = PostProcessingType.MERGE.name
-
-        request_data = {'uuid': self.text.uuid, 'wanted_post_process': wanted_post_process}
-        response = self.client.post(resolve_url('read-token', pk=self.text.uuid), data=request_data)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['upload_id'], str(self.merge_output.uuid))
-
-        request_data = {'uuid': self.img.uuid, 'wanted_post_process': wanted_post_process}
-        response = self.client.post(resolve_url('read-token', pk=self.text.uuid), data=request_data)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['upload_id'], str(self.merge_output.uuid))
-
-    def test_read_token_with_CONVERT_for_wanted_post_process(self):
-        wanted_post_process = PostProcessingType.CONVERT.name
-        request_data = {'uuid': self.img.uuid, 'wanted_post_process': wanted_post_process}
-        response = self.client.post(resolve_url('read-token', pk=self.img.uuid), data=request_data)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['upload_id'], str(self.convert_img_output.uuid))
-
-    def test_read_token_without_wanted_post_process(self):
-        wanted_post_process = None
-        request_data = {'uuid': self.text.uuid, 'wanted_post_process': wanted_post_process}
-        response = self.client.post(resolve_url('read-token', pk=self.text.uuid), data=request_data)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['upload_id'], str(self.merge_output.uuid))
-
-    def test_read_token_with_ORIGINAL_for_wanted_post_process(self):
-        wanted_post_process = PostProcessingWanted.ORIGINAL.name
-        request_data = {'uuid': self.text.uuid, 'wanted_post_process': wanted_post_process}
-        response = self.client.post(resolve_url('read-token', pk=self.text.uuid), data=request_data)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['upload_id'], str(self.text.uuid))
-
-    def test_read_token_with_bad_upload_uuid(self):
-        wanted_post_process = None
-        request_data = {'uuid': uuid.uuid4(), 'wanted_post_process': wanted_post_process}
-        response = self.client.post(resolve_url('read-token', pk=uuid.uuid4()), data=request_data)
         self.assertEqual(response.status_code, 404)
 
 
@@ -646,12 +583,8 @@ class GetTokenListViewTestCase(QueriesAssertionsMixin, APITestCase):
 
     def test_read_tokens(self):
         uploads_uuids = [str(PdfUploadFactory().pk), str(PdfUploadFactory().pk)]
-        uploads_uuids_2 = [str(PdfUploadFactory().pk), str(PdfUploadFactory().pk), str(PdfUploadFactory().pk),
-                           str(PdfUploadFactory().pk)]
-        with self.assertNumQueriesLessThan(8):
+        with self.assertNumQueriesLessThan(7):
             response = self.client.post(resolve_url('read-tokens'), data={'uuids': uploads_uuids})
-        with self.assertNumQueriesLessThan(16):
-            response2 = self.client.post(resolve_url('read-tokens'), data={'uuids': uploads_uuids_2})
         self.assertEqual(response.status_code, 201)
         tokens = response.json()
         self.assertEqual(len(tokens), 2)
@@ -699,7 +632,7 @@ class GetTokenListViewTestCase(QueriesAssertionsMixin, APITestCase):
 
 
 @override_settings(OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
-class GetTokenListViewWithAsyncPostProcessingTestCase(APITestCase, URLPatternsTestCase):
+class GetTokenListViewWithPostProcessingControllerTestCase(QueriesAssertionsMixin, APITestCase, URLPatternsTestCase):
     from django.urls import path, include
 
     app_name = 'osis_document'
@@ -730,7 +663,7 @@ class GetTokenListViewWithAsyncPostProcessingTestCase(APITestCase, URLPatternsTe
         self.convert_img.output_files.add(self.convert_img_output)
         self.client.raise_request_exception = False
 
-    def test_read_token_with_pending_async_post_processing(self):
+    def test_read_tokens_with_pending_async_post_processing(self):
         result_dict = {
             PostProcessingType.CONVERT.name:
                 {
@@ -777,7 +710,7 @@ class GetTokenListViewWithAsyncPostProcessingTestCase(APITestCase, URLPatternsTe
             self.assertIn(response.data[token_dict_key].get('upload_id'), [str(self.text.uuid), str(self.img.uuid)])
             self.assertIsNone(response.data[token_dict_key].get('errors'))
 
-    def test_read_token_with_failed_async_post_processing(self):
+    def test_read_tokens_with_failed_async_post_processing(self):
         result_dict = {
             PostProcessingType.CONVERT.name:
                 {
@@ -838,7 +771,7 @@ class GetTokenListViewWithAsyncPostProcessingTestCase(APITestCase, URLPatternsTe
             self.assertIn(response.data[token_dict_key].get('upload_id'), [str(self.text.uuid), str(self.img.uuid)])
             self.assertIsNone(response.data[token_dict_key].get('errors'))
 
-    def test_read_token_with_done_async_post_processing(self):
+    def test_read_tokens_with_done_async_post_processing(self):
         merge = MergePostProcessingFactory()
         merge_output = CorrectPDFUploadFactory()
         merge.input_files.add(self.convert_text_output, self.convert_img_output)
@@ -866,32 +799,49 @@ class GetTokenListViewWithAsyncPostProcessingTestCase(APITestCase, URLPatternsTe
 
         request_data = {'uuids': [self.text.uuid, self.img.uuid],
                         'wanted_post_process': PostProcessingType.CONVERT.name}
-        response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+        with self.assertNumQueriesLessThan(13):
+            response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(response.data), len(request_data['uuids']))
         for token_dict_key in response.data:
             self.assertIsNotNone(response.data[token_dict_key].get('token'))
             self.assertIsNone(response.data[token_dict_key].get('errors'))
 
+        request_data = {'uuids': [self.text.uuid, self.img.uuid, self.pdf.uuid],
+                        'wanted_post_process': PostProcessingType.CONVERT.name}
+        with self.assertNumQueriesLessThan(15):
+            self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+
         request_data = {'uuids': [self.text.uuid, self.img.uuid], 'wanted_post_process': PostProcessingType.MERGE.name}
-        response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+        with self.assertNumQueriesLessThan(7):
+            response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(response.data), 1)
         for token_dict_key in response.data:
             self.assertIsNotNone(response.data[token_dict_key].get('token'))
             self.assertIsNone(response.data[token_dict_key].get('errors'))
 
+        request_data = {'uuids': [self.text.uuid, self.img.uuid, self.pdf.uuid], 'wanted_post_process': PostProcessingType.MERGE.name}
+        with self.assertNumQueriesLessThan(8):
+            self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+
         request_data = {'uuids': [self.text.uuid, self.img.uuid], 'wanted_post_process': None}
-        response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+        with self.assertNumQueriesLessThan(7):
+            response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(response.data), 1)
         for token_dict_key in response.data:
             self.assertIsNotNone(response.data[token_dict_key].get('token'))
             self.assertIsNone(response.data[token_dict_key].get('errors'))
+
+        request_data = {'uuids': [self.text.uuid, self.img.uuid, self.pdf.uuid], 'wanted_post_process': None}
+        with self.assertNumQueriesLessThan(8):
+            self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
 
         request_data = {'uuids': [self.text.uuid, self.img.uuid],
                         'wanted_post_process': PostProcessingWanted.ORIGINAL.name}
-        response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+        with self.assertNumQueriesLessThan(5):
+            response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(response.data), len(request_data['uuids']))
         for token_dict_key in response.data:
@@ -899,7 +849,12 @@ class GetTokenListViewWithAsyncPostProcessingTestCase(APITestCase, URLPatternsTe
             self.assertIn(response.data[token_dict_key].get('upload_id'), [str(self.text.uuid), str(self.img.uuid)])
             self.assertIsNone(response.data[token_dict_key].get('errors'))
 
-    def test_read_token_with_bad_upload_uuid(self):
+        request_data = {'uuids': [self.text.uuid, self.img.uuid, self.pdf.uuid],
+                        'wanted_post_process': PostProcessingWanted.ORIGINAL.name}
+        with self.assertNumQueriesLessThan(5):
+            self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
+
+    def test_read_tokens_with_bad_upload_uuid(self):
         wanted_post_process = None
         request_data = {'uuids': [uuid.uuid4(), uuid.uuid4()], 'wanted_post_process': wanted_post_process}
         response = self.client.post(reverse('osis_document:read-tokens'), data=request_data, follow=False)
@@ -907,74 +862,6 @@ class GetTokenListViewWithAsyncPostProcessingTestCase(APITestCase, URLPatternsTe
             self.assertIsNone(response.data[token_dict_key].get('token'))
             self.assertIsNotNone(response.data[token_dict_key].get('error'))
             self.assertEqual(response.data[token_dict_key].get('error').get('code'), 'UPLOAD_NOT_FOUND')
-
-
-@override_settings(ROOT_URLCONF="osis_document.urls", OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
-class GetTokenListViewWithSyncPostProcessingTestCase(APITestCase):
-    def setUp(self):
-        self.client.defaults = {'HTTP_X_API_KEY': 'foobar'}
-        self.text = TextDocumentUploadFactory()
-        self.img = ImageUploadFactory()
-        self.action_list = [PostProcessingType.CONVERT.name, PostProcessingType.MERGE.name]
-        self.action_param_dict = {
-            PostProcessingType.CONVERT.name: {},
-            PostProcessingType.MERGE.name: {"output_filename": "a_test_merge_with_params_and_filename",
-                                            "pages_dimension": "A4"
-                                            }
-        }
-        self.convert_text = ConvertPostProcessingFactory()
-        self.convert_text_output = CorrectPDFUploadFactory()
-        self.convert_text.input_files.add(self.text)
-        self.convert_text.output_files.add(self.convert_text_output)
-        self.convert_img = ConvertPostProcessingFactory()
-        self.convert_img_output = CorrectPDFUploadFactory()
-        self.convert_img.input_files.add(self.img)
-        self.convert_img.output_files.add(self.convert_img_output)
-        self.merge = MergePostProcessingFactory()
-        self.merge_output = CorrectPDFUploadFactory()
-        self.merge.input_files.add(self.convert_text_output, self.convert_img_output)
-        self.merge.output_files.add(self.merge_output)
-
-    def test_read_token_with_MERGE_for_wanted_post_process(self):
-        wanted_post_process = PostProcessingType.MERGE.name
-
-        request_data = {'uuids': [self.text.uuid, self.img.uuid], 'wanted_post_process': wanted_post_process}
-        response = self.client.post(resolve_url('read-tokens'), data=request_data)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(len(response.data), 1)
-
-    def test_read_token_with_CONVERT_for_wanted_post_process(self):
-        wanted_post_process = PostProcessingType.CONVERT.name
-        request_data = {'uuids': [self.text.uuid, self.img.uuid], 'wanted_post_process': wanted_post_process}
-        response = self.client.post(resolve_url('read-tokens'), data=request_data)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(len(response.data), len(request_data['uuids']))
-
-    def test_read_token_without_wanted_post_process(self):
-        wanted_post_process = None
-        request_data = {'uuids': [self.text.uuid, self.img.uuid], 'wanted_post_process': wanted_post_process}
-        response = self.client.post(resolve_url('read-tokens'), data=request_data)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(len(response.data), 1)
-
-    def test_read_token_with_ORIGINAL_for_wanted_post_process(self):
-        wanted_post_process = PostProcessingWanted.ORIGINAL.name
-        request_data = {'uuids': [self.text.uuid, self.img.uuid], 'wanted_post_process': wanted_post_process}
-        response = self.client.post(resolve_url('read-tokens'), data=request_data)
-        self.assertEqual(response.status_code, 201)
-        for token_dict_key in response.data:
-            self.assertIsNotNone(response.data[token_dict_key].get('token'))
-            self.assertIn(response.data[token_dict_key].get('upload_id'), [str(self.text.uuid), str(self.img.uuid)])
-            self.assertIsNone(response.data[token_dict_key].get('error'))
-
-    def test_read_token_with_bad_upload_uuid(self):
-        wanted_post_process = None
-        request_data = {'uuids': [uuid.uuid4(), uuid.uuid4()], 'wanted_post_process': wanted_post_process}
-        response = self.client.post(resolve_url('read-tokens'), data=request_data)
-        # self.assertEqual(response.status_code, 404)
-        for token_dict_key in response.data:
-            self.assertIsNone(response.data[token_dict_key].get('token'))
-            self.assertIsNotNone(response.data[token_dict_key].get('error'))
 
 
 @override_settings(ROOT_URLCONF='osis_document.urls', OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
@@ -1152,7 +1039,7 @@ class DeclareFileInfectedViewTestCase(APITestCase):
 
 
 @override_settings(OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
-class GetProgressAsyncPostProcessingViewTestCase(APITestCase, URLPatternsTestCase):
+class GetProgressPostProcessingControllerViewTestCase(APITestCase, URLPatternsTestCase):
     from django.urls import path, include
 
     app_name = 'osis_document'
@@ -1181,8 +1068,9 @@ class GetProgressAsyncPostProcessingViewTestCase(APITestCase, URLPatternsTestCas
         self.convert_img_output = CorrectPDFUploadFactory()
         self.convert_img.input_files.add(self.img)
         self.convert_img.output_files.add(self.convert_img_output)
+        self.url = 'osis_document:get-progress-post-processing'
 
-    def test_get_progress_of_PENDING_async_post_process(self):
+    def test_get_progress_of_PENDING_async_post_processing_controller(self):
         result_dict = {
             PostProcessingType.CONVERT.name:
                 {
@@ -1200,7 +1088,7 @@ class GetProgressAsyncPostProcessingViewTestCase(APITestCase, URLPatternsTestCas
         )
 
         request_data = {'pk': async_post_process.uuid, 'wanted_post_process': PostProcessingWanted.CONVERT.name}
-        response = self.client.get(reverse('osis_document:get-progress-post-processing', kwargs={
+        response = self.client.post(reverse(self.url, kwargs={
             'pk': async_post_process.uuid
         }), data=request_data)
         self.assertEqual(response.status_code, 202)
@@ -1213,7 +1101,7 @@ class GetProgressAsyncPostProcessingViewTestCase(APITestCase, URLPatternsTestCas
         }), data=request_data)
         self.assertEqual(response.data.get('wanted_post_process_status'), PostProcessingStatus.PENDING.name)
 
-    def test_get_progress_of_DONE_async_post_process(self):
+    def test_get_progress_of_DONE_post_processing_controller(self):
         merge = MergePostProcessingFactory()
         merge_output = CorrectPDFUploadFactory()
         merge.input_files.add(self.convert_text_output, self.convert_img_output)
@@ -1253,7 +1141,7 @@ class GetProgressAsyncPostProcessingViewTestCase(APITestCase, URLPatternsTestCas
         }), data=request_data)
         self.assertIsNone(response.data.get('wanted_post_process_status'))
 
-    def test_get_progress_of_FAILED_async_post_process(self):
+    def test_get_progress_of_FAILED_async_post_processing_controller(self):
         result_dict = {
             PostProcessingType.CONVERT.name:
                 {

@@ -34,12 +34,14 @@ note across #RoyalBlue
 If post_processing in Form.FileField
 end note
 osis -> osis_document_API : API-request : 'launch_post_processing(\n [uuids],\n [post_process_types],\n {post_process_params} \n)'
-osis_document_API -> osis_document_utils : post_process(\n [uuids],\n [post_process_types],\n {post_process_params} \n)
+osis_document_API -> osis_document_utils : create_post_processing_controller_object(\n      uuid_list,\n      post_process_actions,\n      post_process_params\n)
+osis_document_utils -> osis_document_API : return PostProcessingController
 note across : Repeat as many times as there are post_process_actions
+osis_document_API -> osis_document_utils : post_process(\n [uuids],\n [post_process_types],\n {post_process_params} \n)
 osis_document_utils -> osis_document_utils : Make post_process_actions
 osis_document_utils -> file_system : Save the file resulting from the post processing
-note across : Stop repeat
 osis_document_utils -> osis_document_API : return post_processing_return={'action_type1' : {input : [uuids], output: [uuids]}, \n 'action_type2' : {input : [uuids], output: [uuids]},\n ...}
+note across : Stop repeat
 osis_document_API -> osis : API-response : HTTP_201_CREATED, post_processing_return
 note across #RoyalBlue
 End if
