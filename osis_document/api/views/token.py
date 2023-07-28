@@ -88,9 +88,7 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
                     data={**post_processing_check,
                           'code': ASYNC_POST_PROCESS_FAILED},
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY,
-
                 )
-
             upload_id = post_processing_check.get('data', {}).get('upload_id')
             request.data['upload_id'] = upload_id or upload.pk
             request.data['access'] = self.token_access

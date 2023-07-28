@@ -57,7 +57,8 @@ class PostProcessingView(APIView):
 
 class GetProgressPostProcessingControllerSchema(AutoSchema):
     serializer_mapping = {
-        'POST': serializers.ProgressPostProcessingControllerSerializer,
+
+        'GET': serializers.ProgressAsyncPostProcessingSerializer,
     }
 
     def get_operation_id(self, path, method):
@@ -74,10 +75,10 @@ class GetProgressPostProcessingControllerView(APIView):
     authentication_classes = []
     permission_classes = []
 
-    def post(self, *args, **kwargs):
+    def get(self, *args, **kwargs):
         try:
-            input_serializer_data = serializers.ProgressPostProcessingControllerSerializer(
-                data=self.request.data,
+            input_serializer_data = serializers.ProgressAsyncPostProcessingSerializer(
+                data={'pk': self.kwargs.get('pk'), },
             )
 
             if input_serializer_data.is_valid(raise_exception=True):
