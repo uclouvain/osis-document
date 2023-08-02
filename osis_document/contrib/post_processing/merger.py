@@ -49,7 +49,7 @@ class Merger(Processor):
             raise MissingFileException
 
         pdf_writer = PdfWriter()
-        for file in input_files:
+        for file in sorted(input_files, key=lambda input_file: upload_objects_uuids.index(str(input_file.uuid))):
             if file.mimetype != "application/pdf":
                 raise FormatInvalidException
             reader = PdfReader(stream=file.file.path)
