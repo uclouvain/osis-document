@@ -57,6 +57,8 @@ OSIS_DOCUMENT_DOMAIN_LIST = [
 ]
 # To configure which extensions are allowed by default for any upload
 OSIS_DOCUMENT_ALLOWED_EXTENSIONS = ['pdf', 'txt', 'docx', 'doc', 'odt', 'png', 'jpg']
+# To enabled mimetype validation
+ENABLE_MIMETYPE_VALIDATION = True
 ```
 
 OSIS-Document is aimed at being run on multiple servers, so on your primary server, add it to your `urls.py` 
