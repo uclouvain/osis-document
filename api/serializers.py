@@ -25,6 +25,7 @@
 # ##############################################################################
 import mimetypes
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.exceptions import FieldDoesNotExist, FieldError
@@ -38,18 +39,21 @@ class RequestUploadSerializer(serializers.Serializer):
     file = serializers.FileField(validators=[OsisDocumentFileExtensionValidator()], required=True)
 
     def validate(self, attrs):
+        if getattr(settings, 'ENABLE_MIMETYPE_VALIDATION', False):
+            self._mimetype_validation(attrs['file'])
+        return super().validate(attrs)
+
+    def __mimetype_validation(self, file_object):
         from pathlib import Path
         from osis_document.exceptions import MimeMismatch
         import magic
 
-        file_object = attrs['file']
         extension = mimetypes.guess_extension(mimetypes.guess_type(file_object.name, strict=True)[0], strict=True)[1:]
         file_object.file.seek(0)
         mime_type = magic.from_buffer(file_object.read(4096), mime=True)
 
         if mime_type != file_object.content_type and Path(file_object.name).suffix != extension:
             raise MimeMismatch
-        return super().validate(attrs)
 
 
 class RequestUploadResponseSerializer(serializers.Serializer):
