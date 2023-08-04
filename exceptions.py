@@ -65,3 +65,10 @@ class InvalidPostProcessorAction(APIException):
 
 class InvalidMergeFileDimension(APIException):
     default_detail = _("Invalid dimension params given for merge action")
+
+
+class SaveRawContentRemotelyException(Exception):
+    def __init__(self, api_response):
+        self.api_response = api_response
+        self.message = f"An error occured during uploading file to OSIS-Document server. Error:{self.api_response.text}"
+        super().__init__(self.message)
