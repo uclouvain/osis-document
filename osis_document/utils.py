@@ -172,7 +172,7 @@ def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
 
     # Create the request
     response = requests.post(url, files=data)
-    if response.status_code != 200:
+    if response.status_code != 201:
         raise SaveRawContentRemotelyException(response)
     return response.json().get('token')
 
