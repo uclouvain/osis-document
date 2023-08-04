@@ -38,7 +38,7 @@ from django.core.exceptions import FieldError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
 from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType
-from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction
+from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction, SaveRawContentRemotelyException
 from osis_document.models import Token, Upload, PostProcessAsync
 
 
@@ -172,6 +172,8 @@ def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
 
     # Create the request
     response = requests.post(url, files=data)
+    if response.status_code != 200:
+        raise SaveRawContentRemotelyException(response)
     return response.json().get('token')
 
 
