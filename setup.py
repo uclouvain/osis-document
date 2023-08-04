@@ -39,6 +39,6 @@ setup(
         'requests>=2.20.0,<3.0',
         'filetype>=1.1.0,<2.0',
         'pypdf>=3.6.0,<4.0',
-        'python-magic==0.4.15'
+        'python-magic==0.4.27'
     ]
 )
