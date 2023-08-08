@@ -37,10 +37,9 @@ from django.core import signing
 from django.core.exceptions import FieldError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
-from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
-from osis_document.enums import FileStatus
-from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction
-from osis_document.models import Token, Upload
+from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType
+from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction, SaveRawContentRemotelyException
+from osis_document.models import Token, Upload, PostProcessAsync
 
 
 def confirm_upload(token, upload_to, model_instance=None) -> UUID:
@@ -173,6 +172,8 @@ def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
 
     # Create the request
     response = requests.post(url, files=data)
+    if response.status_code != 201:
+        raise SaveRawContentRemotelyException(response)
     return response.json().get('token')
 
 
@@ -181,25 +182,73 @@ def post_process(
         post_process_actions: List[str],
         post_process_params: Dict[str, Dict[str, str]],
 ) -> Dict[str, Dict[str, List[UUID]]]:
+    """
+    Given a list of uuids and a list of post-processing actions and a dictionary of params for each post-processing
+    action, return a dictionary containing uuid of input and output for each post-processing action.
+    """
     from osis_document.contrib.post_processing.converter_registry import converter_registry
     from osis_document.contrib.post_processing.merger import merger
 
     post_processing_return = {}
-    post_processing_return.setdefault(PostProcessingEnums.CONVERT_TO_PDF.name, {'input': [], 'output': []})
-    post_processing_return.setdefault(PostProcessingEnums.MERGE_PDF.name, {'input': [], 'output': []})
-    intermediary_output = []
+    post_processing_return.setdefault(PostProcessingType.CONVERT.name, {'input': [], 'output': []})
+    post_processing_return.setdefault(PostProcessingType.MERGE.name, {'input': [], 'output': []})
+    intermediary_output = {}
 
     processors = {
-        PostProcessingEnums.CONVERT_TO_PDF.name: converter_registry,
-        PostProcessingEnums.MERGE_PDF.name: merger,
+        PostProcessingType.CONVERT.name: converter_registry,
+        PostProcessingType.MERGE.name: merger,
     }
 
     for action_type in post_process_actions:
         processor = processors.get(action_type, None)
         if not processor:
             raise InvalidPostProcessorAction
-        input = post_processing_return[action_type]["input"] = intermediary_output or uuid_list
+        input = post_processing_return[action_type]["input"] = intermediary_output[
+            'upload_objects'] if intermediary_output else uuid_list
         intermediary_output = processor.process(upload_objects_uuids=input, **post_process_params[action_type])
         post_processing_return[action_type]["output"] = intermediary_output
 
     return post_processing_return
+
+
+def create_post_process_async_object(
+        uuid_list: List[UUID],
+        post_process_actions: List[str],
+        post_process_params: Dict[str, Dict[str, str]],
+) -> None:
+    """
+    Create a PostProcessingAsync object with the list of uuid, the list of post-processing actions and the
+    post-processing params dictionary
+    """
+    PostProcessAsync.objects.create(
+        status=PostProcessingStatus.PENDING.name,
+        data={'post_process_actions': post_process_actions,
+              'base_input': uuid_list,
+              'post_process_params': post_process_params},
+        results={
+            action: {'status': PostProcessingStatus.PENDING.name} for action in post_process_actions
+        }
+    )
+
+
+def stringify_uuid_and_check_uuid_validity(uuid_input: Union[str, UUID]) -> Dict[str, Union[str, bool]]:
+    """
+    Checks the validity of an uuid and converts it to a string if necessary
+    """
+    results = {
+        'uuid_valid': False,
+        'uuid_stringify': '',
+    }
+    if isinstance(uuid_input, str):
+        try:
+            uuid.UUID(uuid_input)
+            results['uuid_valid'] = True
+            results['uuid_stringify'] = uuid_input
+        except ValueError:
+            results['valid'] = False
+    elif isinstance(uuid_input, UUID):
+        results['uuid_valid'] = True
+        results['uuid_stringify'] = str(uuid_input)
+    else:
+        raise TypeError
+    return results

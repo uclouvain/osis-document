@@ -1,0 +1,27 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+participant osis_submodule  as osis
+participant osis_document_API
+participant osis_document_API_utils
+participant osis_document_utils
+participant file_system
+osis <- osis : Generate or get file
+osis -> osis_document_utils:save_raw_content_remotely(content, name, mimetype)
+osis_document_utils -> osis_document_API : API-request : request-upload(file)
+osis_document_API -> osis_document_API_utils :
+osis_document_API -> osis_document_API : Create Upload(state='REQUESTED')
+osis_document_API -> file_system : Save file to disk
+osis_document_API -> osis_document_API_utils : get_token(Upload.uuid)
+osis_document_API_utils -> osis_document_API_utils : Create Token(WRITE)
+osis_document_API_utils -> osis_document_API : return Token
+osis_document_API -> osis_document_utils : API-response : HTTP_201_CREATED, Token
+osis_document_utils -> osis: Return Token(Write)
+osis <- osis :add write_token as model_instance\nFileField value
+osis <- osis : model_instance.save()
+osis -> osis_document_API : API-request confirm-upload(Token)
+osis_document_API -> osis_document_API_utils : confirm_upload(token)
+osis_document_API_utils -> osis_document_API_utils : Delete Token
+osis_document_API_utils -> osis_document_API_utils : Update Upload(status='UPLOADED')
+osis_document_API_utils -> osis_document_API : return Upload.uuid
+osis_document_API -> osis : API-response  : HTTP_201_CREATED, Upload.uuid
+@enduml

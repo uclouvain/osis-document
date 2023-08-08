@@ -57,6 +57,8 @@ OSIS_DOCUMENT_DOMAIN_LIST = [
 ]
 # To configure which extensions are allowed by default for any upload
 OSIS_DOCUMENT_ALLOWED_EXTENSIONS = ['pdf', 'txt', 'docx', 'doc', 'odt', 'png', 'jpg']
+# To enabled mimetype validation
+ENABLE_MIMETYPE_VALIDATION = True
 ```
 
 OSIS-Document is aimed at being run on multiple servers, so on your primary server, add it to your `urls.py` 
@@ -207,31 +209,81 @@ uploader.addEventListener('osisdocument:add', event => {
 
 Note that the `Uploader` component has the `osis-document-uploader` class.
 
-## File format conversion
+## Set a custom validity period for a Token
 
-In order to use the file conversion `OSIS_UPLOAD_FOLDER` must be defined
-in the `.env` file that shows the whole path to the folder of the
-downloaded files in  OSIS-Document **and LibreOffice must be installed on
-the computer.**
+To generate a token with a validity period other than the default 15 minutes, you must use the "custom_ttl" parameter of one of the get_remote_tokens or get_remote_token functions
 
-### Converter use
-Allowed Format : `Docx`, `Doc`, `Odt`, `txt`, `JPG`, and `PNG`
+This optional parameter only accepts numbers and corresponds to the duration in seconds of the validity period
+
+
+## Post-processing files
+
+To perform post-processing actions manually on files, use the utility function
+`post_process`. This function allows you to convert files, merge files,
+or do both at the same time.
+
+To do this, set the `post_process_type` parameter with the appropriate
+values from the `PostProcessingType` enumeration and provide the uuids of
+the files.
+
+
+```python
+from osis_document.utils import post_process
+from osis_document.enums import PostProcessingType, PageFormatEnums
+
+post_process(uuid_list=[],
+             post_process_actions=[PostProcessingType.CONVERT.name, PostProcessingType.MERGE.name],
+             post_process_params={
+                 PostProcessingType.CONVERT.name: {'output_filename': 'conversion_file_name'},
+                 PostProcessingType.MERGE.name: {'pages_dimension': PageFormatEnums.A4.name,
+                                                 'output_filename': 'merge_file_name'}}
+             )
+``` 
+
+To define the name(s) of the output file(s) or other parameters for the post-processing, use the
+`post_process_params` parameter. If no parameter is required, the right dictionary still be defined according to the following format:
+```python
+post_process_params={
+  PostProcessingType.ACTION1.name:{},
+  PostProcessingType.ACTION2.name:{},
+  ...
+}
+```
+The post-processing output dictionary matches the following tamplate
+```python
+output={
+  'convert': {
+    'input':[object_uuid, ...],
+    'output':[upload_object_uuid, ...]
+  },
+  'merge': {
+    'input':[object_uuid, ...],
+    'output':[upload_object_uuid]
+  }
+}
+```
+### File format conversion
+
+To use the file conversion LibreOffice must be installed on the computer.
+
+Allowed Format :
+- `Docx` 
+- `Doc` 
+- `Odt` 
+- `txt` 
+- `JPG` 
+- `PNG`
+- `PDF`(Accepted but not converted)
 
 ```python
 from osis_document.contrib.post_processing.converter_registry import converter_registry
 
 output = converter_registry.process(upload_objects_uuid=List[UUID], output_filename='new_filename')
 ```
-To convert a text file into a pdf use `ConverterTextDocumentToPdf`
-instead of ConverterImageToPdf
 
-## Files merge in PDF
-In order to use the pdf merging `OSIS_UPLOAD_FOLDER` must be defined in
-the `.env` file  that shows the whole path to the folder of the
-downloaded files in  OSIS-Document.
+### Files merge in PDF
 
-If the files are not in the PDF format the correct conversion class must
-be used before merging.
+If the files are not in the PDF format the correct conversion must be done before merging.
 
 ```python
 from osis_document.contrib.post_processing.merger import Merger
@@ -240,55 +292,17 @@ from osis_document.contrib.post_processing.post_processing_enums import PageForm
 Merger().process(input_uuid_files=[], filename='new_filename', pages_dimension=PageFormatEnums.A4.name)
 ``` 
 
-## Post-processing files
-
-To perform post-processing actions on files, use the utility function
-`post_process`. This function allows you to convert files, merge files,
-or do both at the same time.
-
-To do this, set the `post_process_type` parameter with the appropriate
-values from the `PostProcessingEnums` enumeration and provide the uuids of
-the files.
-
-To define the name(s) of the output file(s) or other parameters for the post-processing, use the
-`post_process_params` parameter.
-
-```python
-from osis_document.utils import post_process
-from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
-from osis_document.contrib.post_processing.post_processing_enums import PageFormatEnums
-
-post_process(uuid_list=[],
-             post_process_actions=[PostProcessingEnums.CONVERT_TO_PDF.name, PostProcessingEnums.MERGE_PDF.name],
-             post_process_params={
-               PostProcessingEnums.CONVERT_TO_PDF.name:{'output_filename': 'conversion_file_name'},
-               PostProcessingEnums.MERGE_PDF.name:{'pages_dimension': PageFormatEnums.A4.name,
-                                                   'output_filename': 'merge_file_name'}}
-             )
-``` 
-### Post-processing output template
-```python
-output={
-  'convert_to_pdf': {
-    'input':[object_uuid, ...],
-    'output':[upload_object_uuid, ...]
-  },
-  'merge_pdf': {
-    'input':[object_uuid, ...],
-    'output':[upload_object_uuid]
-  }
-}
-``` 
-## Define post-processing actions in a FileField of a model
+### Define post-processing actions and post-processing type in a FileField of a model
 ```python
 class ModelName(models.Model):
     ...
     model_field_name = FileField(
         ...
-        post_processing=[PostProcessingEnums.CONVERT_TO_PDF.name, PostProcessingEnums.MERGE_PDF.name],
+        post_processing=[PostProcessingType.CONVERT.name, PostProcessingType.MERGE.name],
+        async_post_processing=False,
         post_process_params={
-            PostProcessingEnums.CONVERT_TO_PDF.name: {'output_filename': 'convert_filename'},
-            PostProcessingEnums.MERGE_PDF.name: {
+            PostProcessingType.CONVERT.name: {'output_filename': 'convert_filename'},
+            PostProcessingType.MERGE.name: {
                 'pages_dimension': PageFormatEnums.A4.name,
                 'output_filename': 'merge_filename'
             }
@@ -296,7 +310,103 @@ class ModelName(models.Model):
         ...
     )
     ...
-``` 
+```
+
+The parameters available for post-processing are :
+
+- `CONVERT`:
+  - `output_filename` The name of the output file
+- `MERGE`:
+  - `pages_dimension` The page size of the output file (A3, A4, A5, etc..)
+  - `output_filename` The name of the output file
+
+### Synchronous post-processing
+![sync post-processing sequence diagram](osis_document/docs/img/post_processing_sync_sequence.png)
+
+
+### Asynchronous post-processing
+![async post-processing sequence diagram](osis_document/docs/img/post_processing_async_sequence.png)
+![make_pending_post_processing_task sequence diagram](osis_document/docs/img/make_pending_post_processing_task_sequence.png)
+To configure an asynchronous post-processing, you must set `async_post_processing` to `True` in the model's FileField.
+
+When form is submit, an instance of the `PostProcessAsync` model was created with status `PENDING`.
+This instance contains all the parameters necessary for the execution of the post-processing and stores the bases inputs. 
+
+No `PostProcessing` instance is created until the execution of the asynchronous post-processing is launched.
+
+One `PostProcessing` instance is created when a post-process action is completed (conversion of 2 file + merge = 3 `PostProcessing` instance)  
+
+A celery task is configured to periodically run asynchronous post-processing with status `PENDING`.
+
+During the asynchronous process, the `PostProcessAsync` instance is updated to keep the inputs/outputs of each post-processing actions.
+
+If an error occurs during the execution of an asynchronous post-processing, the `results` field of `PostProcessAsync`  is updated with the data relating to this error.
+The results dictionary will have the following format :
+
+```python
+results_exemple = {
+    "POST_PROCESSING_ACTION": {
+        "status": "DONE",
+        "upload_objects": ['UUID', 'UUID', 'UUID'],
+        "post_processing_objects": ['UUID', 'UUID', 'UUID']
+    },
+    "POST_PROCESSING_ACTION": {
+        "errors": {
+            "params": "args",
+            "messages": ["error_message"]
+        },
+        "status": "FAILED"
+    },
+    "POST_PROCESSING_ACTION": {
+        "status": "PENDING"
+    }
+}
+```
+### Get token of a post-processed file
+To get the token of one post-processed file, you must use the function `get_remote_token`, or use the function `get_remote_tokens` if you want the token of many files.
+
+Depending on the value of `wanted_post_process`, on the status of an asynchronous post-processing and on the function used, there can be several possibilities.
+
+#### function get_remote_token()
+```python
+from osis_document.api.utils import get_remote_token
+
+get_remote_token(uuid='UUID', write_token=False, wanted_post_process=None)
+```
+
+![get_remote_token activity diagram](osis_document/docs/img/get_remote_token.png)
+
+If the post-process status is `DONE` or if the post-processing done is synchronous, there can be 3 possibilities:
+- If `wanted_post_process` == `None` -> Return a token for the output file of the last post_processing's action.
+- If `wanted_post_process` == `PostProcessingWanted.ACTION.name` -> Return a token for the output file of the specified post-processing action
+- If `wanted_post_process` == `Original` -> Return a token for the base input file
+
+If post-process status is `FAILED`, there can be 3 possibilities:
+- If `wanted_post_process` == `None` -> Return HTTP_422 and a dict containing errors from post-processing process
+- If `wanted_post_process` == `PostProcessingWanted.ACTION.name` and action's status is `DONE` -> Return a token for the output file of the specified post-processing action
+- If `wanted_post_process` == `Original` -> Return a token for the base input file
+
+If post-process status is `PENDING`, there can be 3 possibilities:
+- If `wanted_post_process` == `None` -> Return HTTP_206 and an url to get the progress of an asynchronous post-processing
+- If `wanted_post_process` == `PostProcessingWanted.ACTION.name` and action's status is `DONE` -> Return a token for the output file of the specified post-processing action
+- If `wanted_post_process` == `Original` -> Return a token for the base input file
+
+
+#### function get_remotes_token()
+
+```python
+from osis_document.api.utils import get_remote_tokens
+
+get_remote_tokens(uuids=['UUID', ...], wanted_post_process=None)
+```
+
+![get_remote_tokens activity diagram](osis_document/docs/img/get_remote_tokens.png)
+
+The returns are of the same type as for the get_remote_token function except that the function will return a list of tokens instead of a single token
+
+
+
+
 ## Add a widget to edit a PDF
 
 ```html

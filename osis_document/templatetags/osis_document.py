@@ -27,6 +27,7 @@
 from django import template
 from django.conf import settings
 
+from osis_document.enums import PostProcessingWanted, PostProcessingStatus
 from osis_document.utils import (
     get_file_url as utils_get_file_url,
 )
@@ -35,11 +36,31 @@ register = template.Library()
 
 
 @register.inclusion_tag('osis_document/visualizer.html')
-def document_visualizer(values):
+def document_visualizer(values, wanted_post_process=None):
     from osis_document.api.utils import get_remote_token
-
+    tokens = []
+    for value in values:
+        token = get_remote_token(value, wanted_post_process=wanted_post_process)
+        if isinstance(token, dict):
+            return {
+                'values': '',
+                'base_uuid': str(value),
+                'wanted_post_process': wanted_post_process,
+                'post_process_status': token.get('status'),
+                'base_url': settings.OSIS_DOCUMENT_BASE_URL,
+                'get_progress_url': token.get("links").get('progress'),
+            }
+        elif wanted_post_process == PostProcessingWanted.MERGE.name:
+            return {
+                'values': [token],
+                'post_process_status': PostProcessingStatus.DONE.name,
+                'base_url': settings.OSIS_DOCUMENT_BASE_URL,
+            }
+        else:
+            tokens.append(token)
     return {
-        'values': [get_remote_token(value) for value in values],
+        'values': tokens,
+        'post_process_status': '',
         'base_url': settings.OSIS_DOCUMENT_BASE_URL,
     }
 
@@ -55,14 +76,14 @@ def document_editor(value, **attrs):
 
 
 @register.simple_tag
-def get_metadata(uuid):
+def get_metadata(uuid, wanted_post_process=None, custom_ttl=None):
     from osis_document.api.utils import get_remote_metadata, get_remote_token
-
-    return get_remote_metadata(get_remote_token(uuid))
+    return get_remote_metadata(
+        get_remote_token(uuid=uuid, wanted_post_process=wanted_post_process, custom_ttl=custom_ttl))
 
 
 @register.simple_tag
-def get_file_url(uuid):
+def get_file_url(uuid, wanted_post_process=None, custom_ttl=None):
     from osis_document.api.utils import get_remote_token
-
-    return utils_get_file_url(get_remote_token(uuid))
+    return utils_get_file_url(
+        get_remote_token(uuid=uuid, wanted_post_process=wanted_post_process, custom_ttl=custom_ttl))

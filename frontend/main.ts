@@ -44,6 +44,10 @@ interface UploaderProps extends Record<string, unknown> {
 interface VisualizerProps extends Record<string, unknown> {
   baseUrl: string,
   values: string[],
+  postProcessStatus: string,
+  getProgressUrl: string,
+  baseUuid: string,
+  wantedPostProcess: string,
 }
 
 function initDocumentComponents() {
@@ -74,9 +78,21 @@ function initDocumentComponents() {
   });
 
   document.querySelectorAll<HTMLElement>('.osis-document-visualizer:not([data-v-app])').forEach((elem) => {
-    const props: VisualizerProps = {baseUrl: "", values: [], ...elem.dataset};
+    const props: VisualizerProps = {baseUrl: "", values: [],postProcessStatus: "", getProgressUrl: "", baseUuid:"", wantedPostProcess:"",  ...elem.dataset};
     if (typeof elem.dataset.values !== 'undefined') {
       props.values = elem.dataset.values.split(',');
+    }
+    if (typeof elem.dataset.postProcessStatus !== 'undefined') {
+      props.postProcessStatus = elem.dataset.postProcessStatus;
+    }
+    if (typeof elem.dataset.getProgressUrl !== 'undefined') {
+      props.getProgressUrl = elem.dataset.getProgressUrl;
+    }
+    if (typeof elem.dataset.baseUuid !== 'undefined') {
+      props.baseUuid = elem.dataset.baseUuid;
+    }
+    if (typeof elem.dataset.wantedPostProcess !== 'undefined') {
+      props.wantedPostProcess = elem.dataset.wantedPostProcess;
     }
     createApp(Visualizer, props).use(i18n).mount(elem);
   });

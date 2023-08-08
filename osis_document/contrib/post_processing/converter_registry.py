@@ -23,15 +23,17 @@
 #  see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import uuid
 from os.path import splitext
-from typing import List, Optional
+from typing import List, Optional, Dict
 from uuid import UUID
 
-from .converters.converter import Converter
 from osis_document.contrib.post_processing.processor import Processor
 from osis_document.enums import PostProcessingType
 from osis_document.exceptions import FormatInvalidException, MissingFileException
 from osis_document.models import Upload
+
+from .converters.converter import Converter
 
 
 class ConverterRegistry(Processor):
@@ -44,26 +46,34 @@ class ConverterRegistry(Processor):
     def add_converter(self, converter: Converter) -> None:
         self.converters.append(converter)
 
-    def process(self, upload_objects_uuids: List[UUID], output_filename: Optional[str] = None) -> List[UUID]:
+    def process(self, upload_objects_uuids: List[UUID], output_filename: Optional[str] = None) -> Dict[str, List[UUID]]:
         upload_objects = Upload.objects.filter(uuid__in=upload_objects_uuids)
-        process_return = []
+        process_return = {
+            'upload_objects': [],
+            'post_processing_objects': []
+        }
         converter: Converter
         for converter in self.converters:
             for upload_object in upload_objects:
-                if upload_object.mimetype == 'application/pdf' and upload_object.uuid not in process_return:
-                    process_return.append(upload_object.uuid)
+                if upload_object.mimetype == 'application/pdf' and upload_object.uuid not in process_return['upload_objects']:
+                    process_return['upload_objects'].append(upload_object.uuid)
 
                 if upload_object.mimetype in converter.get_supported_formats():
                     new_file_name = self._get_output_filename(output_filename, upload_object)
                     path = converter.convert(upload_input_object=upload_object, output_filename=new_file_name)
-                    new_instance = self._create_upload_instance(path)
-                    self._create_post_processing_instance(input_files=[upload_object], output_file=new_instance)
-                    process_return.append(new_instance.uuid)
+                    new_instance = self._create_upload_instance(path=path, filename=output_filename)
+                    process_return['post_processing_objects'].append(
+                        self._create_post_processing_instance(
+                            input_files=[upload_object],
+                            output_file=new_instance
+                        ).uuid
+                    )
+                    process_return['upload_objects'].append(new_instance.uuid)
 
-        if not process_return:
+        if not process_return['upload_objects']:
             raise FormatInvalidException
 
-        if len(upload_objects_uuids) != len(process_return):
+        if len(upload_objects_uuids) != len(process_return['upload_objects']):
             raise MissingFileException
 
         return process_return
@@ -71,8 +81,8 @@ class ConverterRegistry(Processor):
     @staticmethod
     def _get_output_filename(output_filename: Optional[str], upload_input_object: Upload) -> str:
         if output_filename:
-            return output_filename + '.pdf'
-        return splitext(upload_input_object.metadata['name'])[0] + '.pdf'
+            return f'{output_filename}{uuid.uuid4()}.pdf'
+        return f'{splitext(upload_input_object.metadata["name"])[0]}{uuid.uuid4()}.pdf'
 
 
 converter_registry = ConverterRegistry()

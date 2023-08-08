@@ -27,7 +27,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='OSIS Document',
-    version='0.6',
+    version='0.9.3',
     description='Document management API and widget',
     url='http://github.com/uclouvain/osis-document',
     author='Université catholique de Louvain',
@@ -39,5 +39,6 @@ setup(
         'requests>=2.20.0,<3.0',
         'filetype>=1.1.0,<2.0',
         'pypdf>=3.6.0,<4.0',
+        'python-magic==0.4.27'
     ]
 )

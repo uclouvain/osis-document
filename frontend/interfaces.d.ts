@@ -36,10 +36,19 @@ export declare interface TokenReponse {
   token: string,
 }
 
-
 export declare interface ErrorReponse {
   error: string,
   detail: string,
 }
 
+export declare interface PostProcessingProgressResult {
+  progress : number,
+  wanted_post_process : string
+}
 
+export declare interface GetRemoteTokenResponse {
+  token: string,
+  upload_id ?: string,
+  access ?: string,
+  expires_at ?: string,
+}
