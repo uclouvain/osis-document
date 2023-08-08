@@ -207,6 +207,150 @@ uploader.addEventListener('osisdocument:add', event => {
 
 Note that the `Uploader` component has the `osis-document-uploader` class.
 
+## File format conversion
+
+In order to use the file conversion `OSIS_UPLOAD_FOLDER` must be defined
+in the `.env` file that shows the whole path to the folder of the
+downloaded files in  OSIS-Document **and LibreOffice must be installed on
+the computer.**
+
+### Converter use
+Allowed Format : `Docx`, `Doc`, `Odt`, `txt`, `JPG`, and `PNG`
+
+```python
+from osis_document.contrib.post_processing.converter_registry import converter_registry
+
+output = converter_registry.process(upload_objects_uuid=List[UUID], output_filename='new_filename')
+```
+To convert a text file into a pdf use `ConverterTextDocumentToPdf`
+instead of ConverterImageToPdf
+
+## Files merge in PDF
+In order to use the pdf merging `OSIS_UPLOAD_FOLDER` must be defined in
+the `.env` file  that shows the whole path to the folder of the
+downloaded files in  OSIS-Document.
+
+If the files are not in the PDF format the correct conversion class must
+be used before merging.
+
+```python
+from osis_document.contrib.post_processing.merger import Merger
+from osis_document.contrib.post_processing.post_processing_enums import PageFormatEnums
+
+Merger().process(input_uuid_files=[], filename='new_filename', pages_dimension=PageFormatEnums.A4.name)
+``` 
+
+## Post-processing files
+
+To perform post-processing actions on files, use the utility function
+`post_process`. This function allows you to convert files, merge files,
+or do both at the same time.
+
+To do this, set the `post_process_type` parameter with the appropriate
+values from the `PostProcessingEnums` enumeration and provide the uuids of
+the files.
+
+To define the name(s) of the output file(s) or other parameters for the post-processing, use the
+`post_process_params` parameter.
+
+```python
+from osis_document.utils import post_process
+from osis_document.contrib.post_processing.post_processing_enums import PostProcessingEnums
+from osis_document.contrib.post_processing.post_processing_enums import PageFormatEnums
+
+post_process(uuid_list=[],
+             post_process_actions=[PostProcessingEnums.CONVERT_TO_PDF.name, PostProcessingEnums.MERGE_PDF.name],
+             post_process_params={
+               PostProcessingEnums.CONVERT_TO_PDF.name:{'output_filename': 'conversion_file_name'},
+               PostProcessingEnums.MERGE_PDF.name:{'pages_dimension': PageFormatEnums.A4.name,
+                                                   'output_filename': 'merge_file_name'}}
+             )
+``` 
+### Post-processing output template
+```python
+output={
+  'convert_to_pdf': {
+    'input':[object_uuid, ...],
+    'output':[upload_object_uuid, ...]
+  },
+  'merge_pdf': {
+    'input':[object_uuid, ...],
+    'output':[upload_object_uuid]
+  }
+}
+``` 
+## Define post-processing actions in a FileField of a model
+```python
+class ModelName(models.Model):
+    ...
+    model_field_name = FileField(
+        ...
+        post_processing=[PostProcessingEnums.CONVERT_TO_PDF.name, PostProcessingEnums.MERGE_PDF.name],
+        post_process_params={
+            PostProcessingEnums.CONVERT_TO_PDF.name: {'output_filename': 'convert_filename'},
+            PostProcessingEnums.MERGE_PDF.name: {
+                'pages_dimension': PageFormatEnums.A4.name,
+                'output_filename': 'merge_filename'
+            }
+        },
+        ...
+    )
+    ...
+``` 
+## Add a widget to edit a PDF
+
+```html
+{% load osis_document %}
+
+{% block content %}
+  {% document_editor yourinstance.document.0 %}
+{% endblock %}
+
+{% block style %}
+  <link href="{% static 'osis_document/osis-document-editor.css' %}" rel="stylesheet" />
+{% endblock %}
+
+{% block script %}
+  <script type="text/javascript" src="{% static 'osis_document/osis-document-editor.umd.min.js' %}"></script>
+{% endblock %}
+```
+
+This editor comes with a few toolbar components, namely:
+ - `pagination`
+ - `zoom`
+ - `comment`
+ - `highlight`
+ - `rotation`
+
+If you need to disable some, you can specify `{% document_editor admission.documents_projet.0 zoom=false %}`
+
+Along with these options, you can dispatch custom events to control the widget externally:
+ - `changeCurrentPage`
+ - `rotate`
+ - `zoomIn`
+ - `zoomOut`
+ - `setScale`
+ - `setHighlight`
+ - `setCommenting`
+ - `save`
+
+```js
+var element = document.querySelector('.osis-document-editor');
+element.dispatchEvent(new CustomEvent('changeCurrentPage', { detail: 2 }));
+element.dispatchEvent(new CustomEvent('rotate', { detail: 90 }));
+element.dispatchEvent(new CustomEvent('zoomIn'));
+element.dispatchEvent(new CustomEvent('setScale', { detail: 'auto' }));
+element.dispatchEvent(new CustomEvent('setCommenting', { detail: '#ff0000' }));
+element.dispatchEvent(new CustomEvent('save'));
+
+// You can also listen for these events to know the number of pages and when the user scrolls
+element.addEventListener('pageChange', ({detail: {pageNumber}}) => {
+  console.log(pageNumber);
+});
+element.addEventListener('numPages', ({detail: {numPages}}) => {
+  console.log(numPages);
+});
+```
 
 # Contributing to OSIS-Document
 
@@ -231,7 +375,7 @@ Commands available:
 
 To ease generation, use the provided generator:
 ```console
-./manage.py generateschema --urlconf=osis_document.urls --generator_class osis_document.api.schema.OsisDocumentSchemaGenerator --file osis_document/schema.yml
+./manage.py generateschema --urlconf=osis_document.urls --generator_class osis_document.api.schema.OsisDocumentSchemaGenerator --file osis-document/schema.yml
 ```
 
 # Communication between servers

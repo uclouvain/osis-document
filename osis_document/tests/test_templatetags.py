@@ -27,20 +27,21 @@ from unittest.mock import patch
 
 from django.template import Context, Template
 from django.test import TestCase, override_settings
-
 from osis_document.tests.factories import PdfUploadFactory
 
 
-@override_settings(OSIS_DOCUMENT_API_SHARED_SECRET='verysecret',
-                   OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/')
+@override_settings(OSIS_DOCUMENT_API_SHARED_SECRET='verysecret', OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/')
 class TemplateTagsTestCase(TestCase):
     def setUp(self):
-        self.mock_remote_metadata = patch('osis_document.api.utils.get_remote_metadata', return_value={
-            "size": 1024,
-            "mimetype": "application/pdf",
-            "name": "test.pdf",
-            "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
-        })
+        self.mock_remote_metadata = patch(
+            'osis_document.api.utils.get_remote_metadata',
+            return_value={
+                "size": 1024,
+                "mimetype": "application/pdf",
+                "name": "test.pdf",
+                "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
+            },
+        )
         self.mock_remote_metadata.start()
         self.mock_remote_token = patch('osis_document.api.utils.get_remote_token', return_value='a:token')
         self.mock_remote_token.start()
@@ -51,22 +52,15 @@ class TemplateTagsTestCase(TestCase):
 
     def test_visualizer_does_not_expose_uuid(self):
         stub_uuid = PdfUploadFactory().uuid
-        context = Context({
-            'values': [stub_uuid]
-        })
-        rendered = Template(
-            '{% load osis_document %}'
-            '{% document_visualizer values %}'
-        ).render(context)
+        context = Context({'values': [stub_uuid]})
+        rendered = Template('{% load osis_document %}' '{% document_visualizer values %}').render(context)
         self.assertNotIn(str(stub_uuid), rendered)
         self.assertIn('class="osis-document-visualizer"', rendered)
         self.assertIn('http://dummyurl.com/', rendered)
 
     def test_other_tags(self):
         stub_uuid = PdfUploadFactory().uuid
-        context = Context({
-            'values': [stub_uuid]
-        })
+        context = Context({'values': [stub_uuid]})
         rendered = Template(
             '{% load osis_document %}'
             '{% for file_uuid in values %}'

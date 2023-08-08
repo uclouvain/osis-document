@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: OSIS Document Service
-  version: 1.0.3
+  version: 1.0.5
   description: A set of API endpoints that allow you to get information about uploads
 paths:
   /metadata/{token}:
@@ -166,7 +166,7 @@ paths:
       - name: uuid
         in: path
         required: true
-        description: A UUID string identifying this Upload.
+        description: A UUID string identifying this Transfert.
         schema:
           type: string
       requestBody:
@@ -199,7 +199,7 @@ paths:
       - name: uuid
         in: path
         required: true
-        description: A UUID string identifying this Upload.
+        description: A UUID string identifying this Transfert.
         schema:
           type: string
       requestBody:
@@ -232,23 +232,23 @@ paths:
       requestBody:
         content:
           application/json:
-            type: array
-            items:
-              type: string
-              format: uuid
-              description: The uuid of the persisted file upload
+            schema:
+              type: array
+              items:
+                type: string
+                format: uuid
+                description: The uuid of the persisted file upload
       responses:
         '201':
           description: The tokens of several uploads
           content:
             application/json:
-              type: object
-              properties:
-                type: string
-              additionalProperties:
-                oneOf:
-                - $ref: '#/components/schemas/Token'
-                - $ref: '#/components/schemas/ErrorWithStatus'
+              schema:
+                type: object
+                additionalProperties:
+                  oneOf:
+                  - $ref: '#/components/schemas/Token'
+                  - $ref: '#/components/schemas/ErrorWithStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -267,10 +267,11 @@ paths:
       requestBody:
         content:
           application/json:
-            type: array
-            items:
-              type: string
-              description: The file token
+            schema:
+              type: array
+              items:
+                type: string
+                description: The file token
       responses:
         '201':
           content:
@@ -281,13 +282,12 @@ paths:
           description: The metadata of several uploads
           content:
             application/json:
-              type: object
-              properties:
-                type: string
-              additionalProperties:
-                oneOf:
-                - $ref: '#/components/schemas/Metadata'
-                - $ref: '#/components/schemas/ErrorWithStatus'
+              schema:
+                type: object
+                additionalProperties:
+                  oneOf:
+                  - $ref: '#/components/schemas/Metadata'
+                  - $ref: '#/components/schemas/ErrorWithStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -313,12 +313,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ChangeMetadata'
+              type: object
+              additionalProperties: true
       responses:
         '200':
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/Metadata'
           description: ''
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -359,6 +361,64 @@ paths:
           $ref: '#/components/responses/NotFound'
       tags:
       - rotate-image
+  /save-editor/{token}:
+    post:
+      operationId: saveEditor
+      description: Receive a file (from VueJS), rotate its pages if needed and replace
+        corresponding upload
+      parameters:
+      - name: token
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaveEditor'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveEditorResponse'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - save-editor
+  /post-processing:
+    post:
+      operationId: postProcessing
+      description: ''
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostProcessing'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - post-processing
+      security:
+      - ApiKeyAuth: []
 components:
   schemas:
     Metadata:
@@ -394,6 +454,14 @@ components:
           description: A writing token for the uploaded file
       required:
       - token
+    RequestUpload:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+      - file
     ConfirmUploadResponse:
       type: object
       properties:
@@ -460,12 +528,7 @@ components:
       - upload_id
     ChangeMetadata:
       type: object
-      properties:
-        name:
-          type: string
-          description: The file's new name
-      required:
-      - name
+      properties: {}
     RotateImageResponse:
       type: object
       properties:
@@ -482,6 +545,44 @@ components:
           description: The rotation requested, in degrees, usually 90, 180 or 270
       required:
       - rotate
+    SaveEditorResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: A fresh writing token for the modified file
+      required:
+      - token
+    SaveEditor:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        rotations:
+          type: object
+          description: The rotations requested, a mapping of 0-indexed page number
+            and degrees
+      required:
+      - file
+      - rotations
+    PostProcessing:
+      type: object
+      properties:
+        files_uuid:
+          type: array
+          items: {}
+          description: A list of files UUID
+        post_process_types:
+          type: array
+          items: {}
+          description: A list of actions to perform on the files
+        post_process_params:
+          type: object
+          description: A dict of params for post processing
+      required:
+      - files_uuid
+      - post_process_types
     Error:
       type: object
       properties:

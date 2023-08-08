@@ -23,14 +23,13 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
 from osis_document.api import serializers
 from osis_document.api.permissions import APIKeyPermission
 from osis_document.api.schema import DetailedAutoSchema
 from osis_document.enums import FileStatus
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 
 class DeclareFileAsInfectedSchema(DetailedAutoSchema):  # pragma: no cover
@@ -55,9 +54,11 @@ class DeclareFileAsInfectedView(APIView):
 
     def post(self, *args, **kwargs):
         """Given a server-to-server request, declare the file as infected"""
-        input_serializer_data = serializers.DeclareFileAsInfectedSerializer(data={
+        input_serializer_data = serializers.DeclareFileAsInfectedSerializer(
+            data={
                 **self.request.data,
-        })
+            }
+        )
         input_serializer_data.is_valid(raise_exception=True)
         validated_data = input_serializer_data.validated_data
         upload = validated_data.get('path')

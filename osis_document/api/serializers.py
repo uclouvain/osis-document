@@ -27,10 +27,15 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.utils.translation import gettext_lazy as _
+from osis_document.models import Token, Upload
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from osis_document.models import Token, Upload
+
+class RequestUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Upload
+        fields = ['file']
 
 
 class RequestUploadResponseSerializer(serializers.Serializer):
@@ -67,7 +72,7 @@ class ContentTypeSerializer(serializers.Serializer):
     )
     instance_filters = serializers.JSONField(
         help_text="Lookup arguments allowing to filter the model instances to return one single object that will be "
-        "used to compute the upload directory path (via the 'upload_to' property)",
+                  "used to compute the upload directory path (via the 'upload_to' property)",
         required=False,
     )
 
@@ -142,7 +147,7 @@ class MetadataSerializer(serializers.Serializer):
 
 
 class ChangeMetadataSerializer(serializers.Serializer):
-    name = serializers.CharField(help_text="The file's new name")
+    pass
 
 
 class RotateImageSerializer(serializers.Serializer):
@@ -151,6 +156,15 @@ class RotateImageSerializer(serializers.Serializer):
 
 class RotateImageResponseSerializer(serializers.Serializer):
     token = serializers.CharField(help_text="A fresh writing token for the rotated file")
+
+
+class SaveEditorSerializer(serializers.Serializer):
+    file = serializers.FileField()
+    rotations = serializers.JSONField(help_text="The rotations requested, a mapping of 0-indexed page number and degrees")
+
+
+class SaveEditorResponseSerializer(serializers.Serializer):
+    token = serializers.CharField(help_text="A fresh writing token for the modified file")
 
 
 class TokenListSerializer(serializers.ListSerializer):
@@ -181,3 +195,18 @@ class TokenSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data = self.complete_new_validated_data(validated_data)
         return super().create(validated_data)
+
+
+class PostProcessing(serializers.Serializer):
+    files_uuid = serializers.ListField(
+        help_text="A list of files UUID",
+        required=True,
+    )
+    post_process_types = serializers.ListField(
+        help_text="A list of actions to perform on the files",
+        required=True,
+    )
+    post_process_params = serializers.DictField(
+        help_text="A dict of params for post processing",
+        required=False
+    )

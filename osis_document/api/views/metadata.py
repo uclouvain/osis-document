@@ -26,6 +26,7 @@
 from django.db.models.functions import Now
 from django.http import Http404
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
@@ -83,10 +84,12 @@ class MetadataListSchema(AutoSchema):  # pragma: no cover
         return {
             'content': {
                 ct: {
-                    'type': 'array',
-                    'items': {
-                        'type': 'string',
-                        'description': 'The file token',
+                    'schema': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'string',
+                            'description': 'The file token',
+                        },
                     },
                 }
                 for ct in self.request_media_types
@@ -99,15 +102,14 @@ class MetadataListSchema(AutoSchema):  # pragma: no cover
             'description': 'The metadata of several uploads',
             'content': {
                 'application/json': {
-                    'type': 'object',
-                    'properties': {
-                        'type': 'string',
-                    },
-                    'additionalProperties': {
-                        'oneOf': [
-                            {'$ref': '#/components/schemas/Metadata'},
-                            {'$ref': '#/components/schemas/ErrorWithStatus'},
-                        ],
+                    'schema': {
+                        'type': 'object',
+                        'additionalProperties': {
+                            'oneOf': [
+                                {'$ref': '#/components/schemas/Metadata'},
+                                {'$ref': '#/components/schemas/ErrorWithStatus'},
+                            ],
+                        },
                     },
                 },
             },
@@ -147,11 +149,25 @@ class MetadataListView(CorsAllowOriginMixin, APIView):
 
 class ChangeMetadataSchema(DetailedAutoSchema):  # pragma: no cover
     serializer_mapping = {
-        'POST': (serializers.ChangeMetadataSerializer, None),
+        'POST': (serializers.ChangeMetadataSerializer, serializers.MetadataSerializer),
     }
 
     def get_operation_id(self, path, method):
         return 'changeMetadata'
+
+    def get_request_body(self, path, method):
+        self.request_media_types = self.map_parsers(path, method)
+        return {
+            'content': {
+                ct: {
+                    'schema': {
+                        'type': 'object',
+                        'additionalProperties': True,
+                    },
+                }
+                for ct in self.request_media_types
+            }
+        }
 
     def get_responses(self, path, method):
         responses = super().get_responses(path, method)
@@ -166,13 +182,22 @@ class ChangeMetadataView(CorsAllowOriginMixin, APIView):
     authentication_classes = []
     permission_classes = []
     schema = ChangeMetadataSchema()
+    # List of the metadata fields that cannot be updated through this view
+    READ_ONLY_METADATA_FIELDS = [
+        'hash',
+    ]
 
     def post(self, *args, **kwargs):
         token = get_object_or_404(
             Token.objects.writing_not_expired(),
             token=self.kwargs['token'],
         )
+
+        if any(read_only_field in self.request.data for read_only_field in self.READ_ONLY_METADATA_FIELDS):
+            raise PermissionDenied
+
         upload = token.upload
-        upload.metadata['name'] = self.request.data.get('name', '')
+        upload.metadata.update(self.request.data)
         upload.save()
-        return Response(status=status.HTTP_200_OK)
+
+        return Response(get_upload_metadata(token=token.token, upload=upload), status=status.HTTP_200_OK)

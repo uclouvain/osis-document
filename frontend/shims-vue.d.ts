@@ -27,7 +27,7 @@
 // Declare *.vue file export as Vue components,
 // see https://github.com/vuejs/vue-eslint-parser/issues/104#issuecomment-1217306443
 declare module "*.vue" {
-  import { Component } from "vue";
-  const component: Component;
+  import { DefineComponent } from "vue";
+  const component: DefineComponent;
   export default component;
 }

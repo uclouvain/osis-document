@@ -78,3 +78,9 @@ class DocumentError(ChoiceEnum):
             'code': key,
             'message': cls.get_value(key),
         }
+
+
+class PostProcessingType(ChoiceEnum):
+    MERGE = _('Merge')
+    CONVERT = _('Convert')
+

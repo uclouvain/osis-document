@@ -37,19 +37,32 @@ register = template.Library()
 @register.inclusion_tag('osis_document/visualizer.html')
 def document_visualizer(values):
     from osis_document.api.utils import get_remote_token
+
     return {
         'values': [get_remote_token(value) for value in values],
         'base_url': settings.OSIS_DOCUMENT_BASE_URL,
     }
 
 
+@register.inclusion_tag('osis_document/editor.html')
+def document_editor(value, **attrs):
+    from osis_document.api.utils import get_remote_token
+    return {
+        'value': get_remote_token(value, write_token=True),
+        'base_url': settings.OSIS_DOCUMENT_BASE_URL,
+        'attrs': attrs,
+    }
+
+
 @register.simple_tag
 def get_metadata(uuid):
     from osis_document.api.utils import get_remote_metadata, get_remote_token
+
     return get_remote_metadata(get_remote_token(uuid))
 
 
 @register.simple_tag
 def get_file_url(uuid):
     from osis_document.api.utils import get_remote_token
+
     return utils_get_file_url(get_remote_token(uuid))

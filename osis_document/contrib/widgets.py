@@ -61,9 +61,7 @@ class FileUploadWidget(SplitArrayWidget):
     template_name = 'osis_document/uploader_widget.html'
 
     class Media:
-        css = {
-            'all': ('osis_document/osis-document.css',)
-        }
+        css = {'all': ('osis_document/osis-document.css',)}
         js = ('osis_document/osis-document.umd.min.js',)
 
     def __init__(self, **kwargs):
@@ -75,6 +73,9 @@ class FileUploadWidget(SplitArrayWidget):
         self.can_edit_filename = kwargs.pop('can_edit_filename', True)
         self.min_files = kwargs.pop('min_files', None)
         self.max_files = kwargs.pop('max_files', None)
+        self.post_processing = kwargs.pop('post_processing', None)
+        self.output_post_processing = kwargs.pop('output_post_processing', None)
+        self.post_process_params = kwargs.pop('post_process_params', None)
         if kwargs.get('size', None) is None:
             kwargs['size'] = 0
         super().__init__(widget=forms.TextInput, **kwargs)
@@ -84,8 +85,10 @@ class FileUploadWidget(SplitArrayWidget):
         if name in data and isinstance(data[name], list):
             return data[name]
         # Else, when sent from braowser, determine the size of the array to get all values
-        return [self.widget.value_from_datadict(data, files, '%s_%s' % (name, index))
-                for index in range(self.get_size(data, name))]
+        return [
+            self.widget.value_from_datadict(data, files, '%s_%s' % (name, index))
+            for index in range(self.get_size(data, name))
+        ]
 
     @staticmethod
     def get_size(data, name):
@@ -126,6 +129,12 @@ class FileUploadWidget(SplitArrayWidget):
             attrs['data-max-files'] = self.max_files
         if self.min_files is not None:
             attrs['data-min-files'] = self.min_files
+        if self.post_processing is not None:
+            attrs['post_processing'] = self.post_processing
+        if self.output_post_processing is not None:
+            attrs['output_post_processing'] = self.output_post_processing
+        if self.post_process_params is not None:
+            attrs['post_process_params'] = self.post_process_params
         return attrs
 
     def format_value(self, values):
@@ -134,7 +143,8 @@ class FileUploadWidget(SplitArrayWidget):
             return []
         # Convert the uuid values to write tokens, and filter out None values
         from osis_document.api.utils import get_remote_token
-        return filter(None, [
-            get_remote_token(value, write_token=True) if isinstance(value, uuid.UUID) else value
-            for value in values
-        ])
+
+        return filter(
+            None,
+            [get_remote_token(value, write_token=True) if isinstance(value, uuid.UUID) else value for value in values],
+        )

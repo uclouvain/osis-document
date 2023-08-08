@@ -31,13 +31,12 @@ from django.core.files.base import ContentFile, File
 from django.shortcuts import resolve_url
 from django.test import TestCase, override_settings
 from django.utils.datetime_safe import datetime
-from rest_framework.test import APITestCase
-
 from osis_document.enums import FileStatus, TokenAccess, DocumentError
 from osis_document.models import Token, Upload
 from osis_document.tests import QueriesAssertionsMixin
 from osis_document.tests.document_test.models import TestDocument
 from osis_document.tests.factories import ImageUploadFactory, PdfUploadFactory, ReadTokenFactory, WriteTokenFactory
+from rest_framework.test import APITestCase
 
 SMALLEST_PDF = b"""%PDF-1.
 1 0 obj<</Pages 2 0 R>>endobj 2 0 obj<</Kids[3 0 R]/Count 1>>endobj 3 0 obj<</MediaBox[0 0 612 792]>>endobj trailer<</Root 1 0 R>>"""
@@ -87,8 +86,7 @@ class RequestUploadViewTestCase(TestCase):
         self.assertFalse(response.has_header("Access-Control-Allow-Origin"))
 
 
-@override_settings(ROOT_URLCONF="osis_document.urls",
-                   OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
+@override_settings(ROOT_URLCONF="osis_document.urls", OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
 class ConfirmUploadViewTestCase(APITestCase):
     def setUp(self):
         self.client.defaults = {'HTTP_X_API_KEY': 'foobar'}
@@ -109,9 +107,12 @@ class ConfirmUploadViewTestCase(APITestCase):
     def test_confirm_upload_with_upload_to(self):
         token = WriteTokenFactory()
         original_upload = token.upload
-        response = self.client.post(resolve_url('confirm-upload', token=token.token), data={
-            'upload_to': 'custom-path/',
-        })
+        response = self.client.post(
+            resolve_url('confirm-upload', token=token.token),
+            data={
+                'upload_to': 'custom-path/',
+            },
+        )
         self.assertEqual(201, response.status_code)
         json = response.json()
         self.assertIn('uuid', json)
@@ -123,13 +124,16 @@ class ConfirmUploadViewTestCase(APITestCase):
     def test_confirm_upload_with_related_model_and_string_upload_to(self):
         token = WriteTokenFactory()
         original_upload = token.upload
-        response = self.client.post(resolve_url('confirm-upload', token=token.token), data={
-            'related_model': {
-                'app': TestDocument._meta.app_label,
-                'model': 'TestDocument',
-                'field': 'documents',
+        response = self.client.post(
+            resolve_url('confirm-upload', token=token.token),
+            data={
+                'related_model': {
+                    'app': TestDocument._meta.app_label,
+                    'model': 'TestDocument',
+                    'field': 'documents',
+                },
             },
-        })
+        )
         self.assertEqual(201, response.status_code)
         json = response.json()
         self.assertIn('uuid', json)
@@ -141,13 +145,16 @@ class ConfirmUploadViewTestCase(APITestCase):
     def test_confirm_upload_with_related_model_and_callable_upload_to(self):
         token = WriteTokenFactory()
         original_upload = token.upload
-        response = self.client.post(resolve_url('confirm-upload', token=token.token), data={
-            'related_model': {
-                'app': TestDocument._meta.app_label,
-                'model': 'TestDocument',
-                'field': 'other_documents',
+        response = self.client.post(
+            resolve_url('confirm-upload', token=token.token),
+            data={
+                'related_model': {
+                    'app': TestDocument._meta.app_label,
+                    'model': 'TestDocument',
+                    'field': 'other_documents',
+                },
             },
-        })
+        )
         self.assertEqual(201, response.status_code)
         json = response.json()
         self.assertIn('uuid', json)
@@ -160,16 +167,19 @@ class ConfirmUploadViewTestCase(APITestCase):
         doc_pk = TestDocument.objects.create(documents=[WriteTokenFactory().upload_id]).pk
         token = WriteTokenFactory()
         original_upload = token.upload
-        response = self.client.post(resolve_url('confirm-upload', token=token.token), data={
-            'related_model': {
-                'app': TestDocument._meta.app_label,
-                'model': 'TestDocument',
-                'field': 'other_documents',
-                'instance_filters': {
-                    'pk': doc_pk,
-                }
+        response = self.client.post(
+            resolve_url('confirm-upload', token=token.token),
+            data={
+                'related_model': {
+                    'app': TestDocument._meta.app_label,
+                    'model': 'TestDocument',
+                    'field': 'other_documents',
+                    'instance_filters': {
+                        'pk': doc_pk,
+                    },
+                },
             },
-        })
+        )
         self.assertEqual(201, response.status_code)
         json = response.json()
         self.assertIn('uuid', json)
@@ -180,57 +190,69 @@ class ConfirmUploadViewTestCase(APITestCase):
 
     def test_confirm_upload_with_unknown_related_model(self):
         token = WriteTokenFactory()
-        response = self.client.post(resolve_url('confirm-upload', token=token.token), data={
-            'related_model': {
-                'app': 'unknown_app',
-                'model': 'unknown_model',
+        response = self.client.post(
+            resolve_url('confirm-upload', token=token.token),
+            data={
+                'related_model': {
+                    'app': 'unknown_app',
+                    'model': 'unknown_model',
+                },
             },
-        })
+        )
         self.assertEqual(400, response.status_code)
         self.assertTrue('related_model' in response.json())
         self.assertTrue('unknown_app:unknown_model' in response.json()['related_model'][0])
 
     def test_confirm_upload_with_unknown_related_model_field(self):
         token = WriteTokenFactory()
-        response = self.client.post(resolve_url('confirm-upload', token=token.token), data={
-            'related_model': {
-                'app': TestDocument._meta.app_label,
-                'model': 'TestDocument',
-                'field': 'unknown_field',
+        response = self.client.post(
+            resolve_url('confirm-upload', token=token.token),
+            data={
+                'related_model': {
+                    'app': TestDocument._meta.app_label,
+                    'model': 'TestDocument',
+                    'field': 'unknown_field',
+                },
             },
-        })
+        )
         self.assertEqual(400, response.status_code)
         self.assertTrue('related_model' in response.json())
         self.assertTrue('unknown_field' in response.json()['related_model'][0])
 
     def test_confirm_upload_with_unknown_instance_filters(self):
         token = WriteTokenFactory()
-        response = self.client.post(resolve_url('confirm-upload', token=token.token), data={
-            'related_model': {
-                'app': TestDocument._meta.app_label,
-                'model': 'TestDocument',
-                'field': 'other_documents',
-                'instance_filters': {
-                    'unknown_filter': '',
-                }
+        response = self.client.post(
+            resolve_url('confirm-upload', token=token.token),
+            data={
+                'related_model': {
+                    'app': TestDocument._meta.app_label,
+                    'model': 'TestDocument',
+                    'field': 'other_documents',
+                    'instance_filters': {
+                        'unknown_filter': '',
+                    },
+                },
             },
-        })
+        )
         self.assertEqual(400, response.status_code)
         self.assertTrue('related_model' in response.json())
         self.assertTrue('unknown field' in response.json()['related_model'][0])
 
     def test_confirm_upload_with_unknown_instance(self):
         token = WriteTokenFactory()
-        response = self.client.post(resolve_url('confirm-upload', token=token.token), data={
-            'related_model': {
-                'app': TestDocument._meta.app_label,
-                'model': 'TestDocument',
-                'field': 'other_documents',
-                'instance_filters': {
-                    'pk': -1,
-                }
+        response = self.client.post(
+            resolve_url('confirm-upload', token=token.token),
+            data={
+                'related_model': {
+                    'app': TestDocument._meta.app_label,
+                    'model': 'TestDocument',
+                    'field': 'other_documents',
+                    'instance_filters': {
+                        'pk': -1,
+                    },
+                },
             },
-        })
+        )
         self.assertEqual(400, response.status_code)
         self.assertTrue('related_model' in response.json())
         self.assertTrue('Impossible to find one single object' in response.json()['related_model'][0])
@@ -251,8 +273,7 @@ class ConfirmUploadViewTestCase(APITestCase):
         self.assertEqual(400, response.status_code)
 
 
-@override_settings(ROOT_URLCONF="osis_document.urls",
-                   OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
+@override_settings(ROOT_URLCONF="osis_document.urls", OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
 class GetTokenViewTestCase(APITestCase):
     def setUp(self):
         self.client.defaults = {'HTTP_X_API_KEY': 'foobar'}
@@ -269,9 +290,9 @@ class GetTokenViewTestCase(APITestCase):
         self.assertEqual(token['access'], TokenAccess.WRITE.name)
 
     def test_read_token(self):
-        response = self.client.post(resolve_url('read-token', pk=PdfUploadFactory().pk), {
-            'expires_at': datetime(2021, 6, 10)
-        })
+        response = self.client.post(
+            resolve_url('read-token', pk=PdfUploadFactory().pk), {'expires_at': datetime(2021, 6, 10)}
+        )
         self.assertEqual(response.status_code, 201)
         token = response.json()
         self.assertEqual(token['access'], TokenAccess.READ.name)
@@ -329,8 +350,7 @@ class GetTokenListViewTestCase(QueriesAssertionsMixin, APITestCase):
         self.assertEqual(tokens[uploads_uuids[0]]['error']['message'], DocumentError.INFECTED.value)
 
 
-@override_settings(ROOT_URLCONF='osis_document.urls',
-                   OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+@override_settings(ROOT_URLCONF='osis_document.urls', OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class MetadataViewTestCase(APITestCase):
     def test_get_metadata(self):
         token = ReadTokenFactory()
@@ -358,13 +378,30 @@ class MetadataViewTestCase(APITestCase):
 
     def test_change_metadata(self):
         token = WriteTokenFactory()
-        response = self.client.post(resolve_url('change-metadata', token=token.token), {
-            'name': 'foobar'
-        })
+        response = self.client.post(
+            resolve_url('change-metadata', token=token.token),
+            {'name': 'foobar', 'new_property': 'value'},
+        )
         self.assertEqual(response.status_code, 200)
         upload = token.upload
         upload.refresh_from_db()
         self.assertEqual(upload.metadata['name'], 'foobar')
+        self.assertEqual(upload.metadata['new_property'], 'value')
+
+    def test_change_metadata_hash_is_forbidden(self):
+        token = WriteTokenFactory()
+        original_hash = token.upload.metadata['hash']
+        response = self.client.post(
+            resolve_url('change-metadata', token=token.token),
+            {
+                'name': 'foobar',
+                'hash': 'new_hash',
+            },
+        )
+        self.assertEqual(response.status_code, 403)
+        upload = token.upload
+        upload.refresh_from_db()
+        self.assertEqual(upload.metadata['hash'], original_hash)
 
 
 @override_settings(ROOT_URLCONF='osis_document.urls', OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
@@ -393,8 +430,7 @@ class MetadataListViewTestCase(QueriesAssertionsMixin, APITestCase):
         self.assertEqual(metadata[tokens[0]]['error']['message'], DocumentError.TOKEN_NOT_FOUND.value)
 
 
-@override_settings(ROOT_URLCONF='osis_document.urls',
-                   OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+@override_settings(ROOT_URLCONF='osis_document.urls', OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class RotateViewTestCase(APITestCase):
     def test_write_only(self):
         token = ReadTokenFactory()
@@ -413,8 +449,7 @@ class RotateViewTestCase(APITestCase):
         self.assertEqual(response.status_code, 200)
 
 
-@override_settings(ROOT_URLCONF='osis_document.urls',
-                   OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+@override_settings(ROOT_URLCONF='osis_document.urls', OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class FileViewTestCase(TestCase):
     @override_settings(OSIS_DOCUMENT_DOMAIN_LIST=[])
     def test_get_file(self):
