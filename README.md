@@ -492,3 +492,11 @@ To ease generation, use the provided generator:
 
 To communicate between two servers (e.g., with SDK-based code), requests are sent with the header `X-Api-Key`
 containing the shared secret set in the server using the setting `OSIS_DOCUMENT_API_SHARED_SECRET`, so make sure it set. 
+
+# Troubleshooting on Server-Side
+
+## 1) Upload failed because of HTTP_409 - conflict: Mimetype mismatch
+If the setting ENABLE_MIMETYPE_VALIDATION = True, the server will ensure that the uploaded file and the extension 
+is correct. We use python-magic to ensure this check and python-magic use 'file' unix command. 
+Sometimes, the database of 'file' command can be out-of-date and we can have false positive. 
+To update the database, you can copy the content of the file osis_document/docs/ressources/magic into /etc/magic
