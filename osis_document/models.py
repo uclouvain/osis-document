@@ -23,16 +23,20 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import magic
 import uuid
 from datetime import timedelta
+from pathlib import Path
 
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models.functions import Now
+from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext_lazy as _
 
+from .exceptions import MimeMismatch
 from .enums import FileStatus, TokenAccess, PostProcessingType, PostProcessingStatus
 
 
@@ -46,8 +50,31 @@ class UploadManager(models.Manager):
 
 class OsisDocumentFileExtensionValidator(FileExtensionValidator):
     def __call__(self, value):
-        self.allowed_extensions = getattr(settings, 'OSIS_DOCUMENT_ALLOWED_EXTENSIONS', None)
+        self.allowed_extensions = getattr(settings, 'OSIS_DOCUMENT_ALLOWED_EXTENSIONS', [])
         super().__call__(value)
+
+
+@deconstructible
+class OsisDocumentMimeMatchValidator:
+    ext_cnt_mapping = {
+        'jpeg': 'image/jpeg',
+        'jpg': 'image/jpeg',
+        'png': 'image/png',
+        'txt': 'text/plain',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'doc': 'application/msword',
+        'odt': 'application/vnd.oasis.opendocument.text',
+        'pdf': 'application/pdf',
+        'xls': 'application/vnd.ms-excel',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    }
+
+    def __call__(self, data):
+        if getattr(settings, 'ENABLE_MIMETYPE_VALIDATION', False):
+            extension = Path(data.name).suffix[1:].lower()
+            content_type = magic.from_buffer(data.read(1024), mime=True)
+            if content_type != self.ext_cnt_mapping[extension]:
+                raise MimeMismatch
 
 
 class Upload(models.Model):

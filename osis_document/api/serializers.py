@@ -23,37 +23,20 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-import mimetypes
-
-from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.utils.translation import gettext_lazy as _
-from osis_document.models import Token, Upload, OsisDocumentFileExtensionValidator
+from osis_document.models import Token, Upload, OsisDocumentFileExtensionValidator, OsisDocumentMimeMatchValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 
 class RequestUploadSerializer(serializers.Serializer):
-    file = serializers.FileField(validators=[OsisDocumentFileExtensionValidator()], required=True)
-
-    def validate(self, attrs):
-        if getattr(settings, 'ENABLE_MIMETYPE_VALIDATION', False):
-            self._mimetype_validation(attrs['file'])
-        return super().validate(attrs)
-
-    def __mimetype_validation(self, file_object):
-        from pathlib import Path
-        from osis_document.exceptions import MimeMismatch
-        import magic
-
-        extension = mimetypes.guess_extension(mimetypes.guess_type(file_object.name, strict=True)[0], strict=True)[1:]
-        file_object.file.seek(0)
-        mime_type = magic.from_buffer(file_object.read(4096), mime=True)
-
-        if mime_type != file_object.content_type and Path(file_object.name).suffix != extension:
-            raise MimeMismatch
+    file = serializers.FileField(validators=[
+        OsisDocumentFileExtensionValidator(),
+        OsisDocumentMimeMatchValidator()
+    ], required=True)
 
 
 class RequestUploadResponseSerializer(serializers.Serializer):
