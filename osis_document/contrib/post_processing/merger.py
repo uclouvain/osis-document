@@ -30,26 +30,40 @@ from uuid import UUID
 
 from django.conf import settings
 from django.db.models import Q
+from pypdf import PaperSize, PageObject, PdfReader, PdfWriter
+
 from osis_document.contrib.post_processing.processor import Processor
 from osis_document.enums import PostProcessingType
 from osis_document.exceptions import FormatInvalidException, MissingFileException, InvalidMergeFileDimension
 from osis_document.models import Upload
-from pypdf import PaperSize, PageObject, PdfReader, PdfWriter
+from osis_document.utils import stringify_uuid_and_check_uuid_validity
 
 
 class Merger(Processor):
     type = PostProcessingType.MERGE.name
 
-    def process(self, upload_objects_uuids: list, output_filename=None, pages_dimension=None, ) -> Dict[
-        str, List[UUID]]:
+    def process(
+        self,
+        upload_objects_uuids: list,
+        output_filename=None,
+        pages_dimension=None,
+    ) -> Dict[str, List[UUID]]:
         input_files = Upload.objects.filter(
             Q(uuid__in=upload_objects_uuids) | Q(post_processing_output_files__uuid__in=upload_objects_uuids)
         ).distinct('uuid')
-        if len(input_files) != len(upload_objects_uuids):
+
+        upload_objects_str_uuids = []
+
+        for upload_object_uuid in upload_objects_uuids:
+            stringify_uuid = stringify_uuid_and_check_uuid_validity(upload_object_uuid)
+            if stringify_uuid['uuid_valid']:
+                upload_objects_str_uuids.append(stringify_uuid['uuid_stringify'])
+
+        if len(input_files) != len(upload_objects_uuids) != len(upload_objects_str_uuids):
             raise MissingFileException
 
         pdf_writer = PdfWriter()
-        for file in sorted(input_files, key=lambda input_file: upload_objects_uuids.index(str(input_file.uuid))):
+        for file in sorted(input_files, key=lambda input_file: upload_objects_str_uuids.index(str(input_file.uuid))):
             if file.mimetype != "application/pdf":
                 raise FormatInvalidException
             reader = PdfReader(stream=file.file.path)
@@ -57,7 +71,7 @@ class Merger(Processor):
                 pdf_writer = self._merge_and_change_pages_dimension(
                     writer_instance=pdf_writer,
                     pages=reader.pages,
-                    dimension=pages_dimension
+                    dimension=pages_dimension,
                 )
             else:
                 pdf_writer.append_pages_from_reader(reader=reader)
@@ -67,11 +81,11 @@ class Merger(Processor):
         pdf_upload_object = self._create_upload_instance(path=path, filename=output_filename)
         post_processing_object = self._create_post_processing_instance(
             input_files=input_files,
-            output_file=pdf_upload_object
+            output_file=pdf_upload_object,
         )
         return {
             'upload_objects': [pdf_upload_object.uuid],
-            'post_processing_objects': [post_processing_object.uuid]
+            'post_processing_objects': [post_processing_object.uuid],
         }
 
     @staticmethod

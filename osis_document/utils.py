@@ -99,6 +99,7 @@ def get_upload_metadata(token: str, upload: Upload):
         'name': upload.file.name,
         'url': get_file_url(token),
         'uploaded_at': upload.uploaded_at,
+        'upload_uuid': upload.uuid,
         **upload.metadata,
     }
 
