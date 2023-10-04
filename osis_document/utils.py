@@ -37,6 +37,7 @@ from django.core import signing
 from django.core.exceptions import FieldError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
+
 from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType
 from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction, SaveRawContentRemotelyException
 from osis_document.models import Token, Upload, PostProcessAsync
@@ -189,6 +190,7 @@ def post_process(
     """
     from osis_document.contrib.post_processing.converter_registry import converter_registry
     from osis_document.contrib.post_processing.merger import merger
+    from osis_document.contrib.post_processing.cloner import cloner
 
     post_processing_return = {}
     post_processing_return.setdefault(PostProcessingType.CONVERT.name, {'input': [], 'output': []})
@@ -198,6 +200,7 @@ def post_process(
     processors = {
         PostProcessingType.CONVERT.name: converter_registry,
         PostProcessingType.MERGE.name: merger,
+        PostProcessingType.CLONE.name: cloner,
     }
 
     for action_type in post_process_actions:
