@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import shutil
 import uuid
 from pathlib import Path
 from typing import List, Dict
@@ -30,13 +31,11 @@ from uuid import UUID
 
 from django.conf import settings
 from django.db.models import Q
-from pypdf import PaperSize, PageObject, PdfReader, PdfWriter
 
 from osis_document.contrib.post_processing.processor import Processor
 from osis_document.enums import PostProcessingType
-from osis_document.exceptions import FormatInvalidException, MissingFileException, InvalidMergeFileDimension
+from osis_document.exceptions import MissingFileException
 from osis_document.models import Upload
-from osis_document.utils import stringify_uuid_and_check_uuid_validity
 
 
 class Cloner(Processor):
@@ -51,21 +50,28 @@ class Cloner(Processor):
             Q(uuid__in=upload_objects_uuids) | Q(post_processing_output_files__uuid__in=upload_objects_uuids)
         ).distinct('uuid')
 
-        upload_objects_str_uuids = []
-
-        for upload_object_uuid in upload_objects_uuids:
-            stringify_uuid = stringify_uuid_and_check_uuid_validity(upload_object_uuid)
-            if stringify_uuid['uuid_valid']:
-                upload_objects_str_uuids.append(stringify_uuid['uuid_stringify'])
-
-        if len(input_files) != len(upload_objects_uuids) != len(upload_objects_str_uuids):
+        if len(input_files) != len(upload_objects_uuids):
             raise MissingFileException
 
-        # TODO
+        upload_objects = []
+        post_processing_objects = []
+        for input_file in input_files:
+            clone_filename = self._get_output_filename(output_filename)
+            clone_path = Path(settings.MEDIA_ROOT) / clone_filename
+            shutil.copy(input_file.file.path, clone_path)
+
+            upload_object = self._create_upload_instance(path=clone_path, filename=clone_filename)
+            upload_objects.append(upload_object.uuid)
+
+            post_processing_object = self._create_post_processing_instance(
+                input_files=[input_file],
+                output_file=upload_object,
+            )
+            post_processing_objects.append(post_processing_object.uuid)
 
         return {
-            'upload_objects': [],
-            'post_processing_objects': [],
+            'upload_objects': upload_objects,
+            'post_processing_objects': post_processing_objects,
         }
 
     @staticmethod
@@ -73,5 +79,6 @@ class Cloner(Processor):
         if output_filename:
             return f"{output_filename}{uuid.uuid4()}.pdf"
         return f"clone_{uuid.uuid4()}.pdf"
+
 
 cloner = Cloner()
