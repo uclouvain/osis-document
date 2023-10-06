@@ -210,7 +210,7 @@ def post_process(
             raise InvalidPostProcessorAction
         input = post_processing_return[action_type]["input"] = intermediary_output[
             'upload_objects'] if intermediary_output else uuid_list
-        intermediary_output = processor.process(upload_objects_uuids=input, **post_process_params[action_type])
+        intermediary_output = processor.process(upload_objects_uuids=input, **post_process_params.get(action_type, {}))
         post_processing_return[action_type]["output"] = intermediary_output
 
     return post_processing_return

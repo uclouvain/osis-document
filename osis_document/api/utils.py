@@ -87,6 +87,7 @@ def get_remote_token(uuid: Union[str, UUID], write_token: bool = False, wanted_p
     (example : PostProcessingWanted.CONVERT.name)
     """
     import requests
+
     is_valid_uuid = stringify_uuid_and_check_uuid_validity(uuid_input=uuid)
     if not is_valid_uuid.get('uuid_valid'):
         return None

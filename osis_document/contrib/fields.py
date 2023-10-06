@@ -55,7 +55,7 @@ class FileField(ArrayField):
         self.post_processing = kwargs.pop('post_processing', [])
         self.async_post_processing = kwargs.pop('async_post_processing', False)
         self.output_post_processing = kwargs.pop('output_post_processing', None)
-        self.post_process_params = kwargs.pop('post_process_params', None)
+        self.post_process_params = kwargs.pop('post_process_params', {})
 
         kwargs.setdefault('default', list)
         kwargs.setdefault('base_field', models.UUIDField())

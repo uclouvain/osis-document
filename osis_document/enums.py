@@ -89,6 +89,7 @@ class PostProcessingType(ChoiceEnum):
 class PostProcessingWanted(ChoiceEnum):
     MERGE = _('Merge')
     CONVERT = _('Convert')
+    CLONE = _('Clone')
     ORIGINAL = _('Original')
 
 
