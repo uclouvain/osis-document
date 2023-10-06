@@ -195,6 +195,7 @@ def post_process(
     post_processing_return = {}
     post_processing_return.setdefault(PostProcessingType.CONVERT.name, {'input': [], 'output': []})
     post_processing_return.setdefault(PostProcessingType.MERGE.name, {'input': [], 'output': []})
+    post_processing_return.setdefault(PostProcessingType.CLONE.name, {'input': [], 'output': []})
     intermediary_output = {}
 
     processors = {

@@ -370,6 +370,49 @@ class PostProcessingTestCase(TestCase):
             PostProcessing.objects.filter(input_files__in=uuid_list)
         )
 
+    def test_clone(self):
+        file1 = CorrectPDFUploadFactory()
+        file2 = CorrectPDFUploadFactory()
+        uuid_list = [file1.uuid, file2.uuid]
+        post_processing_types = [PostProcessingType.CLONE.name]
+        output_filename = "test_clone"
+        post_process_params = {
+            PostProcessingType.CLONE.name: {'output_filename': output_filename}
+        }
+        output = post_process(
+            uuid_list=uuid_list, post_process_actions=post_processing_types, post_process_params=post_process_params
+        )
+
+        upload_objects = output[PostProcessingType.CLONE.name]["output"]['upload_objects']
+        self.assertEqual(len(upload_objects), 2)
+
+        self.assertTrue(Upload.objects.filter(uuid=upload_objects[0]).exists())
+        self.assertTrue(Upload.objects.filter(uuid=upload_objects[1]).exists())
+        self.assertTrue(
+            PostProcessing.objects.filter(
+                output_files__uuid=upload_objects[0]
+            ).exists()
+        )
+        self.assertTrue(
+            PostProcessing.objects.filter(
+                output_files__uuid=upload_objects[1]
+            ).exists()
+        )
+        self.assertEqual(Upload.objects.all().__len__(), 4)
+
+        file1.refresh_from_db()
+        file2.refresh_from_db()
+
+        first_clone = Upload.objects.get(uuid=upload_objects[0])
+        self.assertEqual(file1.file.read(), first_clone.file.read())
+        self.assertEqual(file1.metadata['clone_uuid'], str(first_clone.uuid))
+        self.assertEqual(first_clone.metadata['original_uuid'], str(file1.uuid))
+
+        second_clone = Upload.objects.get(uuid=upload_objects[1])
+        self.assertEqual(file2.file.read(), second_clone.file.read())
+        self.assertEqual(file2.metadata['clone_uuid'], str(second_clone.uuid))
+        self.assertEqual(second_clone.metadata['original_uuid'], str(file2.uuid))
+
 
 class StringifyUuidAndCheckUuidValidity(TestCase):
     def test_valid_string_input(self):

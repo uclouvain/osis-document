@@ -63,6 +63,11 @@ class Cloner(Processor):
             upload_object = self._create_upload_instance(path=clone_path, filename=clone_filename)
             upload_objects.append(upload_object.uuid)
 
+            input_file.metadata['clone_uuid'] = str(upload_object.uuid)
+            input_file.save(update_fields=['metadata'])
+            upload_object.metadata['original_uuid'] = str(input_file.uuid)
+            upload_object.save(update_fields=['metadata'])
+
             post_processing_object = self._create_post_processing_instance(
                 input_files=[input_file],
                 output_file=upload_object,
