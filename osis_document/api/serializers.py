@@ -186,6 +186,7 @@ class TokenSerializer(serializers.ModelSerializer):
             'upload_id',
             'access',
             'expires_at',
+            'for_modified_upload',
         ]
         list_serializer_class = TokenListSerializer
 

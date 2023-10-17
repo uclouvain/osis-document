@@ -70,15 +70,15 @@ class RawFileView(CorsAllowOriginMixin, APIView):
             return Response({'error': _("Resource not found")}, status.HTTP_404_NOT_FOUND)
         if upload.status == FileStatus.INFECTED.name:
             raise FileInfectedException
-        with upload.file.open() as file:
+        with upload.get_file(modified=token.for_modified_upload).open() as file:
             hash = hashlib.sha256(file.read()).hexdigest()
-        if upload.metadata.get('hash') != hash:
+        if upload.get_hash(modified=token.for_modified_upload) != hash:
             return Response({'error': _("Hash checksum mismatch")}, status.HTTP_409_CONFLICT)
         # TODO handle internal nginx redirect based on a setting
         kwargs = {}
         if self.request.GET.get('dl'):
             kwargs = dict(as_attachment=True, filename=upload.metadata.get('name'))
-        response = FileResponse(upload.file.open('rb'), **kwargs)
+        response = FileResponse(upload.get_file(modified=token.for_modified_upload).open('rb'), **kwargs)
         domain_list = getattr(settings, 'OSIS_DOCUMENT_DOMAIN_LIST', [])
         if domain_list:
             response['Content-Security-Policy'] = "frame-ancestors {};".format(' '.join(domain_list))

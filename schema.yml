@@ -516,6 +516,8 @@ components:
         upload_id:
           type: string
           format: uuid
+        for_modified_upload:
+          type: boolean
         access:
           enum:
           - READ
