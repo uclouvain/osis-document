@@ -355,6 +355,11 @@ class GetTokenListView(GetTokenView):
             for token_data in data:
                 token_data.update({'expires_at': datetime_now + timedelta(seconds=custom_ttl)})
 
+        for_modified_upload = self.request.data.get('for_modified_upload')
+        if for_modified_upload is not None:
+            for token_data in data:
+                token_data.update({'for_modified_upload': for_modified_upload})
+
         serializer = self.get_serializer(data=data, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
