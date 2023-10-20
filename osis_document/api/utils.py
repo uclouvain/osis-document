@@ -79,7 +79,7 @@ def get_raw_content_remotely(token: str):
         return None
 
 
-def get_remote_token(uuid: Union[str, UUID], write_token: bool = False, wanted_post_process: str = None, custom_ttl=None):
+def get_remote_token(uuid: Union[str, UUID], write_token: bool = False, wanted_post_process: str = None, custom_ttl=None, for_modified_upload: bool = False):
     """
     Given an uuid, return a writing or reading remote token.
     The custom_ttl parameter is used to define the validity period of the token
@@ -100,7 +100,12 @@ def get_remote_token(uuid: Union[str, UUID], write_token: bool = False, wanted_p
         try:
             response = requests.post(
                 url,
-                json={'uuid': validated_uuid, 'wanted_post_process': wanted_post_process, 'custom_ttl': custom_ttl},
+                json={
+                    'uuid': validated_uuid,
+                    'wanted_post_process': wanted_post_process,
+                    'custom_ttl': custom_ttl,
+                    'for_modified_upload': for_modified_upload,
+                },
                 headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
             )
             if response.status_code == status.HTTP_404_NOT_FOUND:
@@ -116,7 +121,7 @@ def get_remote_token(uuid: Union[str, UUID], write_token: bool = False, wanted_p
             return None
 
 
-def get_remote_tokens(uuids: List[str], wanted_post_process=None, custom_ttl=None) -> Dict[str, str]:
+def get_remote_tokens(uuids: List[str], wanted_post_process=None, custom_ttl=None, for_modified_upload: bool = False) -> Dict[str, str]:
     """Given a list of uuids, a type of post-processing and a custom TTL in second,
     return a dictionary associating each uuid to a reading token.
     The custom_ttl parameter is used to define the validity period of the token
@@ -134,7 +139,7 @@ def get_remote_tokens(uuids: List[str], wanted_post_process=None, custom_ttl=Non
         raise TypeError
     url = "{base_url}read-tokens".format(base_url=settings.OSIS_DOCUMENT_BASE_URL)
     with contextlib.suppress(HTTPError):
-        data = {'uuids': validated_uuids}
+        data = {'uuids': validated_uuids, 'for_modified_upload': for_modified_upload}
         if wanted_post_process:
             data.update({'wanted_post_process': wanted_post_process})
         if custom_ttl:

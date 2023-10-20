@@ -27,9 +27,15 @@
 from django.test import TestCase
 
 from osis_document.models import Upload
+from osis_document.tests.factories import PdfUploadFactory, ModifiedUploadFactory
 
 
 class UploadTestCase(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.pdf_upload_without_modified = PdfUploadFactory()
+        cls.modified_upload = ModifiedUploadFactory()
+
     def test_assert_hash(self):
         with self.assertRaises(AssertionError):
             Upload.objects.create(size=1024)
@@ -39,3 +45,47 @@ class UploadTestCase(TestCase):
                 'hash': 'something',
             },
         )
+
+    def test_get_file(self):
+        with self.subTest('without modified modified=False'):
+            self.assertEqual(
+                self.pdf_upload_without_modified.get_file(),
+                self.pdf_upload_without_modified.file,
+            )
+        with self.subTest('with modified modified=False'):
+            self.assertEqual(
+                self.modified_upload.upload.get_file(),
+                self.modified_upload.upload.file,
+            )
+        with self.subTest('without modified modified=True'):
+            self.assertEqual(
+                self.pdf_upload_without_modified.get_file(modified=True),
+                self.pdf_upload_without_modified.file,
+            )
+        with self.subTest('with modified modified=True'):
+            self.assertEqual(
+                self.modified_upload.upload.get_file(modified=True),
+                self.modified_upload.file,
+            )
+
+    def test_get_hash(self):
+        with self.subTest('without modified modified=False'):
+            self.assertEqual(
+                self.pdf_upload_without_modified.get_hash(),
+                self.pdf_upload_without_modified.metadata['hash'],
+            )
+        with self.subTest('with modified modified=False'):
+            self.assertEqual(
+                self.modified_upload.upload.get_hash(),
+                self.modified_upload.upload.metadata['hash'],
+            )
+        with self.subTest('without modified modified=True'):
+            self.assertEqual(
+                self.pdf_upload_without_modified.get_hash(modified=True),
+                self.pdf_upload_without_modified.metadata['hash'],
+            )
+        with self.subTest('with modified modified=True'):
+            self.assertEqual(
+                self.modified_upload.upload.get_hash(modified=True),
+                self.modified_upload.upload.metadata['modified_hash'],
+            )

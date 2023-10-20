@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import io
 import uuid
 from datetime import timedelta
 from pathlib import Path
@@ -41,7 +42,8 @@ from osis_document.tests import QueriesAssertionsMixin
 from osis_document.tests.document_test.models import TestDocument
 from osis_document.tests.factories import ImageUploadFactory, PdfUploadFactory, ReadTokenFactory, WriteTokenFactory, \
     CorrectPDFUploadFactory, TextDocumentUploadFactory, MergePostProcessingFactory, ConvertPostProcessingFactory, \
-    PendingPostProcessingAsyncFactory, DonePostProcessingAsyncFactory, FailedPostProcessingAsyncFactory
+    PendingPostProcessingAsyncFactory, DonePostProcessingAsyncFactory, FailedPostProcessingAsyncFactory, \
+    ModifiedUploadFactory
 from rest_framework.test import APITestCase, URLPatternsTestCase
 
 SMALLEST_PDF = b"""%PDF-1.
@@ -1076,7 +1078,7 @@ class RotateViewTestCase(APITestCase):
         self.assertEqual(response.status_code, 200)
 
 
-@override_settings( OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+@override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
 class FileViewTestCase(TestCase):
     from django.urls import path, include
 
@@ -1126,6 +1128,27 @@ class FileViewTestCase(TestCase):
         token = ReadTokenFactory(expires_at=date_expiration)
         response = self.client.get(reverse('osis_document:raw-file', kwargs={'token': token.token, }), follow=False)
         self.assertEqual(response.status_code, 403)
+
+    def test_get_modified_file(self):
+        modified_upload = ModifiedUploadFactory()
+        token = ReadTokenFactory(upload=modified_upload.upload, for_modified_upload=True)
+        response = self.client.get(reverse('osis_document:raw-file', kwargs={'token': token.token, }))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b''.join(response.streaming_content), modified_upload.file.read())
+
+    def test_get_modified_file_without_modified_file(self):
+        upload = PdfUploadFactory()
+        token = ReadTokenFactory(upload=upload, for_modified_upload=True)
+        response = self.client.get(reverse('osis_document:raw-file', kwargs={'token': token.token, }))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b''.join(response.streaming_content), upload.file.read())
+
+    def test_get_original_upload_with_modified_file(self):
+        modified_upload = ModifiedUploadFactory()
+        token = ReadTokenFactory(upload=modified_upload.upload, for_modified_upload=False)
+        response = self.client.get(reverse('osis_document:raw-file', kwargs={'token': token.token, }))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b''.join(response.streaming_content), modified_upload.upload.file.read())
 
 
 @override_settings(ROOT_URLCONF="osis_document.urls", OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
@@ -1296,3 +1319,38 @@ class GetProgressAsyncPostProcessingViewTestCase(APITestCase, URLPatternsTestCas
         self.assertIsNotNone(response.data.get('error'))
         self.assertIsNone(response.data.get('progress'))
         self.assertIsNone(response.data.get('wanted_post_process_status'))
+
+
+@override_settings(ROOT_URLCONF="osis_document.urls", OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
+class SaveEditorViewTestCase(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.upload = PdfUploadFactory()
+        cls.file = ContentFile(SMALLEST_PDF, 'foo.pdf')
+
+    def setUp(self):
+        self.client.defaults = {'HTTP_X_API_KEY': 'foobar'}
+
+    def test_post_original_with_read_token(self):
+        token = ReadTokenFactory(upload=self.upload)
+        url = resolve_url('save-editor', token=token.token)
+        response = self.client.post(url, {'file': self.file, 'rotations': '{}'})
+        self.assertEqual(404, response.status_code)
+
+    def test_post_original(self):
+        token = WriteTokenFactory(upload=self.upload)
+        url = resolve_url('save-editor', token=token.token)
+        response = self.client.post(url, {'file': self.file, 'rotations': '{}'})
+        self.assertEqual(200, response.status_code)
+        self.upload.refresh_from_db()
+        self.assertEqual(self.upload.file.read(), SMALLEST_PDF)
+        with self.assertRaises(Upload.modified_upload.RelatedObjectDoesNotExist):
+            self.upload.modified_upload
+
+    def test_post_modified(self):
+        token = WriteTokenFactory(upload=self.upload, for_modified_upload=True)
+        url = resolve_url('save-editor', token=token.token)
+        response = self.client.post(url, {'file': self.file, 'rotations': '{}'})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(self.upload.file.read(), b'hello world')
+        self.assertEqual(self.upload.modified_upload.file.read(), SMALLEST_PDF)

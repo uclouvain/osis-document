@@ -33,7 +33,7 @@ from django.core.files import File
 from factory.fuzzy import FuzzyText
 
 from osis_document.enums import TokenAccess, PostProcessingStatus, PostProcessingType
-from osis_document.models import Token, Upload, PostProcessAsync, PostProcessing
+from osis_document.models import Token, Upload, PostProcessAsync, PostProcessing, ModifiedUpload
 from osis_document.utils import calculate_hash
 
 
@@ -100,6 +100,21 @@ class BadExtensionUploadFactory(factory.django.DjangoModelFactory):
         'hash': calculate_hash(file),
         'name': 'sample-zip-file.zip',
     }
+
+
+class ModifiedUploadFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ModifiedUpload
+
+    upload = factory.SubFactory(PdfUploadFactory)
+    file = factory.django.FileField(data=b'hello world modified', filename='the_file.pdf')
+    size = 19
+
+    @factory.post_generation
+    def set_metadata(obj, create, extracted, **kwargs):
+        obj.upload.metadata['modified_hash'] = calculate_hash(obj.file)
+        obj.upload.save(update_fields=['metadata'])
+        obj.file.seek(0)
 
 
 class WriteTokenFactory(factory.django.DjangoModelFactory):

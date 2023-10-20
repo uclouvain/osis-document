@@ -40,7 +40,7 @@ from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import TokenAccess
 from osis_document.exceptions import MimeMismatch
-from osis_document.models import Token
+from osis_document.models import Token, Upload, ModifiedUpload
 from osis_document.utils import calculate_hash, get_token
 
 
@@ -107,12 +107,27 @@ class SaveEditorView(CorsAllowOriginMixin, APIView):
         fileguess = filetype.guess(bytesa)
         if fileguess.mime != file.content_type or file.content_type != 'application/pdf':
             raise MimeMismatch
-        upload.file.save(upload.file.name, file)
-        upload.size = file.size
-        upload.metadata['hash'] = calculate_hash(file)
-        upload.save()
+
+        if token.for_modified_upload:
+            try:
+                modified_upload = upload.modified_upload
+            except Upload.modified_upload.RelatedObjectDoesNotExist:
+                modified_upload = ModifiedUpload(
+                    upload=upload,
+                )
+            modified_upload.size = file.size
+            modified_upload.file.save(upload.file.name, file)
+            modified_upload.save()
+
+            upload.metadata['modified_hash'] = calculate_hash(file)
+            upload.save(update_fields=['metadata'])
+        else:
+            upload.file.save(upload.file.name, file)
+            upload.size = file.size
+            upload.metadata['hash'] = calculate_hash(file)
+            upload.save()
 
         # Regenerate new token
         token.delete()
-        token = get_token(upload.uuid, access=TokenAccess.WRITE.name)
+        token = get_token(upload.uuid, access=TokenAccess.WRITE.name, for_modified_upload=token.for_modified_upload)
         return Response({'token': token}, status=status.HTTP_200_OK)
