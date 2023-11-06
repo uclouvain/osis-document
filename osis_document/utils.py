@@ -42,7 +42,7 @@ from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction, S
 from osis_document.models import Token, Upload, PostProcessAsync
 
 
-def confirm_upload(token, upload_to, model_instance=None) -> UUID:
+def confirm_upload(token, upload_to, document_expiration_policy=None, model_instance=None) -> UUID:
     """Verify local token existence and expiration"""
     token = Token.objects.writing_not_expired().filter(token=token).select_related('upload').first()
     if not token:
@@ -66,6 +66,7 @@ def confirm_upload(token, upload_to, model_instance=None) -> UUID:
         upload.file.save(name=new_file_name, content=upload.file.file, save=False)
         # Remove the file at the previous location
         upload.file.storage.delete(previous_file_name)
+        upload.expires_at = DocumentExpirationPolicy.compute_expiration_date(document_expiration_policy)
         upload.save()
     return upload.uuid
 
