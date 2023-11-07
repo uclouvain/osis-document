@@ -34,7 +34,7 @@ from osis_document.models import Token, Upload, PostProcessAsync
 from osis_document.tasks import cleanup_old_uploads, make_pending_async_post_processing
 from osis_document.tests.factories import WriteTokenFactory, PdfUploadFactory, PdfUploadFactory, \
     CorrectPDFUploadFactory, TextDocumentUploadFactory, ImageUploadFactory, PendingPostProcessingAsyncFactory, \
-    DonePostProcessingAsyncFactory, FailedPostProcessingAsyncFactory
+    DonePostProcessingAsyncFactory, FailedPostProcessingAsyncFactory, ExpiredPdfUploadFactory
 
 
 class CleanupTaskTestCase(TestCase):
@@ -48,10 +48,12 @@ class CleanupTaskTestCase(TestCase):
             upload = PdfUploadFactory()
 
         PdfUploadFactory(status=FileStatus.UPLOADED.name)
+        # Should be deleted because expired
+        ExpiredPdfUploadFactory(status=FileStatus.UPLOADED.name)
         WriteTokenFactory()
         WriteTokenFactory(upload=upload)
 
-        self.assertEqual(Upload.objects.count(), 5)
+        self.assertEqual(Upload.objects.count(), 6)
         self.assertEqual(Token.objects.count(), 3)
 
         cleanup_old_uploads()

@@ -23,10 +23,13 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import datetime
 from enum import Enum
 from typing import Dict
 
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
+
 
 
 class ChoiceEnum(Enum):
@@ -101,3 +104,17 @@ class PageFormatEnums(Enum):
     A3 = _('A3')
     A4 = _('A4')
     A5 = _('A5')
+
+
+class DocumentExpirationPolicy(ChoiceEnum):
+    NO_EXPIRATION = None
+    EXPORT_EXPIRATION_POLICY = "EXPORT_EXPIRATION_POLICY"
+
+    @classmethod
+    def compute_expiration_date(cls, expiration_policy_value: str):
+        if expiration_policy_value == cls.NO_EXPIRATION.value:
+            return None
+        elif expiration_policy_value == cls.EXPORT_EXPIRATION_POLICY.value:
+            return datetime.date.today() + datetime.timedelta(
+                seconds=settings.OSIS_DOCUMENT_EXPORT_EXPIRATION_POLICY_AGE
+            )

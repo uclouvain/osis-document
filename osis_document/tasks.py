@@ -28,6 +28,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
+from django.db.models import Q
 
 try:
     from document.celery import app
@@ -40,14 +41,21 @@ from osis_document.utils import post_process
 
 @app.task
 def cleanup_old_uploads():
-    qs = Upload.objects.filter(
-        status=FileStatus.REQUESTED.name,
-        uploaded_at__lte=now() - timedelta(seconds=settings.OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE),
-    )
-    qs.delete()
-    Token.objects.filter(
-        expires_at__lte=now(),
+    # Clean Upload which are stale 2 case:
+    #   - State "REQUESTED" and delay in temporary storage expired (= Upload not confirm by client)
+    #   - Upload expired (= Storage delay expired - XLS export, PDF one time generation, ...)
+    Upload.objects.filter(
+        Q(
+            status=FileStatus.REQUESTED.name,
+            uploaded_at__lte=now() - timedelta(seconds=settings.OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE)
+        ) |
+        Q(
+            expires_at__lte=now()
+        ),
     ).delete()
+
+    # Clean Token expired
+    Token.objects.filter(expires_at__lte=now()).delete()
 
 
 @app.task

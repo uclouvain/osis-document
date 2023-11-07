@@ -29,6 +29,7 @@ from uuid import UUID
 
 from django.conf import settings
 from osis_document.exceptions import FileInfectedException, UploadInvalidException
+from osis_document.enums import DocumentExpirationPolicy
 from osis_document.utils import stringify_uuid_and_check_uuid_validity
 from requests import HTTPError
 from rest_framework import status
@@ -156,7 +157,13 @@ def get_remote_tokens(uuids: List[str], wanted_post_process=None, custom_ttl=Non
     return {}
 
 
-def confirm_remote_upload(token, upload_to=None, related_model=None, related_model_instance=None):
+def confirm_remote_upload(
+    token,
+    upload_to=None,
+    document_expiration_policy=DocumentExpirationPolicy.NO_EXPIRATION.value,
+    related_model=None,
+    related_model_instance=None,
+):
     import requests
 
     url = "{}confirm-upload/{}".format(settings.OSIS_DOCUMENT_BASE_URL, token)
@@ -174,6 +181,9 @@ def confirm_remote_upload(token, upload_to=None, related_model=None, related_mod
                 key: getattr(related_model_instance, key, None) for key in instance_filter_fields
             }
         data['related_model'] = related_model
+
+    if document_expiration_policy:
+        data['document_expiration_policy'] = document_expiration_policy
 
     # Do the request
     response = requests.post(

@@ -29,6 +29,7 @@ from django.test import TestCase, override_settings
 from requests import HTTPError
 
 from osis_document.api.utils import confirm_remote_upload, get_remote_metadata, get_remote_token
+from osis_document.enums import DocumentExpirationPolicy
 from osis_document.exceptions import FileInfectedException, UploadInvalidException
 
 
@@ -97,6 +98,28 @@ class RemoteUtilsTestCase(TestCase):
                 json={"upload_to": "path/"},
                 headers={'X-Api-Key': 'very-secret'},
             )
+
+    def test_confirm_remote_upload_with_upload_to_and_document_expiration_policy(self):
+        with patch('requests.post') as request_mock:
+            request_mock.return_value.json.return_value = {"uuid": "bbc1ba15-42d2-48e9-9884-7631417bb1e1"}
+            self.assertEqual(
+                confirm_remote_upload(
+                    'some_token',
+                    'path/',
+                    document_expiration_policy=DocumentExpirationPolicy.EXPORT_EXPIRATION_POLICY.value,
+                ),
+                'bbc1ba15-42d2-48e9-9884-7631417bb1e1'
+            )
+            expected_url = 'http://dummyurl.com/document/confirm-upload/some_token'
+            request_mock.assert_called_with(
+                expected_url,
+                json={
+                    "upload_to": "path/",
+                    "document_expiration_policy": DocumentExpirationPolicy.EXPORT_EXPIRATION_POLICY.value
+                },
+                headers={'X-Api-Key': 'very-secret'},
+            )
+
 
     def test_confirm_remote_upload_with_related_model(self):
         related_model = {
