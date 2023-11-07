@@ -51,6 +51,8 @@ OSIS_DOCUMENT_UPLOAD_LIMIT = '10/minute'
 OSIS_DOCUMENT_TOKEN_MAX_AGE = 60 * 15
 # A temporary upload max age (in seconds) after which it may be deleted by the celery task
 OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE = 60 * 15
+# Upload max age (in seconds) for export expiration policy (default = 15 days)
+OSIS_DOCUMENT_EXPORT_EXPIRATION_POLICY_AGE = 60 * 60 * 24 * 15
 # When used on multiple servers, set the domains on which raw files may be displayed (for Content Security Policy)
 OSIS_DOCUMENT_DOMAIN_LIST = [
     '127.0.0.1:8001',
