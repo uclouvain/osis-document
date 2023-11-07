@@ -127,7 +127,7 @@ class ConfirmUploadRequestSerializer(serializers.Serializer):
     )
     document_expiration_policy = serializers.ChoiceField(
         help_text="This attribute provides a way of setting the expiration policy of the file",
-        choices=DocumentExpirationPolicy.choice(),
+        choices=DocumentExpirationPolicy.choices(),
         required=False,
     )
 

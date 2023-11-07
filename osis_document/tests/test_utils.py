@@ -30,7 +30,7 @@ from unittest.mock import Mock, patch
 
 from django.core.exceptions import FieldError
 from django.test import TestCase, override_settings
-from osis_document.enums import FileStatus, PageFormatEnums, PostProcessingType
+from osis_document.enums import FileStatus, PageFormatEnums, PostProcessingType, DocumentExpirationPolicy
 from osis_document.exceptions import HashMismatch, FormatInvalidException, InvalidMergeFileDimension
 from osis_document.models import Upload, PostProcessing
 from osis_document.tests.factories import (
@@ -140,17 +140,43 @@ class ConfirmUploadTestCase(TestCase):
     def test_with_token(self):
         token = WriteTokenFactory()
         original_upload = token.upload
-        # The file has been saved at the root path
+        # The file has been saved at the root path = Temporary file
         self.assertTrue(original_upload.file.storage.exists(original_upload.file.name))
         self.assertEqual(original_upload.status, FileStatus.REQUESTED.name)
         # Confirm the upload
         original_upload_uuid = confirm_upload(token.token, upload_to='path/')
-        # The file has been moved to the 'path/' repository
+        # The file has been moved to the 'path/' repository = Permanant file
         updated_upload = Upload.objects.get(uuid=original_upload_uuid)
         self.assertFalse(original_upload.file.storage.exists(original_upload.file.name))
         self.assertNotEqual(original_upload.file.name, updated_upload.file.name)
         # The status file has been updated
         self.assertEqual(updated_upload.status, FileStatus.UPLOADED.name)
+        # The document has no expiration
+        self.assertIsNone(updated_upload.expires_at)
+
+    def test_with_token_and_document_expiration_policy_specified(self):
+        token = WriteTokenFactory()
+        original_upload = token.upload
+        # The file has been saved at the root path = Temporary file
+        self.assertTrue(original_upload.file.storage.exists(original_upload.file.name))
+        self.assertEqual(original_upload.status, FileStatus.REQUESTED.name)
+        # Confirm the upload with document expiration policy
+        original_upload_uuid = confirm_upload(
+            token.token,
+            upload_to='path/',
+            document_expiration_policy=DocumentExpirationPolicy.EXPORT_EXPIRATION_POLICY.value,
+        )
+        # The file has been moved to the 'path/' repository = Permanant file with as specified policy
+        updated_upload = Upload.objects.get(uuid=original_upload_uuid)
+        self.assertFalse(original_upload.file.storage.exists(original_upload.file.name))
+        self.assertNotEqual(original_upload.file.name, updated_upload.file.name)
+        # The status file has been updated
+        self.assertEqual(updated_upload.status, FileStatus.UPLOADED.name)
+        # The document has an expiration date
+        self.assertEqual(
+            updated_upload.expires_at,
+            DocumentExpirationPolicy.compute_expiration_date(DocumentExpirationPolicy.EXPORT_EXPIRATION_POLICY.value)
+        )
 
     def test_with_confirmed_upload(self):
         original_upload = PdfUploadFactory(status=FileStatus.UPLOADED.name)

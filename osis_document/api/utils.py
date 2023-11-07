@@ -29,6 +29,7 @@ from uuid import UUID
 
 from django.conf import settings
 from osis_document.exceptions import FileInfectedException, UploadInvalidException
+from osis_document.enums import DocumentExpirationPolicy
 from osis_document.utils import stringify_uuid_and_check_uuid_validity
 from requests import HTTPError
 from rest_framework import status

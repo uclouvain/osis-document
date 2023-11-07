@@ -37,7 +37,7 @@ from django.core import signing
 from django.core.exceptions import FieldError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
-from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType
+from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType, DocumentExpirationPolicy
 from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction, SaveRawContentRemotelyException
 from osis_document.models import Token, Upload, PostProcessAsync
 

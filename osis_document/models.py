@@ -99,7 +99,7 @@ class Upload(models.Model):
         verbose_name=_("Modified at"),
         auto_now=True,
     )
-    expires_at = models.DateTimeField(
+    expires_at = models.DateField(
         verbose_name=_("Expires at"),
         null=True,
         blank=True

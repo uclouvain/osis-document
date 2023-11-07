@@ -28,6 +28,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
+from django.db.models import Q
 
 try:
     from document.celery import app

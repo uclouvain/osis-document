@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import datetime
 import string
 from pathlib import Path
 from typing import List, Set, Dict
@@ -48,6 +49,11 @@ class PdfUploadFactory(factory.django.DjangoModelFactory):
         'hash': 'b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9',
         'name': 'the_file.pdf',
     }
+
+
+class ExpiredPdfUploadFactory(PdfUploadFactory):
+    expires_at = factory.fuzzy.FuzzyDate(start_date=datetime.date(1999,1,1), end_date=datetime.date(2000,1,1))
+
 
 
 class TextDocumentUploadFactory(factory.django.DjangoModelFactory):
