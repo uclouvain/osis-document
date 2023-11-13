@@ -32,7 +32,7 @@ from django.test import TestCase, override_settings
 from django.utils.translation import gettext as _
 
 from osis_document.contrib import FileField
-from osis_document.enums import FileStatus
+from osis_document.enums import FileStatus, DocumentExpirationPolicy
 from osis_document.models import Token, Upload
 from osis_document.tests.document_test.models import TestDocument
 from osis_document.tests.factories import WriteTokenFactory
@@ -122,6 +122,28 @@ class FieldTestCase(TestCase):
             form.save()
         expected_url = f'http://dummyurl.com/document/confirm-upload/{token.token}'
         request_mock.assert_called_with(expected_url, json={'upload_to': 'path'}, headers={'X-Api-Key': 'very-secret'})
+
+    @patch('osis_document.api.utils.get_remote_metadata')
+    def test_model_form_confirms_remotely_with_document_expiration_policy(self, get_remote_metadata):
+        get_remote_metadata.return_value = {"name": "test.jpg"}
+        ModelForm = modelform_factory(TestDocument, fields='__all__')
+
+        token = WriteTokenFactory()
+        form = ModelForm({'documents_expirables_0': token.token})
+        self.assertTrue(form.is_valid(), form.errors)
+
+        with patch('requests.post') as request_mock:
+            request_mock.return_value.json.return_value = {"uuid": "bbc1ba15-42d2-48e9-9884-7631417bb1e1"}
+            form.save()
+        expected_url = f'http://dummyurl.com/document/confirm-upload/{token.token}'
+        request_mock.assert_called_with(
+            expected_url,
+            json={
+                'upload_to': 'path',
+                'document_expiration_policy': DocumentExpirationPolicy.EXPORT_EXPIRATION_POLICY.value,
+            },
+            headers={'X-Api-Key': 'very-secret'}
+        )
 
     def test_update_or_create(self):
         doc_pk = TestDocument.objects.create(documents=[WriteTokenFactory().upload_id]).pk
