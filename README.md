@@ -464,11 +464,28 @@ element.addEventListener('numPages', ({detail: {numPages}}) => {
 });
 ```
 
+## Cropping images before uploading them
+
+You can add `with_cropping=True` to `FileField`, `FileUploadField` or `FileUploadWidget` to add the ability to crop
+any image with [Cropper.js](https://fengyuanchen.github.io/cropperjs/) before they are uploaded. You can also pass custom options through the `cropping_options` parameter:
+```python
+class ModelName(models.Model):
+    ...
+    model_field_name = FileField(
+        ...
+        with_cropping=True,
+        cropping_options={"aspectRatio": 16 / 9}
+        ...
+    )
+    ...
+```
+
+
 # Contributing to OSIS-Document
 
 ## Frontend
 
-To contribute to the frontend part of this module, install `npm` > 6 (included in [https://nodejs.org/en/download/](nodejs)), and run:
+To contribute to the frontend part of this module, install `npm` > 6 (included in [nodejs](https://nodejs.org/en/download/)), and run:
 ```console
 cd osis_document
 npm clean-install
