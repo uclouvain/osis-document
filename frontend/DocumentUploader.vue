@@ -64,6 +64,8 @@
         :max-size="maxSize"
         :mimetypes="mimetypes"
         :automatic="automaticUpload"
+        :with-cropping="withCropping"
+        :cropping-options="croppingOptions"
         @delete="delete fileList[index]; delete tokens[index];"
         @set-token="tokens[index] = $event; delete fileList[index];"
     />
@@ -163,6 +165,14 @@ export default defineComponent({
       type: Number,
       default: 0,
     },
+    withCropping: {
+      type: Boolean,
+      default: false,
+    },
+    croppingOptions: {
+      type: Object,
+      default: () => {return {};},
+    },
   },
   data() {
     let indexGenerated = 0;
@@ -241,12 +251,13 @@ export default defineComponent({
     },
     onFilePicked(e: Event) {
       const files = (e.target as HTMLInputElement).files;
+
+      this.isDragging = false;
       files && Array.from(files).forEach(file => {
         this.indexGenerated++;
         this.fileList[this.indexGenerated] = file;
         this.tokens[this.indexGenerated] = null;
       });
-      this.isDragging = false;
     },
   },
 });

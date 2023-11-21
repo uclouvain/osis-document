@@ -61,6 +61,8 @@ class FileField(ArrayField):
             'document_expiration_policy',
             DocumentExpirationPolicy.NO_EXPIRATION.value,
         )
+        self.with_cropping = kwargs.pop('with_cropping', False)
+        self.cropping_options = kwargs.pop('cropping_options', None)
 
         kwargs.setdefault('default', list)
         kwargs.setdefault('base_field', models.UUIDField())
@@ -88,6 +90,8 @@ class FileField(ArrayField):
                 'async_post_processing': self.async_post_processing,
                 'output_post_processing': self.output_post_processing,
                 'post_process_params': self.post_process_params,
+                'with_cropping': self.with_cropping,
+                'cropping_options': self.cropping_options,
                 **kwargs,
             }
         )

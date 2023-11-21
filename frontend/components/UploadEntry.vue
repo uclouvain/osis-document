@@ -26,13 +26,13 @@
 <template>
   <li class="media">
     <div
-        v-if="isImage"
+        v-if="isImage && !!uploadFile"
         class="media-left"
     >
       <img
           class="media-object img-thumbnail"
           :src="fileUrl"
-          :alt="file.name"
+          :alt="uploadFile.name"
           width="80"
           @load="revokeUrl(fileUrl)"
       >
@@ -74,6 +74,51 @@
       </button>
     </div>
   </li>
+
+  <div
+      v-if="showCropper"
+      ref="cropperModal"
+      class="modal fade"
+      tabindex="-1"
+      role="dialog"
+      data-backdrop="static"
+  >
+    <div
+        class="modal-dialog modal-lg"
+        role="document"
+    >
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">{{ $t('upload_entry.crop_header') }}</h4>
+        </div>
+        <div class="modal-body">
+          <img
+              ref="image"
+              :src="fileUrl"
+              :alt="file.name"
+              @load="initializeCropper"
+          >
+        </div>
+        <div class="modal-footer">
+          <button
+              type="button"
+              class="btn btn-primary"
+              @click="crop"
+          >
+            {{ $t('upload_entry.crop') }}
+          </button>
+          <button
+              type="button"
+              class="btn btn-danger"
+              data-dismiss="modal"
+              @click="$emit('delete')"
+          >
+            {{ $t('upload_entry.cancel') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -84,6 +129,9 @@ import {humanizedSize} from '../utils';
 import EventBus from '../event-bus';
 import {defineComponent} from 'vue';
 import type {ErrorReponse, TokenReponse} from "../interfaces";
+import Cropper from 'cropperjs';
+
+import 'cropperjs/dist/cropper.min.css';
 
 export default defineComponent({
   name: 'UploadEntry',
@@ -108,6 +156,14 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    withCropping: {
+      type: Boolean,
+      default: false,
+    },
+    croppingOptions: {
+      type: Object,
+      default: () => {return {};},
+    },
   },
   emits: {
     setToken(token: string) {
@@ -119,38 +175,87 @@ export default defineComponent({
   },
   data() {
     return {
+      uploadFile: null as null | File,
       progress: 0,
       token: '',
       error: '',
+      isCropped: false,
+      cropper: null as null | Cropper,
     };
   },
   computed: {
+    showCropper() {
+      return this.withCropping && this.isImage && !this.isCropped;
+    },
     isImage: function () {
       return this.file.type.split('/')[0] === 'image';
     },
     fileUrl: function () {
-      return URL.createObjectURL(this.file);
+      if (!this.uploadFile) {
+        return '';
+      }
+      return URL.createObjectURL(this.uploadFile);
     },
     humanizedSize: function () {
       return humanizedSize(this.file.size);
     },
   },
   mounted() {
+    // It might be overwritten if cropping is used
+    this.uploadFile = this.file;
+
     if (this.maxSize && this.file.size > this.maxSize) {
       this.error = this.$t('upload_entry.too_large');
     } else if (this.mimetypes.length && !this.mimetypes.includes(this.file.type)) {
       this.error = this.$tc('upload_entry.wrong_type', this.mimetypes.length, {types: this.mimetypes.join(', ')});
-    } else if (this.automatic) {
+    } else if (this.automatic && !this.withCropping) {
       this.sendFile();
-    } else {
+    } else if (!this.withCropping) {
       EventBus.on('upload', this.sendFile);
     }
   },
   methods: {
+    crop() {
+      if (this.cropper === null) {
+        console.error('cropper is null.');
+        return ;
+      }
+      this.cropper.getCroppedCanvas().toBlob((blob) => {
+        if (blob === null) {
+          console.error('blob is null.');
+          return ;
+        }
+        this.uploadFile = new File([blob], this.file.name, {type: this.file.type});
+        jQuery(this.$refs['cropperModal']).modal('hide');
+        this.isCropped = true;
+        if (this.automatic) {
+          this.sendFile();
+        }
+      });
+    },
+    initializeCropper() {
+      this.cropper = new Cropper(this.$refs['image'] as HTMLImageElement, {...{
+        minContainerWidth: 600,
+        minContainerHeight: 300,
+        viewMode: 2,
+        autoCropArea: 1,
+        movable: false,
+        rotatable: false,
+        scalable: false,
+        zoomable: false,
+        toggleDragModeOnDblclick: false,
+      }, ...this.croppingOptions});
+      jQuery(this.$refs['cropperModal']).modal('show');
+    },
     revokeUrl: function (url: string) {
       URL.revokeObjectURL(url);
     },
     sendFile: function () {
+      if (this.uploadFile === null) {
+        console.error('uploadFile is null.');
+        return ;
+      }
+
       const xhr = new XMLHttpRequest();
       xhr.upload.addEventListener('progress', (e) => {
         this.progress = Math.round((e.loaded * 100) / e.total);
@@ -173,10 +278,16 @@ export default defineComponent({
       });
 
       const fd = new FormData();
-      fd.append('file', this.file);
+      fd.append('file', this.uploadFile);
       // Initiate a multipart/form-data upload
       xhr.send(fd);
     },
   },
 });
 </script>
+
+<style>
+.cropper-container {
+  margin: auto;
+}
+</style>

@@ -39,6 +39,9 @@ export default {
     completion: '{progress}% transférés',
     too_large: 'Le fichier est trop lourd',
     wrong_type: 'Le fichier doit être du type "{types}" | Le fichier doit être d\'un des types suivants : "{types}"',
+    crop_header: 'Veuillez choisir la partie à garder.',
+    crop: 'Recadrer',
+    cancel: 'Annuler',
   },
   view_entry: {
     rotate_left: "Faire pivoter l'image à gauche",

@@ -81,6 +81,8 @@ class FileUploadField(SplitArrayField):
         self.async_post_processing = kwargs.pop('async_post_processing', False)
         self.output_post_processing = kwargs.pop('output_post_processing', None)
         self.post_process_params = kwargs.pop('post_process_params', None)
+        self.with_cropping = kwargs.pop('with_cropping', False)
+        self.cropping_options = kwargs.pop('cropping_options', None)
         kwargs.setdefault(
             'widget',
             FileUploadWidget(
@@ -97,6 +99,8 @@ class FileUploadField(SplitArrayField):
                 async_post_processing=self.async_post_processing,
                 output_post_processing=self.output_post_processing,
                 post_process_params=self.post_process_params,
+                with_cropping=self.with_cropping,
+                cropping_options=self.cropping_options,
             ),
         )
         base_field = TokenField(

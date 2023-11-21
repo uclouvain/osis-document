@@ -49,6 +49,7 @@ it('should mount', async () => {
   window.URL.revokeObjectURL = revokeUrl;
 
   const wrapper = mount(UploadEntry, {props});
+  await nextTick();
   expect(wrapper.text()).toContain('image/png');
   expect(wrapper.text()).toContain('foobar.png');
   expect(createUrl).toHaveBeenCalled();
@@ -166,4 +167,40 @@ it('should fail upload displaying message', async () => {
   expect(wrapper.emitted()).not.toHaveProperty('setToken');
   expect(wrapper.find('.btn-danger').exists()).toBe(true);
   expect(wrapper.find('.text-danger').text()).toBe("request_error");
+});
+
+it('should not upload with cropping enabled', async () => {
+  vi.useFakeTimers();
+  // Mocks
+  const server = newServer({
+    post: ['http://dummyhost/request-upload', function (xhr) {
+      xhr.uploadProgress(512); // 50 % of 1024 bytes
+      setTimeout(() => {
+        xhr.uploadProgress(1024);// 100 % of 1024 bytes
+        setTimeout(() => {
+          xhr.respond(
+              200,
+              {'Content-Type': 'application/json'},
+              '{"token": "0123456789"}',
+          );
+        });
+      });
+    }],
+  }).install();
+
+  const wrapper = mount(UploadEntry, {
+    props: {
+      file: new File([new ArrayBuffer(1024)], 'foobar.png', {
+        type: 'image/png',
+      }),
+      baseUrl: 'http://dummyhost/',
+      withCropping: true,
+    },
+    unmounted() {
+      server.remove();
+    },
+  });
+  await flushPromises();
+
+  expect(server.getRequestLog()).toHaveLength(0);
 });
