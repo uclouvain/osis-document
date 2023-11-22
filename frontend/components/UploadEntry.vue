@@ -26,7 +26,7 @@
 <template>
   <li class="media">
     <div
-        v-if="isImage && !!uploadFile"
+        v-if="isImage && !!uploadFile && (!withCropping || isCropped)"
         class="media-left"
     >
       <img
