@@ -144,7 +144,7 @@ class FileUploadWidget(SplitArrayWidget):
         if self.with_cropping:
             attrs['data-with-cropping'] = "true"
         if self.cropping_options:
-            attrs['data-cropping_options'] = self.cropping_options
+            attrs['data-cropping-options'] = json.dumps(self.cropping_options)
         return attrs
 
     def format_value(self, values):
