@@ -1,0 +1,12 @@
+.text-thumbnail {
+  text-transform: uppercase;
+  text-align: center;
+  font-size: 1.5em;
+  background: #8cb0cc;
+  color: white;
+  height: 2.5em;
+  line-height: 2em;
+  width: 80px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}

@@ -209,6 +209,7 @@ describe('progress of post-processing is correctly displayed', () => {
     });
     await flushPromises();
     expect(wrapper.html()).not.contain('<div class="progress" style="text-align: center">');
+    expect(wrapper.html()).contain('<div class="img-thumbnail text-thumbnail">odt</div>');
     expect(wrapper.html()).contain('<div>test document.odt</div><small><span class="text-nowrap">80.45 KB</span> (application/vnd.oasis.opendocument.text)</small>');
     expect(wrapper.vm.error).toBe('');
     expect(wrapper.vm.inPostProcessing).toBe(false);
