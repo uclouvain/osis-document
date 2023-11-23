@@ -88,15 +88,21 @@
     <!-- thumbnail -->
     <template v-else-if="file">
       <div
-          v-if="isImage"
           class="media-left"
       >
         <img
+            v-if="isImage"
             class="media-object img-thumbnail"
             :src="file.url"
             :alt="file.name"
             width="80"
+        />
+        <div
+            v-else
+            class="img-thumbnail text-thumbnail"
         >
+          {{ altThumbnail }}
+        </div>
       </div>
       <div class="media-body">
         <h4 class="media-heading">
@@ -256,6 +262,12 @@ export default defineComponent({
     isImage: function () {
       return this.file?.mimetype.split('/')[0] === 'image';
     },
+    altThumbnail: function () {
+      if (this.file) {
+        const extension = this.file.name.split('.');
+        return extension.length > 1 ? extension[extension.length - 1] : this.file.mimetype.split('/')[1];
+      }
+    },
     isViewableDocument: function () {
       const mimetype = (this.file as FileUpload).mimetype;
       return mimetype.split('/')[0] === 'image' || mimetype === 'application/pdf';
@@ -377,3 +389,7 @@ export default defineComponent({
   },
 });
 </script>
+
+<style>
+@import '../assets/text_thumbnail.css';
+</style>

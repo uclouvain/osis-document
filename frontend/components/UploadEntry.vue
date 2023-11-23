@@ -26,16 +26,22 @@
 <template>
   <li class="media">
     <div
-        v-if="isImage && !!uploadFile && (!withCropping || isCropped)"
         class="media-left"
     >
       <img
+          v-if="isImage && !!uploadFile && (!withCropping || isCropped)"
           class="media-object img-thumbnail"
           :src="fileUrl"
           :alt="uploadFile.name"
           width="80"
           @load="revokeUrl(fileUrl)"
       >
+      <div
+          v-else
+          class="img-thumbnail text-thumbnail"
+      >
+        {{ altThumbnail }}
+      </div>
     </div>
     <div class="media-body">
       <h4 class="media-heading">
@@ -190,6 +196,10 @@ export default defineComponent({
     isImage: function () {
       return this.file.type.split('/')[0] === 'image';
     },
+    altThumbnail: function () {
+      const extension = this.file.name.split('.');
+      return extension.length > 1 ? extension[extension.length - 1] : this.file.type.split('/')[1];
+    },
     fileUrl: function () {
       if (!this.uploadFile) {
         return '';
@@ -287,6 +297,8 @@ export default defineComponent({
 </script>
 
 <style>
+@import '../assets/text_thumbnail.css';
+
 .cropper-container {
   margin: auto;
 }
