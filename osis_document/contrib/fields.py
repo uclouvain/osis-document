@@ -32,6 +32,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from osis_document.contrib.forms import FileUploadField
 from osis_document.utils import generate_filename
+from osis_document.enums import DocumentExpirationPolicy
 from osis_document.validators import TokenValidator
 
 
@@ -56,6 +57,12 @@ class FileField(ArrayField):
         self.async_post_processing = kwargs.pop('async_post_processing', False)
         self.output_post_processing = kwargs.pop('output_post_processing', None)
         self.post_process_params = kwargs.pop('post_process_params', None)
+        self.document_expiration_policy = kwargs.pop(
+            'document_expiration_policy',
+            DocumentExpirationPolicy.NO_EXPIRATION.value,
+        )
+        self.with_cropping = kwargs.pop('with_cropping', False)
+        self.cropping_options = kwargs.pop('cropping_options', None)
 
         kwargs.setdefault('default', list)
         kwargs.setdefault('base_field', models.UUIDField())
@@ -83,6 +90,8 @@ class FileField(ArrayField):
                 'async_post_processing': self.async_post_processing,
                 'output_post_processing': self.output_post_processing,
                 'post_process_params': self.post_process_params,
+                'with_cropping': self.with_cropping,
+                'cropping_options': self.cropping_options,
                 **kwargs,
             }
         )
@@ -107,6 +116,7 @@ class FileField(ArrayField):
         return confirm_remote_upload(
             token=token,
             upload_to=dirname(generate_filename(model_instance, filename, self.upload_to)),
+            document_expiration_policy=self.document_expiration_policy,
         )
 
     def _post_processing(self, uuid_list: list):

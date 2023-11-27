@@ -36,11 +36,15 @@ register = template.Library()
 
 
 @register.inclusion_tag('osis_document/visualizer.html')
-def document_visualizer(values, wanted_post_process=None):
+def document_visualizer(values, wanted_post_process=None, for_modified_upload=False):
     from osis_document.api.utils import get_remote_token
     tokens = []
     for value in values:
-        token = get_remote_token(value, wanted_post_process=wanted_post_process)
+        token = get_remote_token(
+            value,
+            wanted_post_process=wanted_post_process,
+            for_modified_upload=for_modified_upload,
+        )
         if isinstance(token, dict):
             return {
                 'values': '',
@@ -66,24 +70,36 @@ def document_visualizer(values, wanted_post_process=None):
 
 
 @register.inclusion_tag('osis_document/editor.html')
-def document_editor(value, **attrs):
+def document_editor(value, for_modified_upload=False, **attrs):
     from osis_document.api.utils import get_remote_token
     return {
-        'value': get_remote_token(value, write_token=True),
+        'value': get_remote_token(value, write_token=True, for_modified_upload=for_modified_upload),
         'base_url': settings.OSIS_DOCUMENT_BASE_URL,
         'attrs': attrs,
     }
 
 
 @register.simple_tag
-def get_metadata(uuid, wanted_post_process=None, custom_ttl=None):
+def get_metadata(uuid, wanted_post_process=None, custom_ttl=None, for_modified_upload=False):
     from osis_document.api.utils import get_remote_metadata, get_remote_token
     return get_remote_metadata(
-        get_remote_token(uuid=uuid, wanted_post_process=wanted_post_process, custom_ttl=custom_ttl))
+        get_remote_token(
+            uuid=uuid,
+            wanted_post_process=wanted_post_process,
+            custom_ttl=custom_ttl,
+            for_modified_upload=for_modified_upload,
+        )
+    )
 
 
 @register.simple_tag
-def get_file_url(uuid, wanted_post_process=None, custom_ttl=None):
+def get_file_url(uuid, wanted_post_process=None, custom_ttl=None, for_modified_upload=False):
     from osis_document.api.utils import get_remote_token
     return utils_get_file_url(
-        get_remote_token(uuid=uuid, wanted_post_process=wanted_post_process, custom_ttl=custom_ttl))
+        get_remote_token(
+            uuid=uuid,
+            wanted_post_process=wanted_post_process,
+            custom_ttl=custom_ttl,
+            for_modified_upload=for_modified_upload,
+        )
+    )

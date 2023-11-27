@@ -51,6 +51,8 @@ OSIS_DOCUMENT_UPLOAD_LIMIT = '10/minute'
 OSIS_DOCUMENT_TOKEN_MAX_AGE = 60 * 15
 # A temporary upload max age (in seconds) after which it may be deleted by the celery task
 OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE = 60 * 15
+# Upload max age (in seconds) for export expiration policy (default = 15 days)
+OSIS_DOCUMENT_EXPORT_EXPIRATION_POLICY_AGE = 60 * 60 * 24 * 15
 # When used on multiple servers, set the domains on which raw files may be displayed (for Content Security Policy)
 OSIS_DOCUMENT_DOMAIN_LIST = [
     '127.0.0.1:8001',
@@ -462,11 +464,28 @@ element.addEventListener('numPages', ({detail: {numPages}}) => {
 });
 ```
 
+## Cropping images before uploading them
+
+You can add `with_cropping=True` to `FileField`, `FileUploadField` or `FileUploadWidget` to add the ability to crop
+any image with [Cropper.js](https://fengyuanchen.github.io/cropperjs/) before they are uploaded. You can also pass custom options through the `cropping_options` parameter:
+```python
+class ModelName(models.Model):
+    ...
+    model_field_name = FileField(
+        ...
+        with_cropping=True,
+        cropping_options={"aspectRatio": 16 / 9}
+        ...
+    )
+    ...
+```
+
+
 # Contributing to OSIS-Document
 
 ## Frontend
 
-To contribute to the frontend part of this module, install `npm` > 6 (included in [https://nodejs.org/en/download/](nodejs)), and run:
+To contribute to the frontend part of this module, install `npm` > 6 (included in [nodejs](https://nodejs.org/en/download/)), and run:
 ```console
 cd osis_document
 npm clean-install

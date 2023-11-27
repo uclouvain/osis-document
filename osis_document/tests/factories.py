@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import datetime
 import string
 from pathlib import Path
 from typing import List, Set, Dict
@@ -33,7 +34,7 @@ from django.core.files import File
 from factory.fuzzy import FuzzyText
 
 from osis_document.enums import TokenAccess, PostProcessingStatus, PostProcessingType
-from osis_document.models import Token, Upload, PostProcessAsync, PostProcessing
+from osis_document.models import Token, Upload, PostProcessAsync, PostProcessing, ModifiedUpload
 from osis_document.utils import calculate_hash
 
 
@@ -48,6 +49,11 @@ class PdfUploadFactory(factory.django.DjangoModelFactory):
         'hash': 'b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9',
         'name': 'the_file.pdf',
     }
+
+
+class ExpiredPdfUploadFactory(PdfUploadFactory):
+    expires_at = factory.fuzzy.FuzzyDate(start_date=datetime.date(1999,1,1), end_date=datetime.date(2000,1,1))
+
 
 
 class TextDocumentUploadFactory(factory.django.DjangoModelFactory):
@@ -100,6 +106,21 @@ class BadExtensionUploadFactory(factory.django.DjangoModelFactory):
         'hash': calculate_hash(file),
         'name': 'sample-zip-file.zip',
     }
+
+
+class ModifiedUploadFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ModifiedUpload
+
+    upload = factory.SubFactory(PdfUploadFactory)
+    file = factory.django.FileField(data=b'hello world modified', filename='the_file.pdf')
+    size = 19
+
+    @factory.post_generation
+    def set_metadata(obj, create, extracted, **kwargs):
+        obj.upload.metadata['modified_hash'] = calculate_hash(obj.file)
+        obj.upload.save(update_fields=['metadata'])
+        obj.file.seek(0)
 
 
 class WriteTokenFactory(factory.django.DjangoModelFactory):

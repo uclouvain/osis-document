@@ -28,6 +28,7 @@ from django.core import signing
 from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.utils.translation import gettext_lazy as _
 from osis_document.models import Token, Upload, OsisDocumentFileExtensionValidator, OsisDocumentMimeMatchValidator
+from osis_document.enums import DocumentExpirationPolicy
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -124,6 +125,11 @@ class ConfirmUploadRequestSerializer(serializers.Serializer):
         help_text="This attribute provides a way of setting the upload directory",
         required=False,
     )
+    document_expiration_policy = serializers.ChoiceField(
+        help_text="This attribute provides a way of setting the expiration policy of the file",
+        choices=DocumentExpirationPolicy.choices(),
+        required=False,
+    )
 
     def to_internal_value(self, data):
         internal_value = super().to_internal_value(data)
@@ -186,6 +192,7 @@ class TokenSerializer(serializers.ModelSerializer):
             'upload_id',
             'access',
             'expires_at',
+            'for_modified_upload',
         ]
         list_serializer_class = TokenListSerializer
 

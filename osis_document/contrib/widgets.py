@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import json
 import re
 import uuid
 
@@ -77,6 +78,8 @@ class FileUploadWidget(SplitArrayWidget):
         self.async_post_processing = kwargs.pop('async_post_processing', None)
         self.output_post_processing = kwargs.pop('output_post_processing', None)
         self.post_process_params = kwargs.pop('post_process_params', None)
+        self.with_cropping = kwargs.pop('with_cropping', False)
+        self.cropping_options = kwargs.pop('cropping_options', None)
         if kwargs.get('size', None) is None:
             kwargs['size'] = 0
         super().__init__(widget=forms.TextInput, **kwargs)
@@ -138,6 +141,10 @@ class FileUploadWidget(SplitArrayWidget):
             attrs['output_post_processing'] = self.output_post_processing
         if self.post_process_params is not None:
             attrs['post_process_params'] = self.post_process_params
+        if self.with_cropping:
+            attrs['data-with-cropping'] = "true"
+        if self.cropping_options:
+            attrs['data-cropping-options'] = json.dumps(self.cropping_options)
         return attrs
 
     def format_value(self, values):

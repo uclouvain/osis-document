@@ -23,6 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import contextlib
+
 import magic
 import uuid
 from datetime import timedelta
@@ -42,10 +44,11 @@ from .enums import FileStatus, TokenAccess, PostProcessingType, PostProcessingSt
 
 class UploadManager(models.Manager):
     def from_token(self, token):
-        return self.filter(
+        queryset = self.filter(
             tokens__token=token,
             tokens__expires_at__gt=Now(),
-        ).first()
+        ).select_related('modified_upload')
+        return queryset.first()
 
 
 class OsisDocumentFileExtensionValidator(FileExtensionValidator):
@@ -96,6 +99,11 @@ class Upload(models.Model):
         verbose_name=_("Modified at"),
         auto_now=True,
     )
+    expires_at = models.DateField(
+        verbose_name=_("Expires at"),
+        null=True,
+        blank=True
+    )
     mimetype = models.CharField(
         verbose_name=_("MIME Type"),
         max_length=255,
@@ -126,6 +134,47 @@ class Upload(models.Model):
         assert self.metadata.get('hash')
         super().save(force_insert, force_update, using, update_fields)
 
+    def get_file(self, modified=False):
+        if modified:
+            with contextlib.suppress(Upload.modified_upload.RelatedObjectDoesNotExist):
+                return self.modified_upload.file
+        return self.file
+
+    def get_hash(self, modified=False):
+        if modified:
+            with contextlib.suppress(Upload.modified_upload.RelatedObjectDoesNotExist):
+                self.modified_upload
+                return self.metadata.get('modified_hash')
+        return self.metadata.get('hash')
+
+
+class ModifiedUpload(models.Model):
+    """
+    A modified version of an upload (with annotation, rotation, ...).
+    """
+
+    upload = models.OneToOneField(
+        Upload,
+        verbose_name=_("Upload"),
+        related_name='modified_upload',
+        on_delete=models.CASCADE,
+    )
+    created_at = models.DateTimeField(
+        verbose_name=_("Created at"),
+        auto_now_add=True,
+    )
+    modified_at = models.DateTimeField(
+        verbose_name=_("Modified at"),
+        auto_now=True,
+    )
+    file = models.FileField(
+        verbose_name=_("File"),
+        max_length=255,
+    )
+    size = models.IntegerField(
+        verbose_name=_("Size (in bytes)"),
+    )
+
 
 def default_expiration_time():
     from django.utils.timezone import now
@@ -152,6 +201,11 @@ class Token(models.Model):
         verbose_name=_("Upload"),
         on_delete=models.CASCADE,
         related_name='tokens',
+    )
+    for_modified_upload = models.BooleanField(
+        verbose_name=_("For modified upload"),
+        default=False,
+        blank=True,
     )
     created_at = models.DateTimeField(
         verbose_name=_("Created at"),

@@ -39,6 +39,7 @@ interface UploaderProps extends Record<string, unknown> {
   values?: string[],
   automaticUpload?: boolean,
   editableFilename?: boolean,
+  withCropping?: boolean,
 }
 
 interface VisualizerProps extends Record<string, unknown> {
@@ -73,6 +74,12 @@ function initDocumentComponents() {
     }
     if (typeof elem.dataset.editableFilename !== 'undefined') {
       props.editableFilename = elem.dataset.editableFilename === 'true';
+    }
+    if (typeof elem.dataset.withCropping !== 'undefined') {
+      props.withCropping = elem.dataset.withCropping === 'true';
+    }
+    if (typeof elem.dataset.croppingOptions !== 'undefined') {
+      props.croppingOptions = JSON.parse(elem.dataset.croppingOptions);
     }
     createApp(Uploader, props).use(i18n).mount(elem);
   });
