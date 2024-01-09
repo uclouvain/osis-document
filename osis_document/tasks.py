@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2024 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import os
 from datetime import timedelta
 
 from django.conf import settings
@@ -44,7 +45,7 @@ def cleanup_old_uploads():
     # Clean Upload which are stale 2 case:
     #   - State "REQUESTED" and delay in temporary storage expired (= Upload not confirm by client)
     #   - Upload expired (= Storage delay expired - XLS export, PDF one time generation, ...)
-    Upload.objects.filter(
+    upload_expired_qs = Upload.objects.filter(
         Q(
             status=FileStatus.REQUESTED.name,
             uploaded_at__lte=now() - timedelta(seconds=settings.OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE)
@@ -52,7 +53,11 @@ def cleanup_old_uploads():
         Q(
             expires_at__lte=now()
         ),
-    ).delete()
+    )
+    files_expired = [upload_expired.file for upload_expired in upload_expired_qs]
+    upload_expired_qs.delete()
+    for file in files_expired:
+        file.delete(save=False)
 
     # Clean Token expired
     Token.objects.filter(expires_at__lte=now()).delete()
