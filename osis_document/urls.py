@@ -33,6 +33,7 @@ urlpatterns = [
     path('request-upload', views.RequestUploadView.as_view(), name=views.RequestUploadView.name),
     path('confirm-upload/<path:token>', views.ConfirmUploadView.as_view(), name=views.ConfirmUploadView.name),
     path('declare-file-as-infected', views.DeclareFileAsInfectedView.as_view(), name='declare-file-as-infected'),
+    path('declare-files-as-deleted', views.DeclareFilesAsDeletedView.as_view(), name='declare-files-as-deleted'),
     path('read-token/<uuid:pk>', views.GetTokenView.as_view(token_access=TokenAccess.READ.name), name='read-token'),
     path('write-token/<uuid:pk>', views.GetTokenView.as_view(token_access=TokenAccess.WRITE.name), name='write-token'),
     path('read-tokens', views.GetTokenListView.as_view(token_access=TokenAccess.READ.name), name='read-tokens'),

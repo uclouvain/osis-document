@@ -60,6 +60,7 @@ class ChoiceEnum(Enum):
 class FileStatus(ChoiceEnum):
     REQUESTED = _('Requested')
     UPLOADED = _('Uploaded')
+    DELETED = _('Deleted')
     INFECTED = _('Infected')
 
 

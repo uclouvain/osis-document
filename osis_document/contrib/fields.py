@@ -25,6 +25,7 @@
 # ##############################################################################
 
 from os.path import dirname
+from typing import Set
 
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.validators import ArrayMinLengthValidator
@@ -97,27 +98,56 @@ class FileField(ArrayField):
         )
 
     def pre_save(self, model_instance, add):
-        """Convert all writing tokens to UUIDs by remotely confirming their upload, leaving existing uuids"""
-        value = [
-            self._confirm_upload(model_instance, token) if isinstance(token, str) else token
-            for token in (getattr(model_instance, self.attname) or [])
-        ]
+        """
+        Convert all writing tokens to UUIDs by remotely confirming their upload, leaving existing uuids
+        and deleting old documents
+        """
+        previous_values = set()
+        if not add:
+            previous_values = set(self.model.objects.values_list(self.attname).get(pk=model_instance.pk)[0])
+
+        attvalues = getattr(model_instance, self.attname) or []
+        uploads_to_confirm = {token for token in attvalues if isinstance(token, str)}  # Token
+        uploads_to_delete = previous_values - {token for token in attvalues if not isinstance(token, str)}  # UUID
+
+        uploads_uuid_confirmed = self._confirm_multiple_upload(model_instance, uploads_to_confirm, uploads_to_delete)
+
+        upload_uuids = [uploads_uuid_confirmed[token] if isinstance(token, str) else token for token in attvalues]  # UUID
         if self.post_processing:
-            self._post_processing(uuid_list=value)
-        setattr(model_instance, self.attname, value)
-        return value
+            self._post_processing(uuid_list=upload_uuids)
+        setattr(model_instance, self.attname, upload_uuids)
+        return upload_uuids
 
-    def _confirm_upload(self, model_instance, token):
-        """Call the remote API to confirm the upload of a token"""
-        from osis_document.api.utils import confirm_remote_upload, get_remote_metadata
+    def _confirm_multiple_upload(self, model_instance, tokens: Set[str], upload_uuids_to_delete: Set[str]):
+        """Call the remote API to confirm multiple upload and delete old file if replaced"""
+        from osis_document.api.utils import confirm_remote_upload, get_several_remote_metadata, declare_remote_files_as_deleted
 
-        # Get the current filename by interrogating API
-        filename = get_remote_metadata(token)['name']
-        return confirm_remote_upload(
-            token=token,
-            upload_to=dirname(generate_filename(model_instance, filename, self.upload_to)),
-            document_expiration_policy=self.document_expiration_policy,
-        )
+        uploads_uuid_by_token = {}
+
+        metadata_by_token = get_several_remote_metadata(tokens) if tokens else {}
+        for token in tokens:
+            filename = metadata_by_token[token]['name']
+            upload_uuid = confirm_remote_upload(
+                token=token,
+                upload_to=dirname(generate_filename(model_instance, filename, self.upload_to)),
+                document_expiration_policy=self.document_expiration_policy,
+            )
+            uploads_uuid[token] = upload_uuid
+
+        declare_remote_files_as_deleted(upload_uuids_to_delete)
+        return uploads_uuid_by_token
+
+    # def _confirm_upload(self, model_instance, token):
+    #     """Call the remote API to confirm the upload of a token"""
+    #     from osis_document.api.utils import confirm_remote_upload, get_remote_metadata
+    #
+    #     # Get the current filename by interrogating API
+    #     filename = get_remote_metadata(token)['name']
+    #     return confirm_remote_upload(
+    #         token=token,
+    #         upload_to=dirname(generate_filename(model_instance, filename, self.upload_to)),
+    #         document_expiration_policy=self.document_expiration_policy,
+    #     )
 
     def _post_processing(self, uuid_list: list):
         from osis_document.api.utils import launch_post_processing

@@ -30,7 +30,7 @@ from .raw_file import RawFileView
 from .rotate import RotateImageView
 from .security import DeclareFileAsInfectedView
 from .token import GetTokenView, GetTokenListView
-from .upload import ConfirmUploadView, RequestUploadView
+from .upload import ConfirmUploadView, RequestUploadView, DeclareFilesAsDeletedView
 
 __all__ = [
     "RawFileView",
@@ -43,6 +43,7 @@ __all__ = [
     "GetTokenListView",
     "RotateImageView",
     "DeclareFileAsInfectedView",
+    "DeclareFilesAsDeletedView",
     'PostProcessingView',
     "SaveEditorView",
     "GetProgressAsyncPostProcessingView",

@@ -216,6 +216,21 @@ def launch_post_processing(
     return response.json() if not async_post_processing else response
 
 
+def declare_remote_files_as_deleted(
+    uuid_list
+):
+    import requests
+
+    url = "{}declare-files-as-deleted".format(settings.OSIS_DOCUMENT_BASE_URL)
+    data = {'files': uuid_list}
+    response = requests.post(
+        url,
+        json=data,
+        headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
+    )
+    return response.json()
+
+
 def get_progress_async_post_processing(uuid: str, wanted_post_process: str = None):
     """Given an uuid and a type of post-processing,
         returns an int corresponding to the post-processing progress percentage

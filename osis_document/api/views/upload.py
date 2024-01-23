@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import datetime
 
 from django.conf import settings
 from django.core.exceptions import FieldError
@@ -136,3 +137,52 @@ class ConfirmUploadView(CorsAllowOriginMixin, APIView):
         except FieldError as e:
             return Response({'error': str(e)}, status.HTTP_400_BAD_REQUEST)
         return Response({'uuid': uuid}, status.HTTP_201_CREATED)
+
+
+class DeclareFilesAsDeletedSchema(AutoSchema):  # pragma: no cover
+    def get_operation_id(self, path, method):
+        return 'declareFilesAsDeleted'
+
+    def get_request_body(self, path, method):
+        self.request_media_types = self.map_parsers(path, method)
+        return {
+            'content': {
+                ct: {
+                    'schema': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'string',
+                            'description': 'Files token',
+                        },
+                    },
+                }
+                for ct in self.request_media_types
+            }
+        }
+
+    def get_responses(self, path, method):
+        responses = super().get_responses(path, method)
+        responses['204'] = {
+            'description': 'No content',
+        }
+        return responses
+
+    def get_operation(self, path, method):
+        operation = super().get_operation(path, method)
+        operation['security'] = [{"ApiKeyAuth": []}]
+        return operation
+
+
+
+class DeclareFilesAsDeletedView(CorsAllowOriginMixin, APIView):
+    name = 'declare-files-as-deleted'
+    authentication_classes = []
+    permission_classes = [APIKeyPermission]
+    schema = DeclareFilesAsDeletedSchema()
+
+    def post(self, *args, **kwargs):
+        Upload.objects.filter(uuid__in=self.request.data['files']).update(
+            status=FileStatus.DELETED.name,
+            expires_at=datetime.date.today(),
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
