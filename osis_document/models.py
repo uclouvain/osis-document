@@ -47,6 +47,8 @@ class UploadManager(models.Manager):
         queryset = self.filter(
             tokens__token=token,
             tokens__expires_at__gt=Now(),
+        ).exclude(
+            status=FileStatus.DELETED.name
         ).select_related('modified_upload')
         return queryset.first()
 
