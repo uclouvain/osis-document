@@ -25,10 +25,12 @@
 # ##############################################################################
 from unittest.mock import Mock, patch
 
+import uuid
 from django.test import TestCase, override_settings
 from requests import HTTPError
 
-from osis_document.api.utils import confirm_remote_upload, get_remote_metadata, get_remote_token
+from osis_document.api.utils import confirm_remote_upload, get_remote_metadata, get_remote_token, \
+    declare_remote_files_as_deleted
 from osis_document.enums import DocumentExpirationPolicy
 from osis_document.exceptions import FileInfectedException, UploadInvalidException
 
@@ -174,4 +176,28 @@ class RemoteUtilsTestCase(TestCase):
                     },
                 },
                 headers={'X-Api-Key': 'very-secret'},
+            )
+
+
+@override_settings(
+    OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/',
+    OSIS_DOCUMENT_API_SHARED_SECRET='very-secret',
+)
+class DeclareRemoteFilesAsDeletedTestCase(TestCase):
+    def test_declare_remote_files_as_deleted(self):
+        files_to_delete = [uuid.uuid4(), uuid.uuid4()]
+
+        with patch('requests.post') as request_mock:
+            request_mock.return_value.status_code = 204
+            self.assertIsNone(declare_remote_files_as_deleted(files_to_delete))
+            self.assertEqual(
+                request_mock.call_args[0][0],
+                'http://dummyurl.com/document/declare-files-as-deleted'
+            )
+            self.assertDictEqual(
+                request_mock.call_args[1],
+                {
+                    'json': {'files': [str(file) for file in files_to_delete]},
+                    'headers': {'X-Api-Key': 'very-secret'}
+                }
             )

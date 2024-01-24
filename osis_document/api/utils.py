@@ -23,7 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from typing import Union, List, Dict
+import logging
+from typing import Union, List, Dict, Iterable
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -34,6 +35,9 @@ from osis_document.utils import stringify_uuid_and_check_uuid_validity
 from requests import HTTPError
 from rest_framework import status
 from rest_framework.views import APIView
+
+
+logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
 def get_remote_metadata(token: str) -> Union[dict, None]:
@@ -217,18 +221,19 @@ def launch_post_processing(
 
 
 def declare_remote_files_as_deleted(
-    uuid_list
+    uuid_list: Iterable[UUID]
 ):
     import requests
 
     url = "{}declare-files-as-deleted".format(settings.OSIS_DOCUMENT_BASE_URL)
-    data = {'files': uuid_list}
+    data = {'files': [str(uuid) for uuid in uuid_list]}
     response = requests.post(
         url,
         json=data,
         headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
     )
-    return response.json()
+    if response.status_code != status.HTTP_204_NO_CONTENT:
+        logger.error("An error occured when calling declare-files-as-deleted: {}".format(response.text))
 
 
 def get_progress_async_post_processing(uuid: str, wanted_post_process: str = None):

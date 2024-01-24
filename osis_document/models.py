@@ -224,6 +224,12 @@ class Token(models.Model):
 
     objects = TokenManager()
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['token']),
+            models.Index(fields=['token', 'expires_at'])
+        ]
+
     def __str__(self):
         return self.token
 
