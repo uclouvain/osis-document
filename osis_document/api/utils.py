@@ -23,7 +23,6 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-import logging
 from typing import Union, List, Dict, Iterable
 from urllib.parse import urlparse
 from uuid import UUID
@@ -37,7 +36,6 @@ from rest_framework import status
 from rest_framework.views import APIView
 
 
-logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
 def get_remote_metadata(token: str) -> Union[dict, None]:
@@ -233,6 +231,9 @@ def declare_remote_files_as_deleted(
         headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
     )
     if response.status_code != status.HTTP_204_NO_CONTENT:
+        import logging
+
+        logger = logging.getLogger(settings.DEFAULT_LOGGER)
         logger.error("An error occured when calling declare-files-as-deleted: {}".format(response.text))
 
 
