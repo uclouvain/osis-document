@@ -23,9 +23,9 @@
 #  see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-
+import uuid
 from os.path import dirname
-from typing import Set
+from typing import Set, List, Union
 
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.validators import ArrayMinLengthValidator
@@ -106,31 +106,31 @@ class FileField(ArrayField):
         and deleting old documents
         """
         try:
-            previous_values = self.model.objects.values_list(self.attname).get(pk=model_instance.pk)[0]
-            previous_values = set(previous_values) if previous_values else set()
+            previous_values = self.model.objects.values_list(self.attname).get(pk=model_instance.pk)[0] or []
         except ObjectDoesNotExist:
-            previous_values = set()
+            previous_values = []
 
         attvalues = getattr(model_instance, self.attname) or []
-        files_to_confirm = {token for token in attvalues if isinstance(token, str)}  # Token
-        files_to_delete = previous_values - {token for token in attvalues if not isinstance(token, str)}  # UUID
-
-        files_confirmed = self._confirm_multiple_upload(model_instance, files_to_confirm, files_to_delete)
-
-        files = [files_confirmed[token] if isinstance(token, str) else token for token in attvalues]  # UUID
+        files_confirmed = self._confirm_multiple_upload(model_instance, attvalues, previous_values)
         if self.post_processing:
-            self._post_processing(uuid_list=files)
-        setattr(model_instance, self.attname, files)
-        return files
+            self._post_processing(uuid_list=files_confirmed)
+        setattr(model_instance, self.attname, files_confirmed)
+        return files_confirmed
 
-    def _confirm_multiple_upload(self, model_instance, tokens: Set[str], files_to_delete: Set[UUID]):
+    def _confirm_multiple_upload(
+        self,
+        model_instance,
+        attvalues: List[Union[str, UUID]],
+        previous_values: List[UUID],
+    ):
         """Call the remote API to confirm multiple upload and delete old file if replaced"""
         from osis_document.api.utils import confirm_remote_upload, get_several_remote_metadata, \
             declare_remote_files_as_deleted
 
-        files_uuid_by_token = {}
+        files_to_keep = [token for token in attvalues if not isinstance(token, str)]  # UUID
 
-        metadata_by_token = get_several_remote_metadata(list(tokens)) if tokens else {}
+        tokens = [token for token in attvalues if isinstance(token, str)]
+        metadata_by_token = get_several_remote_metadata(tokens) if tokens else {}
         for token in tokens:
             filename = metadata_by_token[token]['name']
             file_uuid = confirm_remote_upload(
@@ -138,11 +138,12 @@ class FileField(ArrayField):
                 upload_to=dirname(generate_filename(model_instance, filename, self.upload_to)),
                 document_expiration_policy=self.document_expiration_policy,
             )
-            files_uuid_by_token[token] = file_uuid
+            files_to_keep.append(UUID(file_uuid))
 
-        if files_to_delete:
-            declare_remote_files_as_deleted(files_to_delete)
-        return files_uuid_by_token
+        files_to_declare_as_deleted = set(previous_values) - set(files_to_keep)
+        if files_to_declare_as_deleted:
+            declare_remote_files_as_deleted(files_to_declare_as_deleted)
+        return files_to_keep
 
     def _post_processing(self, uuid_list: list):
         from osis_document.api.utils import launch_post_processing
