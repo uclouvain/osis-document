@@ -241,3 +241,10 @@ class ProgressAsyncPostProcessingResponseSerializer(serializers.Serializer):
         help_text="A dictionary containing the status of the post-processing wanted, the percentage of progress of the post-processing and optionally a boolean if the post-processing failed",
         required=True
     )
+
+
+class DeclareFilesAsDeletedSerializer(serializers.Serializer):
+    files = serializers.ListField(
+        help_text="A list of files UUID",
+        required=True,
+    )

@@ -47,6 +47,8 @@ class UploadManager(models.Manager):
         queryset = self.filter(
             tokens__token=token,
             tokens__expires_at__gt=Now(),
+        ).exclude(
+            status=FileStatus.DELETED.name
         ).select_related('modified_upload')
         return queryset.first()
 
@@ -223,6 +225,12 @@ class Token(models.Model):
     )
 
     objects = TokenManager()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['token']),
+            models.Index(fields=['token', 'expires_at'])
+        ]
 
     def __str__(self):
         return self.token
