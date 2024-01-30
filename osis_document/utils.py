@@ -26,6 +26,7 @@
 import contextlib
 import datetime
 import hashlib
+import os
 import posixpath
 import sys
 import uuid
@@ -40,6 +41,9 @@ from django.utils.translation import gettext_lazy as _
 from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType, DocumentExpirationPolicy
 from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction, SaveRawContentRemotelyException
 from osis_document.models import Token, Upload, PostProcessAsync
+
+
+FILENAME_MAX_LENGTH = os.pathconf('/', 'PC_NAME_MAX')
 
 
 def confirm_upload(token, upload_to, document_expiration_policy=None, model_instance=None) -> UUID:

@@ -36,7 +36,7 @@ from osis_document.contrib.post_processing.processor import Processor
 from osis_document.enums import PostProcessingType
 from osis_document.exceptions import FormatInvalidException, MissingFileException, InvalidMergeFileDimension
 from osis_document.models import Upload
-from osis_document.utils import stringify_uuid_and_check_uuid_validity
+from osis_document.utils import stringify_uuid_and_check_uuid_validity, FILENAME_MAX_LENGTH
 
 
 class Merger(Processor):
@@ -108,8 +108,10 @@ class Merger(Processor):
     @staticmethod
     def _get_output_filename(output_filename: str = None):
         if output_filename:
-            return f"{output_filename}{uuid.uuid4()}.pdf"
-        return f"merge_{uuid.uuid4()}.pdf"
+            filename = f"{output_filename}{uuid.uuid4()}"
+        else:
+            filename = f"merge_{uuid.uuid4()}"
+        return f"{filename[:FILENAME_MAX_LENGTH - 4]}.pdf"
 
 
 merger = Merger()

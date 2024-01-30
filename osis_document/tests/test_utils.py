@@ -396,6 +396,32 @@ class PostProcessingTestCase(TestCase):
             PostProcessing.objects.filter(input_files__in=uuid_list)
         )
 
+    def test_merge_with_filename_too_big(self):
+        file1 = CorrectPDFUploadFactory()
+        file2 = CorrectPDFUploadFactory()
+        uuid_list = [file1.uuid, file2.uuid]
+        post_processing_types = [PostProcessingType.MERGE.name]
+        output_filename = 'A' * 1000
+        post_process_params = {
+            PostProcessingType.MERGE.name: {'output_filename': output_filename}
+        }
+        uuid_output = post_process(
+            uuid_list=uuid_list, post_process_actions=post_processing_types, post_process_params=post_process_params
+        )
+        output_upload_object = Upload.objects.get(
+            uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects'])
+        self.assertTrue(
+            Upload.objects.filter(
+                uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects']).exists()
+        )
+        self.assertTrue(
+            PostProcessing.objects.filter(
+                output_files__uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects']
+            ).exists()
+        )
+        self.assertEqual(Upload.objects.all().__len__(), 3)
+        self.assertEqual(f'{output_upload_object.metadata.get("name")}.pdf', f'{output_filename}.pdf')
+
 
 class StringifyUuidAndCheckUuidValidity(TestCase):
     def test_valid_string_input(self):
