@@ -179,6 +179,8 @@ class DeclareFilesAsDeletedView(CorsAllowOriginMixin, APIView):
 
         Upload.objects.filter(uuid__in=validated_data['files']).update(
             status=FileStatus.DELETED.name,
-            expires_at=datetime.date.today(),
+            expires_at=datetime.date.today() + datetime.timedelta(
+                seconds=settings.OSIS_DOCUMENT_DELETED_UPLOAD_MAX_AGE
+            ),
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
