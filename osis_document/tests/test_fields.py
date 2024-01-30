@@ -74,7 +74,7 @@ class FieldTestCase(TestCase):
             "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
         }
         get_several_remote_metadata.return_value = {
-            token.token: get_remote_metadata.return_value
+            str(token.token): get_remote_metadata.return_value
         }
         form = ModelForm({'documents_0': token.token})
         self.assertTrue(form.is_valid(), form.errors)
@@ -99,7 +99,7 @@ class FieldTestCase(TestCase):
             "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
         }
         get_several_remote_metadata.return_value = {
-            token.token: get_remote_metadata.return_value
+            str(token.token): get_remote_metadata.return_value
         }
         ModelForm = modelform_factory(TestDocument, fields='__all__')
 
@@ -124,7 +124,7 @@ class FieldTestCase(TestCase):
 
         token = WriteTokenFactory(upload=Upload.objects.first())
         get_several_remote_metadata.return_value = {
-            token.token: get_remote_metadata.return_value
+            str(token.token): get_remote_metadata.return_value
         }
         form = ModelForm({'documents_0': token.token})
         # 3 queries (
@@ -156,7 +156,7 @@ class FieldTestCase(TestCase):
 
         get_remote_metadata.return_value = {"name": "test.jpg"}
         get_several_remote_metadata.return_value = {
-            token.token: get_remote_metadata.return_value
+            str(token.token): get_remote_metadata.return_value
         }
         ModelForm = modelform_factory(TestDocument, fields='__all__')
         form = ModelForm({'documents_0': token.token})
@@ -180,7 +180,7 @@ class FieldTestCase(TestCase):
 
         get_remote_metadata.return_value = {"name": "test.jpg"}
         get_several_remote_metadata.return_value = {
-            token.token: get_remote_metadata.return_value
+            str(token.token): get_remote_metadata.return_value
         }
         ModelForm = modelform_factory(TestDocument, fields='__all__')
 
@@ -233,7 +233,7 @@ class FieldTestCase(TestCase):
             "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
         }
         get_several_remote_metadata.return_value = {
-            token.token: get_remote_metadata.return_value
+            str(token.token): get_remote_metadata.return_value
         }
         instance = TestDocument(documents=[token.token])
         with patch('osis_document.api.utils.confirm_remote_upload') as confirm_remote_upload:
@@ -265,7 +265,7 @@ class FieldTestCase(TestCase):
                 "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
             }
         get_several_remote_metadata.return_value = {
-            token.token: get_remote_metadata.return_value,
+            str(token.token): get_remote_metadata.return_value,
         }
         upload_id = token.upload_id
 

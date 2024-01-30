@@ -35,7 +35,7 @@ from rest_framework.views import APIView
 from osis_document.api import serializers
 from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
-from osis_document.enums import DocumentError
+from osis_document.enums import DocumentError, FileStatus
 from osis_document.models import Token
 from osis_document.utils import get_metadata, get_upload_metadata
 
@@ -139,6 +139,8 @@ class MetadataListView(CorsAllowOriginMixin, APIView):
         tokens = Token.objects.filter(
             token__in=self.request.data,
             expires_at__gt=Now(),
+        ).exclude(
+            upload__status=FileStatus.DELETED.name
         ).select_related('upload')
 
         for token in tokens:

@@ -190,6 +190,8 @@ class TokenManager(models.Manager):
         return self.filter(
             access=TokenAccess.WRITE.name,
             expires_at__gt=Now(),
+        ).exclude(
+            upload__status=FileStatus.DELETED.name,
         )
 
 
