@@ -59,7 +59,7 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
 
     name = 'get-token'
     serializer_class = serializers.TokenSerializer
-    queryset = Upload.objects.all()
+    queryset = Upload.objects.all().exclude(status=FileStatus.DELETED.name)
     authentication_classes = []
     permission_classes = [APIKeyPermission]
     token_access = None

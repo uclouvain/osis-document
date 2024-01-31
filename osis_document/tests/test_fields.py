@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2024 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -45,8 +45,14 @@ from osis_document.utils import confirm_upload
 )
 class FieldTestCase(TestCase):
     @patch('osis_document.api.utils.get_remote_metadata')
-    def test_model_form_validation(self, get_remote_metadata):
+    @patch('osis_document.api.utils.get_several_remote_metadata')
+    def test_model_form_validation(
+        self,
+        get_several_remote_metadata,
+        get_remote_metadata,
+    ):
         get_remote_metadata.return_value = None
+        get_several_remote_metadata.return_value = None
         ModelForm = modelform_factory(TestDocument, fields='__all__')
 
         form = ModelForm({})
@@ -59,36 +65,56 @@ class FieldTestCase(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn(_("File upload is either non-existent or has expired"), form.errors['documents'][0])
 
+        token = WriteTokenFactory()
+
         get_remote_metadata.return_value = {
             "size": 1024,
             "mimetype": "image/jpeg",
             "name": "test.jpg",
             "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
         }
-        token = WriteTokenFactory()
+        get_several_remote_metadata.return_value = {
+            str(token.token): get_remote_metadata.return_value
+        }
         form = ModelForm({'documents_0': token.token})
         self.assertTrue(form.is_valid(), form.errors)
 
     @patch('osis_document.api.utils.get_remote_metadata')
+    @patch('osis_document.api.utils.get_several_remote_metadata')
     @patch('osis_document.api.utils.confirm_remote_upload')
-    def test_model_form_submit(self, confirm_remote_upload, get_remote_metadata):
+    def test_model_form_submit(
+        self,
+        confirm_remote_upload,
+        get_several_remote_metadata,
+        get_remote_metadata,
+    ):
         # For the sake of simplicity, let's say a remote confirm is local
         confirm_remote_upload.side_effect = lambda token, upload_to, **_: confirm_upload(token, upload_to)
 
+        token = WriteTokenFactory()
         get_remote_metadata.return_value = {
             "size": 1024,
             "mimetype": "image/jpeg",
             "name": "test.jpg",
             "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
         }
+        get_several_remote_metadata.return_value = {
+            str(token.token): get_remote_metadata.return_value
+        }
         ModelForm = modelform_factory(TestDocument, fields='__all__')
 
-        token = WriteTokenFactory()
         form = ModelForm({'documents_0': token.token})
         self.assertTrue(form.is_valid(), form.errors)
-
-        # 4 queries (one for loading obj, one for upload state, one for deleting token, one for saving obj)
-        with self.assertNumQueries(4):
+        # 7 queries (
+            # one for loading obj,
+            # one for upload state,
+            # one for deleting token,
+            # one for getting old documents fields value,
+            # one for getting old other_documents fields value,
+            # one for getting old documents_expirables fields value,
+            # one for saving obj
+        # )
+        with self.assertNumQueries(7):
             document = form.save()
 
         self.assertIsNone(Token.objects.filter(token=token.token).first())
@@ -97,9 +123,19 @@ class FieldTestCase(TestCase):
         self.assertEqual(token.upload.status, FileStatus.UPLOADED.name)
 
         token = WriteTokenFactory(upload=Upload.objects.first())
+        get_several_remote_metadata.return_value = {
+            str(token.token): get_remote_metadata.return_value
+        }
         form = ModelForm({'documents_0': token.token})
-        # 3 queries (one for loading obj, one for deleting token, one for saving obj)
-        with self.assertNumQueries(3):
+        # 3 queries (
+            # one for loading obj,
+            # one for deleting token,
+            # one for getting old documents fields value,
+            # one for getting old other_documents fields value,
+            # one for getting old documents_expirables fields value,
+            # one for saving obj
+        # )
+        with self.assertNumQueries(6):
             document = form.save()
 
         # Saving an empty form should empty the field
@@ -109,11 +145,20 @@ class FieldTestCase(TestCase):
         self.assertEqual(len(document.documents), 0)
 
     @patch('osis_document.api.utils.get_remote_metadata')
-    def test_model_form_confirms_remotely_with_correct_path(self, get_remote_metadata):
-        get_remote_metadata.return_value = {"name": "test.jpg"}
-        ModelForm = modelform_factory(TestDocument, fields='__all__')
 
+    @patch('osis_document.api.utils.get_several_remote_metadata')
+    def test_model_form_confirms_remotely_with_correct_path(
+        self,
+        get_several_remote_metadata,
+        get_remote_metadata,
+    ):
         token = WriteTokenFactory()
+
+        get_remote_metadata.return_value = {"name": "test.jpg"}
+        get_several_remote_metadata.return_value = {
+            str(token.token): get_remote_metadata.return_value
+        }
+        ModelForm = modelform_factory(TestDocument, fields='__all__')
         form = ModelForm({'documents_0': token.token})
         self.assertTrue(form.is_valid(), form.errors)
 
@@ -124,11 +169,21 @@ class FieldTestCase(TestCase):
         request_mock.assert_called_with(expected_url, json={'upload_to': 'path'}, headers={'X-Api-Key': 'very-secret'})
 
     @patch('osis_document.api.utils.get_remote_metadata')
-    def test_model_form_confirms_remotely_with_document_expiration_policy(self, get_remote_metadata):
+
+    @patch('osis_document.api.utils.get_several_remote_metadata')
+    def test_model_form_confirms_remotely_with_document_expiration_policy(
+        self,
+        get_several_remote_metadata,
+        get_remote_metadata,
+    ):
+        token = WriteTokenFactory()
+
         get_remote_metadata.return_value = {"name": "test.jpg"}
+        get_several_remote_metadata.return_value = {
+            str(token.token): get_remote_metadata.return_value
+        }
         ModelForm = modelform_factory(TestDocument, fields='__all__')
 
-        token = WriteTokenFactory()
         form = ModelForm({'documents_expirables_0': token.token})
         self.assertTrue(form.is_valid(), form.errors)
 
@@ -163,15 +218,24 @@ class FieldTestCase(TestCase):
         self.assertEqual(len(instance.documents), 1)
 
     @patch('osis_document.api.utils.get_remote_metadata')
-    def test_create_from_uuid_saving(self, get_remote_metadata):
+    @patch('osis_document.api.utils.get_several_remote_metadata')
+    def test_create_from_uuid_saving(
+        self,
+        get_several_remote_metadata,
+        get_remote_metadata,
+    ):
+        token = WriteTokenFactory()
+
         get_remote_metadata.return_value = {
             "size": 1024,
             "mimetype": "image/jpeg",
             "name": "test.jpg",
             "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
         }
-
-        instance = TestDocument(documents=[WriteTokenFactory().token])
+        get_several_remote_metadata.return_value = {
+            str(token.token): get_remote_metadata.return_value
+        }
+        instance = TestDocument(documents=[token.token])
         with patch('osis_document.api.utils.confirm_remote_upload') as confirm_remote_upload:
             # For the sake of simplicity, let's say a remote confirm is local
             confirm_remote_upload.side_effect = lambda token, upload_to, **_: confirm_upload(token, upload_to)
@@ -186,14 +250,24 @@ class FieldTestCase(TestCase):
         self.assertIsInstance(instance.documents[0], uuid.UUID)
 
     @patch('osis_document.api.utils.get_remote_metadata')
-    def test_field_having_requirements(self, get_remote_metadata):
-        get_remote_metadata.return_value = {
-            "size": 1024,
-            "mimetype": "image/jpeg",
-            "name": "test.jpg",
-            "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
+    @patch('osis_document.api.utils.get_several_remote_metadata')
+    def test_field_having_requirements(
+        self,
+        get_several_remote_metadata,
+        get_remote_metadata,
+    ):
+        token = WriteTokenFactory()
+
+        get_remote_metadata.return_value =  {
+                "size": 1024,
+                "mimetype": "image/jpeg",
+                "name": "test.jpg",
+                "url": "http://dummyurl.com/document/file/AZERTYIOOHGFDFGHJKLKJHG",
+            }
+        get_several_remote_metadata.return_value = {
+            str(token.token): get_remote_metadata.return_value,
         }
-        upload_id = WriteTokenFactory().upload_id
+        upload_id = token.upload_id
 
         field = FileField(min_files=1)
         with self.assertRaises(ValidationError):

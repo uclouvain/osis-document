@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import datetime
 
 from django.conf import settings
 from django.core.exceptions import FieldError
@@ -37,6 +38,7 @@ from osis_document.api import serializers
 from osis_document.api.permissions import APIKeyPermission
 from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
+from osis_document.enums import FileStatus
 from osis_document.models import Upload
 from osis_document.utils import calculate_hash, confirm_upload, get_token
 
@@ -136,3 +138,49 @@ class ConfirmUploadView(CorsAllowOriginMixin, APIView):
         except FieldError as e:
             return Response({'error': str(e)}, status.HTTP_400_BAD_REQUEST)
         return Response({'uuid': uuid}, status.HTTP_201_CREATED)
+
+
+class DeclareFilesAsDeletedSchema(DetailedAutoSchema):  # pragma: no cover
+    serializer_mapping = {
+        'POST': serializers.DeclareFilesAsDeletedSerializer,
+    }
+
+    def get_operation_id(self, path, method):
+        return 'declareFilesAsDeleted'
+
+    def get_responses(self, path, method):
+        responses = super().get_responses(path, method)
+        del responses['201']
+        responses['204'] = {
+            'description': 'No content',
+        }
+        return responses
+
+    def get_operation(self, path, method):
+        operation = super().get_operation(path, method)
+        operation['security'] = [{"ApiKeyAuth": []}]
+        return operation
+
+
+class DeclareFilesAsDeletedView(CorsAllowOriginMixin, APIView):
+    name = 'declare-files-as-deleted'
+    authentication_classes = []
+    permission_classes = [APIKeyPermission]
+    schema = DeclareFilesAsDeletedSchema()
+
+    def post(self, *args, **kwargs):
+        input_serializer_data = serializers.DeclareFilesAsDeletedSerializer(
+            data={
+                **self.request.data,
+            }
+        )
+        input_serializer_data.is_valid(raise_exception=True)
+        validated_data = input_serializer_data.validated_data
+
+        Upload.objects.filter(uuid__in=validated_data['files']).update(
+            status=FileStatus.DELETED.name,
+            expires_at=datetime.date.today() + datetime.timedelta(
+                seconds=settings.OSIS_DOCUMENT_DELETED_UPLOAD_MAX_AGE
+            ),
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)

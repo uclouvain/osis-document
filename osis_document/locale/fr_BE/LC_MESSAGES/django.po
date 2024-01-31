@@ -17,20 +17,53 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+msgid "A3"
+msgstr "A3"
+
+msgid "A4"
+msgstr "A4"
+
+msgid "A5"
+msgstr "A5"
+
 msgid "Access type"
 msgstr "Type d'accès"
 
 msgid "Bad file upload mimetype"
 msgstr "Type MIME du fichier uploadé incorrect"
 
+msgid "Convert"
+msgstr "Convertir"
+
 msgid "Created at"
 msgstr "Créé le"
+
+msgid "Data Post Processing"
+msgstr "Donnée Post Processing"
+
+msgid "Deleted"
+msgstr "Supprimé"
 
 msgid "Documents"
 msgstr "Documents"
 
+msgid "Done"
+msgstr "Fait"
+
+msgid "Error during file conversion to pdf"
+msgstr "Erreur durant la conversion du fichier en pdf"
+
+msgid "Error during getting input files"
+msgstr "Erreur durant l'obtention des fichiers d'entrée"
+
+msgid "Expired token."
+msgstr "Jeton expiré."
+
 msgid "Expires at"
 msgstr "Expire le"
+
+msgid "Failed"
+msgstr "Echoué"
 
 msgid "File"
 msgstr "Fichier"
@@ -41,6 +74,9 @@ msgstr "Le fichier n'existe pas"
 msgid "File is flagged as infected"
 msgstr "Le fichier est marquécomme infecté"
 
+msgid "File is not a PDF"
+msgstr "Le fichier n'est pas un PDF"
+
 msgid "File is not an image"
 msgstr "Le fichier n'est pas une image"
 
@@ -49,6 +85,9 @@ msgstr "Le fichier n'existe pas ou a expiré"
 
 msgid "File upload is too large"
 msgstr "Le fichier transféré est trop lourd"
+
+msgid "For modified upload"
+msgstr "Pour téléchargement modifié"
 
 msgid "Hash check failed"
 msgstr "Erreur de vérification de hashage"
@@ -59,11 +98,32 @@ msgstr "Le contrôle du hash a échoué"
 msgid "Infected"
 msgstr "Infecté"
 
+msgid "Input"
+msgstr "Entrée"
+
+msgid "Invalid dimension params given for merge action"
+msgstr "Paramètres de dimension non valides pour l'action de fusion"
+
+msgid "Invalid file format"
+msgstr "Format de fichier invalide"
+
+msgid "Invalid post_processing action"
+msgstr "Action post_processing invalide"
+
+msgid "Invalid token"
+msgstr "Jeton invalide"
+
+msgid "Invalid upload UUID"
+msgstr "UUID de téléchargement non valide"
+
 msgid "MIME Type"
 msgstr "Type MIME"
 
 msgid "MIME type mismatch"
 msgstr "Le format et l'extension du fichier ne correspondent pas"
+
+msgid "Merge"
+msgstr "Fusion"
 
 msgid "Metadata"
 msgstr "Métadonnées"
@@ -74,6 +134,15 @@ msgstr "Paramètre OSIS_DOCUMENT_BASE_URL non renseigné"
 msgid "Modified at"
 msgstr "Modifié le"
 
+msgid "Original"
+msgstr "Original"
+
+msgid "Output"
+msgstr "Sortie"
+
+msgid "Pending"
+msgstr "En attente"
+
 msgid "Read"
 msgstr "Lecture"
 
@@ -82,6 +151,9 @@ msgstr "Requêté"
 
 msgid "Resource not found"
 msgstr "Ressource non trouvée"
+
+msgid "Result Post Processing"
+msgstr "Résultat du post-traitement"
 
 msgid "Size"
 msgstr "Taille"
@@ -98,6 +170,9 @@ msgstr "Token"
 msgid "Token non-existent or expired"
 msgstr "Token non-existant ou expiré"
 
+msgid "Token not found"
+msgstr "Jeton non trouvé"
+
 msgid "Too few files uploaded"
 msgstr "Trop peu de fichiers transférés"
 
@@ -110,6 +185,9 @@ msgstr "UUID"
 msgid "Upload"
 msgstr "Transfert"
 
+msgid "Upload not found"
+msgstr "Téléchargement non trouvée"
+
 msgid "Uploaded"
 msgstr "Transféré"
 
@@ -119,8 +197,8 @@ msgstr "Transféré le"
 msgid "Write"
 msgstr "Ecriture"
 
-msgid "Expired token."
-msgstr "Jeton expiré."
-
-msgid "You cannot access the file because the url's validity period has expired."
-msgstr "Vous ne pouvez pas accéder au fichier car la période de validité de l'url est dépassée."
+msgid ""
+"You cannot access the file because the url's validity period has expired."
+msgstr ""
+"Vous ne pouvez pas accéder au fichier car la période de validité de l'url "
+"est dépassée."

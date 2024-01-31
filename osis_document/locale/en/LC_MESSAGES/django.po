@@ -17,19 +17,52 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+msgid "A3"
+msgstr ""
+
+msgid "A4"
+msgstr ""
+
+msgid "A5"
+msgstr ""
+
 msgid "Access type"
 msgstr ""
 
 msgid "Bad file upload mimetype"
 msgstr ""
 
+msgid "Convert"
+msgstr ""
+
 msgid "Created at"
+msgstr ""
+
+msgid "Data Post Processing"
+msgstr ""
+
+msgid "Deleted"
 msgstr ""
 
 msgid "Documents"
 msgstr ""
 
+msgid "Done"
+msgstr ""
+
+msgid "Error during file conversion to pdf"
+msgstr ""
+
+msgid "Error during getting input files"
+msgstr ""
+
+msgid "Expired token."
+msgstr ""
+
 msgid "Expires at"
+msgstr ""
+
+msgid "Failed"
 msgstr ""
 
 msgid "File"
@@ -41,6 +74,9 @@ msgstr ""
 msgid "File is flagged as infected"
 msgstr ""
 
+msgid "File is not a PDF"
+msgstr ""
+
 msgid "File is not an image"
 msgstr ""
 
@@ -48,6 +84,9 @@ msgid "File upload is either non-existent or has expired"
 msgstr ""
 
 msgid "File upload is too large"
+msgstr ""
+
+msgid "For modified upload"
 msgstr ""
 
 msgid "Hash check failed"
@@ -59,10 +98,31 @@ msgstr ""
 msgid "Infected"
 msgstr ""
 
+msgid "Input"
+msgstr ""
+
+msgid "Invalid dimension params given for merge action"
+msgstr ""
+
+msgid "Invalid file format"
+msgstr ""
+
+msgid "Invalid post_processing action"
+msgstr ""
+
+msgid "Invalid token"
+msgstr ""
+
+msgid "Invalid upload UUID"
+msgstr ""
+
 msgid "MIME Type"
 msgstr ""
 
 msgid "MIME type mismatch"
+msgstr ""
+
+msgid "Merge"
 msgstr ""
 
 msgid "Metadata"
@@ -74,6 +134,15 @@ msgstr ""
 msgid "Modified at"
 msgstr ""
 
+msgid "Original"
+msgstr ""
+
+msgid "Output"
+msgstr ""
+
+msgid "Pending"
+msgstr ""
+
 msgid "Read"
 msgstr ""
 
@@ -81,6 +150,9 @@ msgid "Requested"
 msgstr ""
 
 msgid "Resource not found"
+msgstr ""
+
+msgid "Result Post Processing"
 msgstr ""
 
 msgid "Size"
@@ -98,6 +170,9 @@ msgstr ""
 msgid "Token non-existent or expired"
 msgstr ""
 
+msgid "Token not found"
+msgstr ""
+
 msgid "Too few files uploaded"
 msgstr ""
 
@@ -110,6 +185,9 @@ msgstr ""
 msgid "Upload"
 msgstr ""
 
+msgid "Upload not found"
+msgstr ""
+
 msgid "Uploaded"
 msgstr ""
 
@@ -119,9 +197,6 @@ msgstr ""
 msgid "Write"
 msgstr ""
 
-msgid "Expired token."
+msgid ""
+"You cannot access the file because the url's validity period has expired."
 msgstr ""
-
-msgid "You cannot access the file because the url's validity period has expired."
-msgstr ""
-

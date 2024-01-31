@@ -258,6 +258,9 @@ export default defineComponent({
         this.fileList[this.indexGenerated] = file;
         this.tokens[this.indexGenerated] = null;
       });
+
+      // Reset the input value to allow to upload the same file multiple times
+      (this.$refs.fileInput as HTMLInputElement).value = '';
     },
   },
 });

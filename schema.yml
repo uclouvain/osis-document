@@ -195,6 +195,35 @@ paths:
       - declare-file-as-infected
       security:
       - ApiKeyAuth: []
+  /declare-files-as-deleted:
+    post:
+      operationId: declareFilesAsDeleted
+      description: ''
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclareFilesAsDeleted'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeclareFilesAsDeleted'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DeclareFilesAsDeleted'
+      responses:
+        '204':
+          description: No content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - declare-files-as-deleted
+      security:
+      - ApiKeyAuth: []
   /read-token/{uuid}:
     post:
       operationId: getReadToken
@@ -316,22 +345,24 @@ paths:
           description: Data for unfinished asynchronous post processing
           content:
             application/json:
-              schema:
-                type: object
-                additionalProperties:
-                  oneOf:
-                  - $ref: '#/components/schemas/Token'
-                  - $ref: '#/components/schemas/ErrorWithStatus'
+              type: object
+              properties:
+                type: string
+              additionalProperties:
+                oneOf:
+                - $ref: '#/components/schemas/Token'
+                - $ref: '#/components/schemas/ErrorWithStatus'
         '422':
           description: Data for failed asynchronous post processing
           content:
             application/json:
-              schema:
-                type: object
-                additionalProperties:
-                  oneOf:
-                  - $ref: '#/components/schemas/Token'
-                  - $ref: '#/components/schemas/ErrorWithStatus'
+              type: object
+              properties:
+                type: string
+              additionalProperties:
+                oneOf:
+                - $ref: '#/components/schemas/Token'
+                - $ref: '#/components/schemas/ErrorWithStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -630,6 +661,15 @@ components:
           description: The path to the file to declare as infected
       required:
       - path
+    DeclareFilesAsDeleted:
+      type: object
+      properties:
+        files:
+          type: array
+          items: {}
+          description: A list of files UUID
+      required:
+      - files
     Token:
       type: object
       properties:

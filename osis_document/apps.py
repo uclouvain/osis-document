@@ -43,6 +43,10 @@ class OsisDocumentConfig(AppConfig):
             'OSIS_DOCUMENT_EXPORT_EXPIRATION_POLICY_AGE',
             60 * 60 * 24 * 15,
         )
-
+        settings.OSIS_DOCUMENT_DELETED_UPLOAD_MAX_AGE = getattr(
+            settings,
+            'OSIS_DOCUMENT_DELETED_UPLOAD_MAX_AGE',
+            60 * 60 * 24 * 15,
+        )
         # Add FileFieldSerializer the default_serializer_mapping
         ModelSerializer.serializer_field_mapping[FileField] = FileFieldSerializer

@@ -23,13 +23,17 @@
 #  see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-
+import uuid
 from os.path import dirname
+from typing import Set, List, Union
 
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.validators import ArrayMinLengthValidator
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from uuid import UUID
+
 from osis_document.contrib.forms import FileUploadField
 from osis_document.utils import generate_filename
 from osis_document.enums import DocumentExpirationPolicy
@@ -97,27 +101,49 @@ class FileField(ArrayField):
         )
 
     def pre_save(self, model_instance, add):
-        """Convert all writing tokens to UUIDs by remotely confirming their upload, leaving existing uuids"""
-        value = [
-            self._confirm_upload(model_instance, token) if isinstance(token, str) else token
-            for token in (getattr(model_instance, self.attname) or [])
-        ]
+        """
+        Convert all writing tokens to UUIDs by remotely confirming their upload, leaving existing uuids
+        and deleting old documents
+        """
+        try:
+            previous_values = self.model.objects.values_list(self.attname).get(pk=model_instance.pk)[0] or []
+        except ObjectDoesNotExist:
+            previous_values = []
+
+        attvalues = getattr(model_instance, self.attname) or []
+        files_confirmed = self._confirm_multiple_upload(model_instance, attvalues, previous_values)
         if self.post_processing:
-            self._post_processing(uuid_list=value)
-        setattr(model_instance, self.attname, value)
-        return value
+            self._post_processing(uuid_list=files_confirmed)
+        setattr(model_instance, self.attname, files_confirmed)
+        return files_confirmed
 
-    def _confirm_upload(self, model_instance, token):
-        """Call the remote API to confirm the upload of a token"""
-        from osis_document.api.utils import confirm_remote_upload, get_remote_metadata
+    def _confirm_multiple_upload(
+        self,
+        model_instance,
+        attvalues: List[Union[str, UUID]],
+        previous_values: List[UUID],
+    ):
+        """Call the remote API to confirm multiple upload and delete old file if replaced"""
+        from osis_document.api.utils import confirm_remote_upload, get_several_remote_metadata, \
+            declare_remote_files_as_deleted
 
-        # Get the current filename by interrogating API
-        filename = get_remote_metadata(token)['name']
-        return confirm_remote_upload(
-            token=token,
-            upload_to=dirname(generate_filename(model_instance, filename, self.upload_to)),
-            document_expiration_policy=self.document_expiration_policy,
-        )
+        files_to_keep = [token for token in attvalues if not isinstance(token, str)]  # UUID
+
+        tokens = [token for token in attvalues if isinstance(token, str)]
+        metadata_by_token = get_several_remote_metadata(tokens) if tokens else {}
+        for token in tokens:
+            filename = metadata_by_token[token]['name']
+            file_uuid = confirm_remote_upload(
+                token=token,
+                upload_to=dirname(generate_filename(model_instance, filename, self.upload_to)),
+                document_expiration_policy=self.document_expiration_policy,
+            )
+            files_to_keep.append(UUID(file_uuid))
+
+        files_to_declare_as_deleted = set(previous_values) - set(files_to_keep)
+        if files_to_declare_as_deleted:
+            declare_remote_files_as_deleted(files_to_declare_as_deleted)
+        return files_to_keep
 
     def _post_processing(self, uuid_list: list):
         from osis_document.api.utils import launch_post_processing
