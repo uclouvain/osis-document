@@ -23,11 +23,13 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import os
 import uuid
 from datetime import date, datetime, timedelta
 from unittest import mock
 from unittest.mock import Mock, patch
 
+import factory
 from django.core.exceptions import FieldError
 from django.test import TestCase, override_settings
 from osis_document.enums import FileStatus, PageFormatEnums, PostProcessingType, DocumentExpirationPolicy
@@ -199,6 +201,25 @@ class ConfirmUploadTestCase(TestCase):
         token.save()
         with self.assertRaises(FieldError):
             confirm_upload(token.token, upload_to='path/')
+
+    def test_with_long_filename(self):
+        original_upload = PdfUploadFactory(
+            status=FileStatus.REQUESTED.name,
+            file=factory.django.FileField(data=b'hello world', filename='a' * 300 + '.pdf'),
+            metadata={
+                'hash': 'b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9',
+                'name': 'a' * 300 + '.pdf',
+            }
+        )
+        token = WriteTokenFactory(upload=original_upload)
+        self.assertTrue(original_upload.file.storage.exists(original_upload.file.name))
+        # Confirm the upload
+        original_upload_uuid = confirm_upload(token.token, upload_to='long_filename_path/')
+        # The file hasn't been moved
+        updated_upload = Upload.objects.get(uuid=original_upload_uuid)
+        self.assertFalse(original_upload.file.storage.exists(original_upload.file.name))
+        self.assertNotEqual(original_upload.file.name, updated_upload.file.name)
+        self.assertTrue(os.path.exists(updated_upload.file.path))
 
 
 class PostProcessingTestCase(TestCase):
