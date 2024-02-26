@@ -248,6 +248,10 @@ class PostProcessingTestCase(TestCase):
         )
         self.assertTrue(output_upload_object.size > a_image.size)
         self.assertEqual(f'{output_upload_object.metadata.get("name")}.pdf', f'{output_filename}.pdf')
+        self.assertEqual(
+            output_upload_object.metadata.get("post_processing"),
+            'osis_document.contrib.post_processing.converter_registry.ConverterRegistry',
+        )
 
     def test_convert_text_document_with_correct_extension(self):
         a_text_document = TextDocumentUploadFactory()
@@ -301,6 +305,10 @@ class PostProcessingTestCase(TestCase):
         )
         self.assertEqual(Upload.objects.all().__len__(), 3)
         self.assertEqual(f'{output_upload_object.metadata.get("name")}.pdf', f'{output_filename}.pdf')
+        self.assertEqual(
+            output_upload_object.metadata.get("post_processing"),
+            'osis_document.contrib.post_processing.merger.Merger',
+        )
 
     def test_with_convert_and_merge(self):
         a_image = ImageUploadFactory()
@@ -442,6 +450,39 @@ class PostProcessingTestCase(TestCase):
         )
         self.assertEqual(Upload.objects.all().__len__(), 3)
         self.assertEqual(f'{output_upload_object.metadata.get("name")}.pdf', f'{output_filename}.pdf')
+
+    def test_merge_two_different_uploads_with_the_same_big_filename(self):
+        file1 = CorrectPDFUploadFactory()
+        file2 = CorrectPDFUploadFactory()
+        uuid_list = [file1.uuid, file2.uuid]
+        post_processing_types = [PostProcessingType.MERGE.name]
+        output_filename = 'A' * 1000
+        post_process_params = {
+            PostProcessingType.MERGE.name: {'output_filename': output_filename}
+        }
+        uuid_output = post_process(
+            uuid_list=uuid_list, post_process_actions=post_processing_types, post_process_params=post_process_params
+        )
+        output_upload_object1 = Upload.objects.get(
+            uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects']
+        )
+
+        file1 = CorrectPDFUploadFactory()
+        file2 = CorrectPDFUploadFactory()
+        uuid_list = [file1.uuid, file2.uuid]
+        post_processing_types = [PostProcessingType.MERGE.name]
+        output_filename = 'A' * 1000
+        post_process_params = {
+            PostProcessingType.MERGE.name: {'output_filename': output_filename}
+        }
+        uuid_output = post_process(
+            uuid_list=uuid_list, post_process_actions=post_processing_types, post_process_params=post_process_params
+        )
+        output_upload_object2 = Upload.objects.get(
+            uuid__in=uuid_output[PostProcessingType.MERGE.name]["output"]['upload_objects']
+        )
+
+        self.assertNotEqual(output_upload_object1.file.name, output_upload_object2.file.name)
 
 
 class StringifyUuidAndCheckUuidValidity(TestCase):
