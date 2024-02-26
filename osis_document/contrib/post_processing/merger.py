@@ -108,7 +108,7 @@ class Merger(Processor):
     @staticmethod
     def _get_output_filename(output_filename: str = None):
         if output_filename:
-            filename = f"{output_filename}{uuid.uuid4()}"
+            filename = f"{output_filename}"
         else:
             filename = f"merge_{uuid.uuid4()}"
         return f"{filename[:FILENAME_MAX_LENGTH - 4]}.pdf"
