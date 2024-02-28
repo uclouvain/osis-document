@@ -482,6 +482,41 @@ class ModelName(models.Model):
     ...
 ```
 
+## Automatic file removal
+
+When a document on Django model field is modified, the old one is automatically declared as deleted:
+
+```python
+# `document` is saved
+instance.file = document
+instance.save()
+
+# `new_document` is saved, `document` is declared as deleted and the physical file will be removed.
+instance.file = new_document
+instance.save()
+```
+
+If you need to keep the old document (for example, the document is moved to another field), you can set the `_files_to_keep` attribute on the instance before saving. The documents will not be declared as deleted then:
+
+```python
+# document is saved
+instance.file = document
+instance.another_file = None
+instance.save()
+
+# In that case, `document` would be deleted because the value on the `file` attribute changed.
+instance.another_file = instance.file
+instance.file = None
+instance.save()
+
+# To avoid that, we set `_files_to_keep` before saving.
+instance.another_file = instance.file
+instance.file = None
+instance._files_to_keep = instance.file
+instance.save()
+```
+
+`_files_to_keep` is a list of UUIDs of the Upload instance to keep.
 
 # Contributing to OSIS-Document
 
