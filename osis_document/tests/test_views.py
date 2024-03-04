@@ -85,6 +85,18 @@ class RequestUploadViewTestCase(TestCase):
         self.assertEqual(Upload.objects.first().status, FileStatus.REQUESTED.name)
         self.assertTrue(Token.objects.first().access, TokenAccess.WRITE.name)
 
+    def test_upload_long_filename(self):
+        file = ContentFile(SMALLEST_PDF, 'a' * 300 + '.pdf')
+        self.assertFalse(Upload.objects.exists())
+
+        response = self.client.post(resolve_url('request-upload'), {'file': file})
+        json = response.json()
+        self.assertIn('token', json)
+        self.assertTrue(Upload.objects.exists())
+        self.assertTrue(Token.objects.exists())
+        self.assertEqual(Upload.objects.first().status, FileStatus.REQUESTED.name)
+        self.assertTrue(Token.objects.first().access, TokenAccess.WRITE.name)
+
     @override_settings(OSIS_DOCUMENT_DOMAIN_LIST=['http://dummyurl.com/'])
     def test_cors(self):
         file = ContentFile(SMALLEST_PDF, 'foo.pdf')

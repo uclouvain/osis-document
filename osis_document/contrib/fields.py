@@ -127,7 +127,8 @@ class FileField(ArrayField):
         from osis_document.api.utils import confirm_remote_upload, get_several_remote_metadata, \
             declare_remote_files_as_deleted
 
-        files_to_keep = [token for token in attvalues if not isinstance(token, str)]  # UUID
+        files_confirmed = [token for token in attvalues if not isinstance(token, str)]  # UUID
+        files_to_keep = getattr(model_instance, '_files_to_keep', [])
 
         tokens = [token for token in attvalues if isinstance(token, str)]
         metadata_by_token = get_several_remote_metadata(tokens) if tokens else {}
@@ -138,12 +139,12 @@ class FileField(ArrayField):
                 upload_to=dirname(generate_filename(model_instance, filename, self.upload_to)),
                 document_expiration_policy=self.document_expiration_policy,
             )
-            files_to_keep.append(UUID(file_uuid))
+            files_confirmed.append(UUID(file_uuid))
 
-        files_to_declare_as_deleted = set(previous_values) - set(files_to_keep)
+        files_to_declare_as_deleted = set(previous_values) - set(files_to_keep) - set(files_confirmed)
         if files_to_declare_as_deleted:
             declare_remote_files_as_deleted(files_to_declare_as_deleted)
-        return files_to_keep
+        return files_confirmed
 
     def _post_processing(self, uuid_list: list):
         from osis_document.api.utils import launch_post_processing

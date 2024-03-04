@@ -36,19 +36,22 @@ from osis_document.utils import calculate_hash
 class Processor:
     type: str
 
-    @staticmethod
-    def _create_upload_instance(path: Path, filename: str) -> Upload:
+    @classmethod
+    def _create_upload_instance(cls, path: Path, filename: str) -> Upload:
         with path.open(mode='rb') as f:
             file = File(f, name=path.name)
             instance = Upload(
                 mimetype="application/pdf",
                 size=file.size,
-                metadata={'hash': calculate_hash(file), 'name': filename},
+                metadata={
+                    'hash': calculate_hash(file),
+                    'name': filename,
+                    'post_processing': f'{cls.__module__}.{cls.__name__}',
+                },
                 status=FileStatus.UPLOADED.name
             )
-            instance.file = path.name
-            instance.file.file = file
-            instance.save()
+            instance.file.save(path.name, file)
+            # instance.file.save() also save the instance by default.
             return instance
 
     @classmethod
