@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: OSIS Document Service
-  version: 1.0.5
+  version: 1.0.6
   description: A set of API endpoints that allow you to get information about uploads
 paths:
   /metadata/{token}:
@@ -566,6 +566,37 @@ paths:
       - post-processing
       security:
       - ApiKeyAuth: []
+  /duplicate:
+    post:
+      operationId: duplicateUpload
+      description: View to duplicate several uploads.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadDuplication'
+      responses:
+        '201':
+          description: Association between the uuids of the original uploads and the uuids of the copies
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  oneOf:
+                  - $ref: '#/components/schemas/Upload'
+                  - $ref: '#/components/schemas/ErrorWithStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - duplicate
+      security:
+      - ApiKeyAuth: []
 components:
   schemas:
     Metadata:
@@ -752,6 +783,26 @@ components:
       - async_post_processing
       - files_uuid
       - post_process_types
+    UploadDuplication:
+      type: object
+      properties:
+        uuids:
+          type: array
+          items: {}
+          description: The list of the uuids of the documents to duplicate.
+        with_modified_upload:
+          type: boolean
+          default: false
+          description: Boolean that defines if the duplication is also necessary for
+            the modified version of the files. Note that the uuids of the modified
+            uploads don't must be passed and the duplicated ones are not returned.
+        upload_path_by_uuid:
+          type: object
+          description: A dictionary associating for each uuid, where the duplicated
+            file should be saved. If the path is not specified for one file, the duplicated
+            file will be saved in the same location as the original file.
+      required:
+      - uuids
     Error:
       type: object
       properties:
@@ -767,6 +818,12 @@ components:
               type: string
             message:
               type: string
+    Upload:
+      type: object
+      properties:
+        upload_id:
+          type: string
+          format: uuid
   securitySchemes:
     ApiKeyAuth:
       type: apiKey

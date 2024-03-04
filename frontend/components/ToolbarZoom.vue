@@ -29,9 +29,9 @@
     <button
         class="btn btn-default"
         type="button"
-        @click="$emit('onZoomIn')"
+        @click="$emit('onZoomOut')"
     >
-      <span class="fas fa-magnifying-glass-plus" />
+      <span class="fas fa-magnifying-glass-minus" />
     </button>
     <div
         class="btn-group dropup"
@@ -66,9 +66,9 @@
     <button
         class="btn btn-default"
         type="button"
-        @click="$emit('onZoomOut')"
+        @click="$emit('onZoomIn')"
     >
-      <span class="fas fa-magnifying-glass-minus" />
+      <span class="fas fa-magnifying-glass-plus" />
     </button>
   </div>
 </template>

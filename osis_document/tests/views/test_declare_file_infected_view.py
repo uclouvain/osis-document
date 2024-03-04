@@ -23,22 +23,32 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from setuptools import setup, find_packages
 
-setup(
-    name='OSIS Document',
-    version='0.10.5',
-    description='Document management API and widget',
-    url='http://github.com/uclouvain/osis-document',
-    author='Université catholique de Louvain',
-    author_email='O365G-team-osis-dev@groupes.uclouvain.be',
-    license='AGPLv3',
-    packages=find_packages(exclude=('osis_document.tests',)),
-    include_package_data=True,
-    install_requires=[
-        'requests>=2.20.0,<3.0',
-        'filetype>=1.1.0,<2.0',
-        'pypdf>=3.6.0,<4.0',
-        'python-magic==0.4.27'
-    ]
-)
+from django.shortcuts import resolve_url
+from django.test import override_settings
+from rest_framework.test import APITestCase
+
+from osis_document.tests.factories import PdfUploadFactory
+
+
+@override_settings(ROOT_URLCONF="osis_document.urls", OSIS_DOCUMENT_API_SHARED_SECRET='foobar')
+class DeclareFileInfectedViewTestCase(APITestCase):
+    def setUp(self):
+        self.client.defaults = {'HTTP_X_API_KEY': 'foobar'}
+        self.infected_file = PdfUploadFactory()
+        self.infected_filepath = str(self.infected_file.file)
+        self.url = resolve_url('declare-file-as-infected')
+
+    def test_protected(self):
+        self.client.defaults = {}
+        response = self.client.post(self.url, {'path': self.infected_filepath})
+        self.assertEqual(403, response.status_code)
+
+    def test_declare_as_infected(self):
+        response = self.client.post(self.url, {'path': self.infected_filepath})
+        self.assertEqual(202, response.status_code)
+        self.assertIn('uuid', response.json())
+
+    def test_confirm_upload_with_unknown_path(self):
+        response = self.client.post(self.url, {'path': 'foobar'})
+        self.assertEqual(400, response.status_code)

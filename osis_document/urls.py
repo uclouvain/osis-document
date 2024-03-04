@@ -44,6 +44,7 @@ urlpatterns = [
     path('save-editor/<path:token>', views.SaveEditorView.as_view(), name=views.SaveEditorView.name),
     path('file/<path:token>', views.RawFileView.as_view(), name=views.RawFileView.name),
     path('post-processing', views.PostProcessingView.as_view(), name=views.PostProcessingView.name),
+    path('duplicate', views.UploadDuplicationView.as_view(), name=views.UploadDuplicationView.name),
     path('get-progress-async-post-processing/<uuid:pk>', views.GetProgressAsyncPostProcessingView.as_view(),
          name=views.GetProgressAsyncPostProcessingView.name),
 ]
