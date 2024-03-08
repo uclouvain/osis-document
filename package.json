@@ -51,7 +51,7 @@
     "vue-tsc": "^1.0.24"
   },
   "dependencies": {
-    "pdfjs-dist": "^3.5.141",
+    "pdfjs-dist": "3.6.172",
     "tiny-emitter": "^2.1.0",
     "vue-uuid": "^3.0.0"
   }
