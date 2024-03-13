@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2022 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2024 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,30 +23,28 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from .editor import SaveEditorView
-from .metadata import MetadataView, ChangeMetadataView, MetadataListView
-from .post_processing import PostProcessingView, GetProgressAsyncPostProcessingView
-from .raw_file import RawFileView
-from .rotate import RotateImageView
-from .security import DeclareFileAsInfectedView
-from .token import GetTokenView, GetTokenListView
-from .upload import ConfirmUploadView, RequestUploadView, DeclareFilesAsDeletedView
-from .duplicate import UploadDuplicationView
 
-__all__ = [
-    "RawFileView",
-    "MetadataView",
-    "MetadataListView",
-    "ChangeMetadataView",
-    "ConfirmUploadView",
-    "RequestUploadView",
-    "GetTokenView",
-    "GetTokenListView",
-    "RotateImageView",
-    "DeclareFileAsInfectedView",
-    "DeclareFilesAsDeletedView",
-    'PostProcessingView',
-    "SaveEditorView",
-    "GetProgressAsyncPostProcessingView",
-    "UploadDuplicationView",
-]
+from django.shortcuts import resolve_url
+from django.test import override_settings
+from rest_framework.test import APITestCase
+
+from osis_document.tests.factories import ImageUploadFactory, ReadTokenFactory, WriteTokenFactory
+
+
+@override_settings(ROOT_URLCONF='osis_document.urls', OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
+class RotateViewTestCase(APITestCase):
+    def test_write_only(self):
+        token = ReadTokenFactory()
+        response = self.client.post(resolve_url('rotate-image', token=token.token))
+        self.assertEqual(response.status_code, 404)
+
+    def test_image_only(self):
+        token = WriteTokenFactory()
+        response = self.client.post(resolve_url('rotate-image', token=token.token))
+        self.assertEqual(response.status_code, 400)
+
+    def test_successfully_rotates(self):
+        token = WriteTokenFactory(upload=ImageUploadFactory())
+        response = self.client.post(resolve_url('rotate-image', token=token.token))
+        self.assertNotEqual(response.json()['token'], token.token)
+        self.assertEqual(response.status_code, 200)

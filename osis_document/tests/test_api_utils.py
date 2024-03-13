@@ -29,9 +29,14 @@ import uuid
 from django.test import TestCase, override_settings
 from requests import HTTPError
 
-from osis_document.api.utils import confirm_remote_upload, get_remote_metadata, get_remote_token, \
-    declare_remote_files_as_deleted
-from osis_document.enums import DocumentExpirationPolicy
+from osis_document.api.utils import (
+    confirm_remote_upload,
+    get_remote_metadata,
+    get_remote_token,
+    declare_remote_files_as_deleted,
+    documents_remote_duplicate,
+)
+from osis_document.enums import DocumentExpirationPolicy, DocumentError
 from osis_document.exceptions import FileInfectedException, UploadInvalidException
 
 
@@ -110,18 +115,17 @@ class RemoteUtilsTestCase(TestCase):
                     'path/',
                     document_expiration_policy=DocumentExpirationPolicy.EXPORT_EXPIRATION_POLICY.value,
                 ),
-                'bbc1ba15-42d2-48e9-9884-7631417bb1e1'
+                'bbc1ba15-42d2-48e9-9884-7631417bb1e1',
             )
             expected_url = 'http://dummyurl.com/document/confirm-upload/some_token'
             request_mock.assert_called_with(
                 expected_url,
                 json={
                     "upload_to": "path/",
-                    "document_expiration_policy": DocumentExpirationPolicy.EXPORT_EXPIRATION_POLICY.value
+                    "document_expiration_policy": DocumentExpirationPolicy.EXPORT_EXPIRATION_POLICY.value,
                 },
                 headers={'X-Api-Key': 'very-secret'},
             )
-
 
     def test_confirm_remote_upload_with_related_model(self):
         related_model = {
@@ -190,14 +194,55 @@ class DeclareRemoteFilesAsDeletedTestCase(TestCase):
         with patch('requests.post') as request_mock:
             request_mock.return_value.status_code = 204
             self.assertIsNone(declare_remote_files_as_deleted(files_to_delete))
-            self.assertEqual(
-                request_mock.call_args[0][0],
-                'http://dummyurl.com/document/declare-files-as-deleted'
+            self.assertEqual(request_mock.call_args[0][0], 'http://dummyurl.com/document/declare-files-as-deleted')
+            self.assertDictEqual(
+                request_mock.call_args[1],
+                {'json': {'files': [str(file) for file in files_to_delete]}, 'headers': {'X-Api-Key': 'very-secret'}},
             )
+
+
+@override_settings(
+    OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/',
+    OSIS_DOCUMENT_API_SHARED_SECRET='very-secret',
+)
+class DocumentsRemoteDuplicateTestCase(TestCase):
+    def test_documents_remote_duplicate(self):
+        files_to_duplicate = [str(uuid.uuid4()), str(uuid.uuid4())]
+        duplicates_files = [str(uuid.uuid4()), str(uuid.uuid4())]
+
+        with patch('requests.post') as request_mock:
+            request_mock.return_value.status_code = 201
+            request_mock.return_value.json.return_value = {
+                # Retrieved because the duplicate is created
+                files_to_duplicate[0]: {'upload_id': duplicates_files[0]},
+                # Not retrieved because the upload is not found
+                files_to_duplicate[1]: {'error': DocumentError.get_dict_error(DocumentError.UPLOAD_NOT_FOUND.name)},
+            }
+            result = documents_remote_duplicate(
+                uuids=files_to_duplicate,
+                with_modified_upload=True,
+                upload_path_by_uuid={
+                    files_to_duplicate[0]: 'custom_path/file.pdf',
+                    files_to_duplicate[1]: 'custom_path2/file2.pdf',
+                },
+            )
+
+            # Check call
+            self.assertEqual(request_mock.call_args[0][0], 'http://dummyurl.com/document/duplicate')
             self.assertDictEqual(
                 request_mock.call_args[1],
                 {
-                    'json': {'files': [str(file) for file in files_to_delete]},
-                    'headers': {'X-Api-Key': 'very-secret'}
-                }
+                    'json': {
+                        'uuids': files_to_duplicate,
+                        'with_modified_upload': True,
+                        'upload_path_by_uuid': {
+                            files_to_duplicate[0]: 'custom_path/file.pdf',
+                            files_to_duplicate[1]: 'custom_path2/file2.pdf',
+                        },
+                    },
+                    'headers': {'X-Api-Key': 'very-secret'},
+                },
             )
+
+            # Check result
+            self.assertEqual(result, {files_to_duplicate[0]: duplicates_files[0]})

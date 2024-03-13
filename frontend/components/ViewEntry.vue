@@ -340,7 +340,6 @@ export default defineComponent({
         }
       }
       this.loading = false;
-      console.log('loading est false');
     },
     getProgressPostProcessing :async function(){
       /* istanbul ignore if -- @preserve */

@@ -248,3 +248,26 @@ class DeclareFilesAsDeletedSerializer(serializers.Serializer):
         help_text="A list of files UUID",
         required=True,
     )
+
+
+class UploadDuplicationSerializer(serializers.Serializer):
+    uuids = serializers.ListField(
+        help_text="The list of the uuids of the documents to duplicate.",
+        required=True,
+    )
+    with_modified_upload = serializers.BooleanField(
+        help_text=(
+            "Boolean that defines if the duplication is also necessary for the modified version of the files. Note "
+            "that the uuids of the modified uploads don't must be passed and the duplicated ones are not returned."
+        ),
+        required=False,
+        default=False,
+    )
+    upload_path_by_uuid = serializers.DictField(
+        required=False,
+        help_text=(
+            "A dictionary associating for each uuid, where the duplicated file should be saved. If the path is not "
+            "specified for one file, the duplicated file will be saved in the same location as the original file."
+        ),
+        default=dict,
+    )

@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`should mount 1`] = `
-"<div class=\\"btn-group\\"><button class=\\"btn btn-default\\" type=\\"button\\"><span class=\\"fas fa-magnifying-glass-plus\\"></span></button>
+"<div class=\\"btn-group\\"><button class=\\"btn btn-default\\" type=\\"button\\"><span class=\\"fas fa-magnifying-glass-minus\\"></span></button>
   <div class=\\"btn-group dropup\\" role=\\"group\\"><button type=\\"button\\" class=\\"btn btn-default dropdown-toggle\\" data-toggle=\\"dropdown\\" aria-haspopup=\\"true\\" aria-expanded=\\"false\\">editor.zoom.auto <span class=\\"caret\\"></span></button>
     <ul class=\\"dropdown-menu\\">
       <li class=\\"active\\" value=\\"0\\"><a href=\\"#\\">editor.zoom.auto</a></li>
@@ -17,6 +17,6 @@ exports[`should mount 1`] = `
       <li class=\\"\\" value=\\"3\\"><a href=\\"#\\">300%</a></li>
       <li class=\\"\\" value=\\"4\\"><a href=\\"#\\">400%</a></li>
     </ul>
-  </div><button class=\\"btn btn-default\\" type=\\"button\\"><span class=\\"fas fa-magnifying-glass-minus\\"></span></button>
+  </div><button class=\\"btn btn-default\\" type=\\"button\\"><span class=\\"fas fa-magnifying-glass-plus\\"></span></button>
 </div>"
 `;

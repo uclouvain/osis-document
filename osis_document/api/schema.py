@@ -33,7 +33,7 @@ class OsisDocumentSchemaGenerator(SchemaGenerator):
         schema = super().get_schema(*args, **kwargs)
         schema["openapi"] = "3.0.0"
         schema["info"]["title"] = "OSIS Document Service"
-        schema["info"]["version"] = "1.0.5"
+        schema["info"]["version"] = "1.0.6"
         schema["info"]["description"] = "A set of API endpoints that allow you to get information about uploads"
         schema["servers"] = [
             {
@@ -86,6 +86,15 @@ class OsisDocumentSchemaGenerator(SchemaGenerator):
                     },
                 },
             },
+        }
+        schema["components"]["schemas"]["Upload"] = {
+            "type": "object",
+            "properties": {
+                "upload_id": {
+                    "type": "string",
+                    "format": "uuid",
+                },
+            }
         }
         for path, path_content in schema['paths'].items():
             for method, method_content in path_content.items():
