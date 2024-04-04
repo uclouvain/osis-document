@@ -48,10 +48,10 @@ it('should emit events', async () => {
     },
   });
   await wrapper.findAll('button')[0].trigger('click');
-  expect(wrapper.emitted()).toHaveProperty('onZoomIn');
+  expect(wrapper.emitted()).toHaveProperty('onZoomOut');
 
   await wrapper.findAll('button')[2].trigger('click');
-  expect(wrapper.emitted()).toHaveProperty('onZoomOut');
+  expect(wrapper.emitted()).toHaveProperty('onZoomIn');
 
   await wrapper.findAll('li a')[2].trigger('click');
   expect(wrapper.emitted()).toHaveProperty('onSetScale.0.0', 'page-fit');

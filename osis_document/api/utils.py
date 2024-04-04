@@ -23,7 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from typing import Union, List, Dict, Iterable
+from typing import Union, List, Dict, Iterable, Optional
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -36,11 +36,10 @@ from rest_framework import status
 from rest_framework.views import APIView
 
 
-
-
 def get_remote_metadata(token: str) -> Union[dict, None]:
     """Given a token, return the remote metadata."""
     import requests
+
     url = "{}metadata/{}".format(settings.OSIS_DOCUMENT_BASE_URL, token)
     try:
         response = requests.get(url)
@@ -54,6 +53,7 @@ def get_remote_metadata(token: str) -> Union[dict, None]:
 def get_several_remote_metadata(tokens: List[str]) -> Dict[str, dict]:
     """Given a list of tokens, return a dictionary associating each token to upload metadata."""
     import requests
+
     url = "{}metadata".format(settings.OSIS_DOCUMENT_BASE_URL)
     try:
         response = requests.post(
@@ -82,7 +82,13 @@ def get_raw_content_remotely(token: str):
         return None
 
 
-def get_remote_token(uuid: Union[str, UUID], write_token: bool = False, wanted_post_process: str = None, custom_ttl=None, for_modified_upload: bool = False):
+def get_remote_token(
+    uuid: Union[str, UUID],
+    write_token: bool = False,
+    wanted_post_process: str = None,
+    custom_ttl=None,
+    for_modified_upload: bool = False,
+):
     """
     Given an uuid, return a writing or reading remote token.
     The custom_ttl parameter is used to define the validity period of the token
@@ -90,6 +96,7 @@ def get_remote_token(uuid: Union[str, UUID], write_token: bool = False, wanted_p
     (example : PostProcessingWanted.CONVERT.name)
     """
     import requests
+
     is_valid_uuid = stringify_uuid_and_check_uuid_validity(uuid_input=uuid)
     if not is_valid_uuid.get('uuid_valid'):
         return None
@@ -115,8 +122,8 @@ def get_remote_token(uuid: Union[str, UUID], write_token: bool = False, wanted_p
                 return UploadInvalidException.__class__.__name__
             json = response.json()
             if (
-                    response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-                    and json.get('detail', '') == FileInfectedException.default_detail
+                response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+                and json.get('detail', '') == FileInfectedException.default_detail
             ):
                 return FileInfectedException.__class__.__name__
             return json.get('token') or json
@@ -124,7 +131,12 @@ def get_remote_token(uuid: Union[str, UUID], write_token: bool = False, wanted_p
             return None
 
 
-def get_remote_tokens(uuids: List[str], wanted_post_process=None, custom_ttl=None, for_modified_upload: bool = False) -> Dict[str, str]:
+def get_remote_tokens(
+    uuids: List[str],
+    wanted_post_process=None,
+    custom_ttl=None,
+    for_modified_upload: bool = False,
+) -> Dict[str, str]:
     """Given a list of uuids, a type of post-processing and a custom TTL in second,
     return a dictionary associating each uuid to a reading token.
     The custom_ttl parameter is used to define the validity period of the token
@@ -133,6 +145,7 @@ def get_remote_tokens(uuids: List[str], wanted_post_process=None, custom_ttl=Non
     """
     import requests
     import contextlib
+
     validated_uuids = []
     for uuid in uuids:
         is_valid_uuid = stringify_uuid_and_check_uuid_validity(uuid_input=uuid)
@@ -156,6 +169,61 @@ def get_remote_tokens(uuids: List[str], wanted_post_process=None, custom_ttl=Non
             return {uuid: item.get('token') for uuid, item in response.json().items() if 'error' not in item}
         if response.status_code in [status.HTTP_206_PARTIAL_CONTENT, status.HTTP_500_INTERNAL_SERVER_ERROR]:
             return response.json()
+    return {}
+
+
+def documents_remote_duplicate(
+    uuids: List[str],
+    with_modified_upload: bool = False,
+    upload_path_by_uuid: Optional[Dict[str, str]] = None,
+) -> Dict[str, str]:
+    """
+    Duplicate a list of documents.
+    uuids: List of uuids of the documents to duplicate.
+    with_modified_upload: boolean to know if the duplication is also necessary for the modified uploads. Note that
+    the uuids of the modified uploads don't must be passed to the API and the duplicated ones are not returned (only
+    the original uuids must be used).
+    upload_path_by_uuid: dict {uuid: str} to specify for each uuid, where the duplicated file should be saved. If not
+    specified for one file, the duplicated file will be saved in the same location as the original file.
+    :return: dict {uuid: uuid} A dictionary associating each document uuid with the uuid of the duplicated document. If
+    an error occurs for one specific document, the uuid of this document is not returned.
+    """
+    import requests
+
+    validated_uuids = []
+
+    # Check the validity of the uuids
+    for document_uuid in uuids:
+        is_valid_uuid = stringify_uuid_and_check_uuid_validity(uuid_input=document_uuid)
+        if is_valid_uuid.get('uuid_valid'):
+            validated_uuids.append(is_valid_uuid.get('uuid_stringify'))
+
+    if len(uuids) != len(validated_uuids):
+        raise TypeError
+
+    url = "{base_url}duplicate".format(base_url=settings.OSIS_DOCUMENT_BASE_URL)
+
+    try:
+        response = requests.post(
+            url,
+            json={
+                'uuids': validated_uuids,
+                'with_modified_upload': with_modified_upload,
+                'upload_path_by_uuid': upload_path_by_uuid,
+            },
+            headers={'X-Api-Key': settings.OSIS_DOCUMENT_API_SHARED_SECRET},
+        )
+
+        if response.status_code == status.HTTP_201_CREATED:
+            return {
+                original_uuid: item['upload_id']
+                for original_uuid, item in response.json().items()
+                if 'upload_id' in item
+            }
+
+    except HTTPError:
+        pass
+
     return {}
 
 
@@ -197,19 +265,20 @@ def confirm_remote_upload(
 
 
 def launch_post_processing(
-        uuid_list: List,
-        async_post_processing: bool,
-        post_processing_types: List[str],
-        post_process_params: Dict[str, Dict[str, str]]
+    uuid_list: List,
+    async_post_processing: bool,
+    post_processing_types: List[str],
+    post_process_params: Dict[str, Dict[str, str]],
 ):
     import requests
 
     url = "{}post-processing".format(settings.OSIS_DOCUMENT_BASE_URL)
-    data = {'async_post_processing': async_post_processing,
-            'post_process_types': post_processing_types,
-            'files_uuid': uuid_list,
-            'post_process_params': post_process_params
-            }
+    data = {
+        'async_post_processing': async_post_processing,
+        'post_process_types': post_processing_types,
+        'files_uuid': uuid_list,
+        'post_process_params': post_process_params,
+    }
     response = requests.post(
         url,
         json=data,
@@ -218,9 +287,7 @@ def launch_post_processing(
     return response.json() if not async_post_processing else response
 
 
-def declare_remote_files_as_deleted(
-    uuid_list: Iterable[UUID]
-):
+def declare_remote_files_as_deleted(uuid_list: Iterable[UUID]):
     import requests
 
     url = "{}declare-files-as-deleted".format(settings.OSIS_DOCUMENT_BASE_URL)
@@ -239,15 +306,15 @@ def declare_remote_files_as_deleted(
 
 def get_progress_async_post_processing(uuid: str, wanted_post_process: str = None):
     """Given an uuid and a type of post-processing,
-        returns an int corresponding to the post-processing progress percentage
-        The wanted_post_process parameter is used to specify the post-processing action you want to get progress to.
-        (example : PostProcessingType.CONVERT.name)
+    returns an int corresponding to the post-processing progress percentage
+    The wanted_post_process parameter is used to specify the post-processing action you want to get progress to.
+    (example : PostProcessingType.CONVERT.name)
     """
     import requests
 
     url = "{base_url}get-progress-async-post-processing/{uuid}".format(
         base_url=settings.OSIS_DOCUMENT_BASE_URL,
-        uuid=uuid
+        uuid=uuid,
     )
     response = requests.post(
         url,

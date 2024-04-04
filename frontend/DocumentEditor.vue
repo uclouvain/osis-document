@@ -31,7 +31,7 @@
           class="viewerContainer"
           tabindex="0"
       >
-        <div class="pdfViewer" />
+        <div class="pdfViewer" ref="pdfViewer" />
       </div>
     </div>
 
@@ -229,6 +229,7 @@ export default defineComponent({
           const viewer = new PDFViewer({
             container: this.$refs.viewerContainer as HTMLDivElement,
             eventBus: new EventBus(),
+            viewer: this.$refs.pdfViewer as HTMLDivElement,
           });
           viewer.setDocument(pdfDocument);
 
@@ -258,6 +259,7 @@ export default defineComponent({
     rotate(rotation: number) {
       // @ts-ignore bad typing from lib, see https://github.com/mozilla/pdf.js/pull/16362
       (this.viewer?.getPageView(this.currentPage - 1) as PDFPageView).update({rotation});
+      this.viewer?.update();  // To correctly display annotation layers after a rotation
       if (rotation !== 0) {
         this.rotations[this.currentPage - 1] = rotation;
       } else {

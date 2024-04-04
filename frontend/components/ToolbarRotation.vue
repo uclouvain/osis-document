@@ -29,14 +29,14 @@
     <button
         type="button"
         class="btn btn-default"
-        @click="$emit('onRotate', (currentRotation - 90) % 360)"
+        @click="$emit('onRotate', ((currentRotation - 90) % 360 + 360) % 360)"
     >
       <span class="fas fa-rotate-left" />
     </button>
     <button
         type="button"
         class="btn btn-default"
-        @click="$emit('onRotate', (currentRotation + 90) % 360)"
+        @click="$emit('onRotate', ((currentRotation + 90) % 360 + 360) % 360)"
     >
       <span class="fas fa-rotate-right" />
     </button>
