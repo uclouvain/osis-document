@@ -80,6 +80,7 @@ class FileUploadWidget(SplitArrayWidget):
         self.post_process_params = kwargs.pop('post_process_params', None)
         self.with_cropping = kwargs.pop('with_cropping', False)
         self.cropping_options = kwargs.pop('cropping_options', None)
+        self.for_modified_upload = kwargs.pop('for_modified_upload', False)
         if kwargs.get('size', None) is None:
             kwargs['size'] = 0
         super().__init__(widget=forms.TextInput, **kwargs)
@@ -156,5 +157,14 @@ class FileUploadWidget(SplitArrayWidget):
 
         return filter(
             None,
-            [get_remote_token(value, write_token=True) if isinstance(value, uuid.UUID) else value for value in values],
+            [
+                get_remote_token(
+                    value,
+                    write_token=True,
+                    for_modified_upload=self.for_modified_upload,
+                )
+                if isinstance(value, uuid.UUID)
+                else value
+                for value in values
+            ],
         )
