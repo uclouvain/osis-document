@@ -47,6 +47,23 @@ class WidgetTestCase(TestCase):
         render = widget.render('foo', [stub_uuid])
         self.assertNotIn(str(stub_uuid), render)
         self.assertIn('data-values="some:token"', render)
+        mock_remote_token.assert_called_once_with(
+            stub_uuid,
+            write_token=True,
+            for_modified_upload=False,
+        )
+
+    @patch('osis_document.api.utils.get_remote_token')
+    def test_widget_with_modified_upload(self, mock_remote_token):
+        mock_remote_token.return_value = 'some:token'
+        widget = FileUploadWidget(size=2, for_modified_upload=True)
+        stub_uuid = PdfUploadFactory().uuid
+        widget.render('foo', [stub_uuid])
+        mock_remote_token.assert_called_once_with(
+            stub_uuid,
+            write_token=True,
+            for_modified_upload=True,
+        )
 
     def test_widget_renders_attributes(self):
         widget = FileUploadWidget(size=1, mimetypes=['application/pdf'])

@@ -83,6 +83,7 @@ class FileUploadField(SplitArrayField):
         self.post_process_params = kwargs.pop('post_process_params', None)
         self.with_cropping = kwargs.pop('with_cropping', False)
         self.cropping_options = kwargs.pop('cropping_options', None)
+        self.for_modified_upload = kwargs.pop('for_modified_upload', False)
         kwargs.setdefault(
             'widget',
             FileUploadWidget(
@@ -101,6 +102,7 @@ class FileUploadField(SplitArrayField):
                 post_process_params=self.post_process_params,
                 with_cropping=self.with_cropping,
                 cropping_options=self.cropping_options,
+                for_modified_upload=self.for_modified_upload,
             ),
         )
         base_field = TokenField(
@@ -146,5 +148,14 @@ class FileUploadField(SplitArrayField):
         if isinstance(value, list):
             from osis_document.api.utils import get_remote_token
 
-            return [get_remote_token(v, write_token=True) if is_uuid(v) else v for v in value]
+            return [
+                get_remote_token(
+                    v,
+                    write_token=True,
+                    for_modified_upload=self.for_modified_upload
+                )
+                if is_uuid(v)
+                else v
+                for v in value
+            ]
         return value

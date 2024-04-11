@@ -48,6 +48,7 @@ class RequestUploadViewTestCase(TestCase):
         response = self.client.post(resolve_url('request-upload'), {'file': file})
         self.assertEqual(400, response.status_code)
 
+    @override_settings(ENABLE_MIMETYPE_VALIDATION=True)
     def test_request_upload_with_mime_smuggling(self):
         file = ContentFile(SMALLEST_PDF, 'foo.doc')
         response = self.client.post(resolve_url('request-upload'), {'file': file})

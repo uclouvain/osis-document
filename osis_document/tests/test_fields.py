@@ -89,7 +89,7 @@ class FieldTestCase(TestCase):
         get_remote_metadata,
     ):
         # For the sake of simplicity, let's say a remote confirm is local
-        confirm_remote_upload.side_effect = lambda token, upload_to, **_: confirm_upload(token, upload_to)
+        confirm_remote_upload.side_effect = lambda token, upload_to, **_: str(confirm_upload(token, upload_to))
 
         token = WriteTokenFactory()
         get_remote_metadata.return_value = {
@@ -238,7 +238,7 @@ class FieldTestCase(TestCase):
         instance = TestDocument(documents=[token.token])
         with patch('osis_document.api.utils.confirm_remote_upload') as confirm_remote_upload:
             # For the sake of simplicity, let's say a remote confirm is local
-            confirm_remote_upload.side_effect = lambda token, upload_to, **_: confirm_upload(token, upload_to)
+            confirm_remote_upload.side_effect = lambda token, upload_to, **_: str(confirm_upload(token, upload_to))
             instance.save()
 
         self.assertEqual(len(instance.documents), 1)

@@ -29,7 +29,7 @@ from unittest.mock import Mock, patch
 from django import forms
 from django.test import TestCase, override_settings
 from osis_document.contrib.forms import FileUploadField, TokenField
-from osis_document.tests.factories import WriteTokenFactory
+from osis_document.tests.factories import WriteTokenFactory, PdfUploadFactory, ModifiedUploadFactory
 
 
 @override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
@@ -271,3 +271,47 @@ class FormTestCase(TestCase):
 
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data.get('media'), ['a:token'])
+
+
+    @patch('osis_document.api.utils.get_remote_token')
+    def test_for_modified_upload(self, get_remote_token):
+        get_remote_token.return_value = 'a:token'
+
+        class TestFormWithModifiedUpload(forms.Form):
+            media = FileUploadField(for_modified_upload=True)
+
+        upload = PdfUploadFactory()
+        modified_upload = ModifiedUploadFactory(upload=upload)
+
+        form = TestFormWithModifiedUpload(
+            initial={
+                'media': [upload.uuid],
+            },
+        )
+
+        form.as_p()
+
+        get_remote_token.assert_called_once_with(
+            upload.uuid,
+            write_token=True,
+            for_modified_upload=True,
+        )
+
+        get_remote_token.reset_mock()
+
+        class TestFormWithoutModifiedUpload(forms.Form):
+            media = FileUploadField()
+
+        form = TestFormWithoutModifiedUpload(
+            initial={
+                'media': [upload.uuid],
+            },
+        )
+
+        form.as_p()
+
+        get_remote_token.assert_called_once_with(
+            upload.uuid,
+            write_token=True,
+            for_modified_upload=False,
+        )
