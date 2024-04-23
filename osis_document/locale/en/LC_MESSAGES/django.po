@@ -116,6 +116,10 @@ msgstr ""
 msgid "Invalid upload UUID"
 msgstr ""
 
+#, python-format
+msgid "Item %(nth)s in the array did not validate:"
+msgstr ""
+
 msgid "MIME Type"
 msgstr ""
 

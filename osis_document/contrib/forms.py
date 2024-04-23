@@ -25,6 +25,7 @@
 # ##############################################################################
 
 from django import forms
+from django.conf import settings
 from django.contrib.postgres.forms import SplitArrayField
 from django.utils.translation import gettext_lazy as _
 
@@ -68,11 +69,23 @@ class FileUploadField(SplitArrayField):
         'max_files': _("Too many files uploaded"),
         'min_files': _("Too few files uploaded"),
         'invalid_token': _("Invalid token"),
+        'item_invalid': _("Item %(nth)s in the array did not validate:"),
     }
 
     def __init__(self, **kwargs):
         self.mimetypes = kwargs.pop('mimetypes', None)
-        self.max_size = kwargs.pop('max_size', None)
+
+        # Define an upload limit size based on the app settings and the field settings
+        absolute_upload_size_limit = getattr(settings, 'OSIS_DOCUMENT_MAX_UPLOAD_SIZE', None)
+        field_upload_size_limit = kwargs.pop('max_size', None)
+
+        if field_upload_size_limit:
+            if absolute_upload_size_limit and field_upload_size_limit > absolute_upload_size_limit:
+                field_upload_size_limit = absolute_upload_size_limit
+        else:
+            field_upload_size_limit = absolute_upload_size_limit
+
+        self.max_size = field_upload_size_limit
         self.max_files = kwargs.pop('max_files', None)
         self.min_files = kwargs.pop('min_files', None)
         self.upload_to = kwargs.pop('upload_to', None)
@@ -152,7 +165,7 @@ class FileUploadField(SplitArrayField):
                 get_remote_token(
                     v,
                     write_token=True,
-                    for_modified_upload=self.for_modified_upload
+                    for_modified_upload=self.for_modified_upload,
                 )
                 if is_uuid(v)
                 else v
