@@ -215,6 +215,30 @@ class FormTestCase(TestCase):
         error = TokenField.default_error_messages['size']
         self.assertIn(str(error), form.errors['media'][0])
 
+        # The max size is not defined in the settings
+        with override_settings(OSIS_DOCUMENT_MAX_UPLOAD_SIZE=None):
+            class TestForm(forms.Form):
+                media_with_limited_size = FileUploadField(max_size=2)
+                media_without_limited_size = FileUploadField()
+
+            form = TestForm()
+
+            self.assertEqual(form.fields['media_with_limited_size'].max_size, 2)
+            self.assertEqual(form.fields['media_without_limited_size'].max_size, None)
+
+        # The max size is defined in the settings
+        with override_settings(OSIS_DOCUMENT_MAX_UPLOAD_SIZE=10):
+            class TestForm(forms.Form):
+                media_with_lower_limited_size = FileUploadField(max_size=2)
+                media_with_greater_limited_size = FileUploadField(max_size=15)
+                media_without_limited_size = FileUploadField()
+
+            form = TestForm()
+
+            self.assertEqual(form.fields['media_with_lower_limited_size'].max_size, 2)
+            self.assertEqual(form.fields['media_with_greater_limited_size'].max_size, 10)
+            self.assertEqual(form.fields['media_without_limited_size'].max_size, 10)
+
     def test_check_mimetype(self):
         class TestForm(forms.Form):
             media = FileUploadField(mimetypes=('image/jpeg',))

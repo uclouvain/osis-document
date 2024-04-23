@@ -145,7 +145,6 @@ class FieldTestCase(TestCase):
         self.assertEqual(len(document.documents), 0)
 
     @patch('osis_document.api.utils.get_remote_metadata')
-
     @patch('osis_document.api.utils.get_several_remote_metadata')
     def test_model_form_confirms_remotely_with_correct_path(
         self,
@@ -154,7 +153,7 @@ class FieldTestCase(TestCase):
     ):
         token = WriteTokenFactory()
 
-        get_remote_metadata.return_value = {"name": "test.jpg"}
+        get_remote_metadata.return_value = {"name": "test.jpg", "size": 1}
         get_several_remote_metadata.return_value = {
             str(token.token): get_remote_metadata.return_value
         }
@@ -169,7 +168,6 @@ class FieldTestCase(TestCase):
         request_mock.assert_called_with(expected_url, json={'upload_to': 'path'}, headers={'X-Api-Key': 'very-secret'})
 
     @patch('osis_document.api.utils.get_remote_metadata')
-
     @patch('osis_document.api.utils.get_several_remote_metadata')
     def test_model_form_confirms_remotely_with_document_expiration_policy(
         self,
@@ -178,7 +176,7 @@ class FieldTestCase(TestCase):
     ):
         token = WriteTokenFactory()
 
-        get_remote_metadata.return_value = {"name": "test.jpg"}
+        get_remote_metadata.return_value = {"name": "test.jpg", "size": 1}
         get_several_remote_metadata.return_value = {
             str(token.token): get_remote_metadata.return_value
         }
