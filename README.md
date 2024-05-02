@@ -7,7 +7,6 @@
 `OSIS Document` requires
 
 - Django 3.2+
-- Django REST Framework 3.12+
 - Requests 2+
 
 
