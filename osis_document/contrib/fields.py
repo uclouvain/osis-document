@@ -23,9 +23,8 @@
 #  see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-import uuid
 from os.path import dirname
-from typing import Set, List, Union
+from typing import List, Union
 
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.validators import ArrayMinLengthValidator

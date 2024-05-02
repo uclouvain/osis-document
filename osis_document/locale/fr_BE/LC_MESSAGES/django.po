@@ -116,6 +116,10 @@ msgstr "Jeton invalide"
 msgid "Invalid upload UUID"
 msgstr "UUID de téléchargement non valide"
 
+#, python-format
+msgid "Item %(nth)s in the array did not validate:"
+msgstr "L'élément n°%(nth)s du tableau n’est pas valide :"
+
 msgid "MIME Type"
 msgstr "Type MIME"
 

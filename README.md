@@ -62,6 +62,8 @@ OSIS_DOCUMENT_DOMAIN_LIST = [
 OSIS_DOCUMENT_ALLOWED_EXTENSIONS = ['pdf', 'txt', 'docx', 'doc', 'odt', 'png', 'jpg']
 # To enabled mimetype validation
 ENABLE_MIMETYPE_VALIDATION = True
+# To define an upload size limit (in Bytes) (default: None)
+OSIS_DOCUMENT_MAX_UPLOAD_SIZE = 52428800
 ```
 
 OSIS-Document is aimed at being run on multiple servers, so on your primary server, add it to your `urls.py` 
