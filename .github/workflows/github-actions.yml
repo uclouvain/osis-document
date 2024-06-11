@@ -24,10 +24,10 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-node-
 
-    - name: install latest npm
-      run: |
-        npm install -g npm &&
-        npm --version
+#    - name: install latest npm
+#      run: |
+#        npm install -g npm &&
+#        npm --version
 
     - run: npm ci
     - run: npm run lint
@@ -51,10 +51,10 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-node-
 
-    - name: install latest npm
-      run: |
-        npm install -g npm &&
-        npm --version
+#    - name: install latest npm
+#      run: |
+#        npm install -g npm &&
+#        npm --version
 
     - run: npm ci
     - run: npm run coverage
