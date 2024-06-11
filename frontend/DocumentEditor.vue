@@ -271,12 +271,12 @@ export default defineComponent({
     },
     zoomIn() {
       const viewer = this.viewer as PDFViewer;
-      viewer.increaseScale({scaleFactor: 1.1});
+      viewer.updateScale({scaleFactor: 1.1});
       this.currentZoom = viewer.currentScale.toString();
     },
     zoomOut() {
       const viewer = this.viewer as PDFViewer;
-      viewer.decreaseScale({scaleFactor: 1.1});
+      viewer.updateScale({scaleFactor: 0.9});
       this.currentZoom = viewer.currentScale.toString();
     },
     setScale(scale: string) {
@@ -298,7 +298,7 @@ export default defineComponent({
       this.highlightingColor = color;
       if (color) {
         this.startWatchingAnnotations();
-        viewer.annotationEditorMode = AnnotationEditorType.INK;
+        viewer.annotationEditorMode = {mode: AnnotationEditorType.INK};
         viewer.annotationEditorParams = {
           type: AnnotationEditorParamsType.INK_THICKNESS,
           value: 10,
@@ -313,7 +313,7 @@ export default defineComponent({
         };
       } else {
         this.stopWatchingAnnotations();
-        viewer.annotationEditorMode = AnnotationEditorType.NONE;
+        viewer.annotationEditorMode = {mode: AnnotationEditorType.NONE};
       }
     },
     setCommenting(color: string) {
@@ -322,7 +322,7 @@ export default defineComponent({
       this.commentingColor = color;
       if (color) {
         this.startWatchingAnnotations();
-        viewer.annotationEditorMode = AnnotationEditorType.FREETEXT;
+        viewer.annotationEditorMode = {mode: AnnotationEditorType.FREETEXT};
         viewer.annotationEditorParams = {
           type: AnnotationEditorParamsType.FREETEXT_SIZE,
           value: 10,
@@ -333,7 +333,7 @@ export default defineComponent({
         };
       } else {
         this.stopWatchingAnnotations();
-        viewer.annotationEditorMode = AnnotationEditorType.NONE;
+        viewer.annotationEditorMode = {mode: AnnotationEditorType.NONE};
       }
     },
     updateNeedsToBeSaved() {
