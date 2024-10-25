@@ -41,6 +41,7 @@
         type="button"
         class="btn btn-default dropdown-toggle"
         data-toggle="dropdown"
+        data-bs-toggle="dropdown"
     >
       <span class="caret" />
     </button>

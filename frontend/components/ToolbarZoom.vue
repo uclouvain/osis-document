@@ -41,6 +41,7 @@
           type="button"
           class="btn btn-default dropdown-toggle"
           data-toggle="dropdown"
+          data-bs-toggle="dropdown"
           aria-haspopup="true"
           aria-expanded="false"
       >

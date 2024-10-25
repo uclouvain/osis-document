@@ -25,7 +25,7 @@
   -->
 
 <template>
-  <li class="media">
+  <li class="media d-flex">
     <!-- progress bar -->
     <div
         v-if="loading"
@@ -42,7 +42,7 @@
               width: `100%`
             }"
         >
-          <span class="sr-only">{{ $t('view_entry.loading') }}</span>
+          <span class="sr-only visually-hidden">{{ $t('view_entry.loading') }}</span>
         </div>
       </div>
     </div>
@@ -51,7 +51,7 @@
         class="media-body"
     >
       <div
-          class="progress"
+          class="progress text-center"
           style="text-align: center"
       >
         <div
@@ -64,14 +64,14 @@
               width: postProcessingProgress.toString() + `%`
             }"
         >
-          <span class="sr-only">{{ $t('view_entry.loading') }}</span>
+          <span class="sr-only visually-hidden">{{ $t('view_entry.loading') }}</span>
         </div>
         <span class="align-items-center">Avancement du post processing : {{ postProcessingProgress }} %</span>
       </div>
     </div>
     <!-- error -->
     <template v-else-if="error">
-      <div class="media-body">
+      <div class="media-body d-flex flex-grow-1">
         <span class="text-danger">{{ $t('error', { error }) }}</span>
       </div>
       <div class="media-right text-right">
@@ -87,19 +87,19 @@
     </template>
     <!-- thumbnail -->
     <template v-else-if="file">
-      <div
-          v-if="isImage"
-          class="media-left"
-      >
-        <img
-            class="media-object img-thumbnail"
-            :src="file.url"
-            :alt="file.name"
-            width="80"
+      <div class="media-body d-flex flex-grow-1">
+        <div
+            v-if="isImage"
+            class="media-left me-1"
         >
-      </div>
-      <div class="media-body">
-        <h4 class="media-heading">
+          <img
+              class="media-object img-thumbnail"
+              :src="file.url"
+              :alt="file.name"
+              width="80"
+          >
+        </div>
+        <h4 class="media-heading fs-5 flex-grow-1 text-start">
           <div
               v-if="isEditable && editableFilename"
               class="input-group"
@@ -112,7 +112,7 @@
             >
             <span
                 v-if="extension"
-                class="input-group-addon"
+                class="input-group-addon input-group-text"
             >
               {{ extension }}
             </span>
@@ -120,7 +120,7 @@
               <button
                   type="button"
                   :disabled="file.name === fullName"
-                  class="btn btn-default"
+                  class="btn btn-default border"
                   @click="saveName"
               >
                 <i :class="`fas fa-${saved ? 'check' : 'save'}`" />
@@ -130,25 +130,27 @@
           <div v-else>
             {{ file.name }}
           </div>
-          <small><span class="text-nowrap">{{ humanizedSize(file.size) }}</span> ({{ file.mimetype }})</small>
+          <small class="fs-6 text-secondary"><span class="text-nowrap">{{ humanizedSize(file.size) }}</span> ({{ file.mimetype }})</small>
         </h4>
       </div>
       <!-- actions -->
       <div
-          class="media-right text-right"
+          class="media-right float-end text-end"
           :style="{'min-width': isViewableDocument ? '9.5em' : '7em'}"
       >
         <div class="btn-group">
           <a
               v-if="isViewableDocument"
-              class="btn btn-default"
+              class="btn btn-default border"
               data-toggle="modal"
+              data-bs-toggle="modal"
               :data-target="`#modal-${formattedValue}`"
+              :data-bs-target="`#modal-${formattedValue}`"
           >
             <span class="fas fa-eye" />
           </a>
           <a
-              class="btn btn-default"
+              class="btn btn-default border"
               target="_blank"
               :href="`${file.url}?dl=1`"
           >

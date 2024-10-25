@@ -1,5 +1,5 @@
 <template>
-  <ul class="media-list">
+  <ul class="media-list list-unstyled">
     <ViewEntry
         v-for="(value, index) in values"
         :id="index.toString()"

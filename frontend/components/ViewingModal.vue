@@ -39,8 +39,9 @@
         <div class="modal-header">
           <button
               type="button"
-              class="close"
+              class="close hide-bs3-element"
               data-dismiss="modal"
+              data-bs-dismiss="modal"
               :aria-label="$t('view_entry.close')"
           >
             <span aria-hidden="true">&times;</span>
@@ -48,6 +49,13 @@
           <h4 class="modal-title">
             {{ file.name }}
           </h4>
+          <button
+              type="button"
+              class="btn-close d-none display-bs5-element"
+              data-dismiss="modal"
+              data-bs-dismiss="modal"
+              :aria-label="$t('view_entry.close')"
+          />
         </div>
         <div
             ref="modal"
@@ -122,6 +130,7 @@
                   type="button"
                   class="btn btn-default"
                   data-dismiss="modal"
+                  data-bs-dismiss="modal"
               >
                 {{ $t('view_entry.close') }}
               </button>
