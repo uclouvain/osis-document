@@ -40,11 +40,11 @@
     >
     {{ uploadText || dragNDropLabel }}
     <button
-        class="btn btn-default"
+        class="btn btn-default border"
         type="button"
         @click="($refs.fileInput as HTMLInputElement).click()"
     >
-      <span class="glyphicon glyphicon-plus" />
+      <span class="fa-solid fa-plus" />
       {{ uploadButtonText || $t('uploader.add_file_label') }}
     </button>
     <span v-if="maxSize">
@@ -54,7 +54,7 @@
 
   <ul
       v-if="fileList"
-      class="media-list"
+      class="media-list list-unstyled"
   >
     <UploadEntry
         v-for="(file, index) in fileList"
@@ -75,7 +75,7 @@
       class="text-right form-group"
   >
     <button
-        class="btn btn-default "
+        class="btn btn-default"
         type="button"
         @click="triggerUpload"
     >
@@ -83,7 +83,7 @@
     </button>
   </div>
 
-  <ul class="media-list">
+  <ul class="media-list ps-0 list-unstyled">
     <ViewEntry
         v-for="(token, index) in filteredTokens"
         :id="`${name}-${index}`"

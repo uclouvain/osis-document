@@ -24,7 +24,7 @@
   -
   -->
 <template>
-  <li class="media">
+  <li class="media d-flex">
     <div
         v-if="isImage && !!uploadFile && (!withCropping || isCropped)"
         class="media-left"
@@ -38,9 +38,9 @@
       >
     </div>
     <div class="media-body">
-      <h4 class="media-heading">
+      <h4 class="media-heading fs-5">
         {{ file.name }}
-        <small><span class="text-nowrap">{{ humanizedSize }}</span> ({{ file.type }})</small>
+        <small class="fs-6 text-secondary"><span class="text-nowrap">{{ humanizedSize }}</span> ({{ file.type }})</small>
       </h4>
       <div
           v-if="!error"
@@ -54,7 +54,7 @@
             aria-valuemax="100"
             :style="{width: `${progress}%`}"
         >
-          <span class="sr-only">{{ $t('upload_entry.completion', { progress }) }}</span>
+          <span class="sr-only visually-hidden">{{ $t('upload_entry.completion', { progress }) }}</span>
         </div>
       </div>
       <span
@@ -82,6 +82,7 @@
       tabindex="-1"
       role="dialog"
       data-backdrop="static"
+      data-bs-backdrop="static"
   >
     <div
         class="modal-dialog modal-lg"
@@ -111,6 +112,7 @@
               type="button"
               class="btn btn-danger"
               data-dismiss="modal"
+              data-bs-dismiss="modal"
               @click="$emit('delete')"
           >
             {{ $t('upload_entry.cancel') }}
