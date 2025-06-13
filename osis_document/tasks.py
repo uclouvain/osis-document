@@ -64,46 +64,103 @@ def cleanup_old_uploads():
 
 
 @app.task
+def process_single_action(post_process_async_id, action, current_processing_uuids):
+    """
+    Process a single action for a PostProcessAsync object.
+    This task is designed to be run asynchronously to prevent timeouts.
+    """
+    try:
+        post_process_async = PostProcessAsync.objects.get(uuid=post_process_async_id)
+
+        output_data = post_process(
+            uuid_list=current_processing_uuids,
+            post_process_actions=[action],
+            post_process_params=post_process_async.data["post_process_params"],
+        )
+
+        post_process_async.results[action]['upload_objects'] = output_data[action]['output']['upload_objects']
+        post_process_async.results[action]['post_processing_objects'] = output_data[action]['output'][
+            'post_processing_objects']
+        post_process_async.results[action]['status'] = PostProcessingStatus.DONE.name
+        post_process_async.save()
+
+        # Get the output UUIDs to use as input for the next action
+        output_uuids = output_data[action]['output']['upload_objects']
+
+        # Find the next action to process
+        actions = post_process_async.data["post_process_actions"]
+        current_index = actions.index(action)
+
+        if current_index + 1 < len(actions):
+            # There's another action to process
+            next_action = actions[current_index + 1]
+
+            # Create a task for the next action
+            result = process_single_action.delay(
+                post_process_async_id=post_process_async_id,
+                action=next_action,
+                current_processing_uuids=output_uuids
+            )
+
+            # Update the status to indicate processing has started
+            post_process_async.results[next_action]['task_id'] = str(result.id)
+            post_process_async.save()
+        else:
+            # This was the last action, update the overall status
+            if any([post_process_async.results[item]['status'] == PostProcessingStatus.FAILED.name 
+                   for item in post_process_async.results]):
+                post_process_async.status = PostProcessingStatus.FAILED.name
+            else:
+                post_process_async.status = PostProcessingStatus.DONE.name
+            post_process_async.save()
+
+        return output_uuids
+
+    except ValidationError as e:
+        post_process_async = PostProcessAsync.objects.get(uuid=post_process_async_id)
+        post_process_async.results[action]['errors'] = {
+            'messages': e.messages,
+            'params': str(e.params['value'])
+        }
+        post_process_async.results[action]['status'] = PostProcessingStatus.FAILED.name
+        post_process_async.status = PostProcessingStatus.FAILED.name
+        post_process_async.save()
+    except Exception as e:
+        post_process_async = PostProcessAsync.objects.get(uuid=post_process_async_id)
+        post_process_async.results[action]['errors'] = {
+            'messages': e.args or getattr(e, 'default_detail', str(e))
+        }
+        post_process_async.results[action]['status'] = PostProcessingStatus.FAILED.name
+        post_process_async.status = PostProcessingStatus.FAILED.name
+        post_process_async.save()
+
+
+@app.task
 def make_pending_async_post_processing():
+    """
+    Find all pending async post-processing objects and start processing them.
+    For each object, only the first action is started as a task.
+    Subsequent actions will be chained by the process_single_action task.
+    """
     qs = PostProcessAsync.objects.filter(
         status=PostProcessingStatus.PENDING.name
     )
+
     for post_process_async in qs:
+        # Start with the base input
         current_processing_uuids = [uuid for uuid in post_process_async.data['base_input']]
-        for action in post_process_async.data["post_process_actions"]:
-            try:
-                output_data = post_process(
-                    uuid_list=current_processing_uuids,
-                    post_process_actions=[action],
-                    post_process_params=post_process_async.data["post_process_params"],
-                )
-                post_process_async.results[action]['upload_objects'] = output_data[action]['output']['upload_objects']
-                post_process_async.results[action]['post_processing_objects'] = output_data[action]['output'][
-                    'post_processing_objects']
-                post_process_async.results[action]['status'] = PostProcessingStatus.DONE.name
-                post_process_async.save()
-                current_processing_uuids = output_data[action]['output']['upload_objects']
 
-            except ValidationError as e:
-                post_process_async.results[action]['errors'] = {
-                    'messages': e.messages,
-                    'params': str(e.params['value'])
-                }
-                post_process_async.results[action]['status'] = PostProcessingStatus.FAILED.name
-                post_process_async.save()
-                break
-            except Exception as e:
-                post_process_async.results[action]['errors'] = {
-                    'messages': e.args or e.default_detail
-                }
-                post_process_async.results[action]['status'] = PostProcessingStatus.FAILED.name
-                post_process_async.save()
-                break
+        # Only start the first action, the rest will be chained
+        if post_process_async.data["post_process_actions"]:
+            first_action = post_process_async.data["post_process_actions"][0]
 
-        if any([post_process_async.results[item]['status'] == PostProcessingStatus.FAILED.name for item in
-                post_process_async.results]):
-            post_process_async.status = PostProcessingStatus.FAILED.name
-        else:
-            post_process_async.status = PostProcessingStatus.DONE.name
+            # Create a task for the first action
+            result = process_single_action.delay(
+                post_process_async_id=post_process_async.uuid,
+                action=first_action,
+                current_processing_uuids=current_processing_uuids
+            )
 
-        post_process_async.save()
+            # Update the status to indicate processing has started
+            post_process_async.results[first_action]['task_id'] = str(result.id)
+            post_process_async.save()
