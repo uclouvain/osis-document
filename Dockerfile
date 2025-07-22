@@ -28,6 +28,7 @@ COPY ./docker/server/django-server-entrypoint.sh ./django-server-entrypoint.sh
 COPY ./docker/server/manage.py ./manage.py
 COPY ./docker/server/document ./document
 COPY ./osis_document /osis-document/osis_document
+COPY ./debug /osis-document/debug
 
 RUN chmod +x ./django-server-entrypoint.sh && \
     rm -rf ~/.cache/pip
