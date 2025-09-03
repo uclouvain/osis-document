@@ -40,6 +40,6 @@ setup(
         'filetype>=1.1.0,<2.0',
         'pypdf>=3.6.0,<4.0',
         'python-magic==0.4.27',
-        'djangorestframework==3.15.2'
+        'djangorestframework==3.16.1'
     ]
 )
