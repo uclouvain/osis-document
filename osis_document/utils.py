@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -145,42 +145,6 @@ def calculate_hash(file):
         for chunk in file.chunks():
             hash.update(chunk)
     return hash.hexdigest()
-
-
-def save_raw_upload(file, name, mimetype, **metadata):
-    """Save a file into a local Upload object with given parameters."""
-
-    hash = calculate_hash(file)
-    upload = Upload.objects.create(
-        mimetype=mimetype,
-        size=sys.getsizeof(file),
-        metadata={"hash": hash, 'name': name, **metadata},
-    )
-    upload.file.save(
-        content=ContentFile(file),
-        name=name,
-        save=True,
-    )
-    # create a related token
-    token = Token.objects.create(
-        upload_id=upload.uuid,
-        token=signing.dumps(str(upload.uuid)),
-    )
-    return token
-
-
-def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
-    """Save a raw file by sending it over the network."""
-    import requests
-
-    url = "{}request-upload".format(settings.OSIS_DOCUMENT_BASE_URL)
-    data = {'file': (name, content, mimetype)}
-
-    # Create the request
-    response = requests.post(url, files=data)
-    if response.status_code != 201:
-        raise SaveRawContentRemotelyException(response)
-    return response.json().get('token')
 
 
 def post_process(

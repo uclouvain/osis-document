@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ class UploadManager(models.Manager):
 
 class OsisDocumentFileExtensionValidator(FileExtensionValidator):
     def __call__(self, value):
-        self.allowed_extensions = getattr(settings, 'OSIS_DOCUMENT_ALLOWED_EXTENSIONS', [])
+        self.allowed_extensions = settings.OSIS_DOCUMENT_ALLOWED_EXTENSIONS
         super().__call__(value)
 
 

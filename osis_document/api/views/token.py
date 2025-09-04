@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ from django.db.models import Prefetch, QuerySet
 from django.urls import reverse
 from django.utils.timezone import now
 from osis_document.api import serializers
-from osis_document.api.permissions import APIKeyPermission
+from backoffice.settings.rest_framework.permissions import APIKeyPermission
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.contrib.error_code import ASYNC_POST_PROCESS_FAILED
 from osis_document.enums import FileStatus, DocumentError, PostProcessingStatus, PostProcessingWanted
@@ -221,7 +221,7 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
 
 
 class GetTokenListSchema(AutoSchema):  # pragma: no cover
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'getReadTokenList'
 
     def get_request_body(self, path, method):

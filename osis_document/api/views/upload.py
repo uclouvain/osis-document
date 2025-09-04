@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -35,20 +35,20 @@ from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from osis_document.api import serializers
-from osis_document.api.permissions import APIKeyPermission
-from osis_document.api.schema import DetailedAutoSchema
+from backoffice.settings.rest_framework.permissions import APIKeyPermission
+from drf_spectacular.openapi import AutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import FileStatus
 from osis_document.models import Upload
 from osis_document.utils import calculate_hash, confirm_upload, get_token
 
 
-class RequestUploadSchema(DetailedAutoSchema):  # pragma: no cover
+class RequestUploadSchema(AutoSchema):  # pragma: no cover
     serializer_mapping = {
         'POST': (serializers.RequestUploadSerializer, serializers.RequestUploadResponseSerializer),
     }
 
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'requestUpload'
 
     def get_responses(self, path, method):
@@ -68,7 +68,7 @@ class RequestUploadSchema(DetailedAutoSchema):  # pragma: no cover
 
 class UploadUserThrottle(UserRateThrottle):
     def get_rate(self):
-        return getattr(settings, 'OSIS_DOCUMENT_UPLOAD_LIMIT', '10/minute')
+        return settings.OSIS_DOCUMENT_UPLOAD_LIMIT
 
 
 class RequestUploadView(CorsAllowOriginMixin, APIView):
@@ -98,12 +98,12 @@ class RequestUploadView(CorsAllowOriginMixin, APIView):
         return Response({'error': serializer.errors}, status.HTTP_400_BAD_REQUEST)
 
 
-class ConfirmUploadSchema(DetailedAutoSchema):  # pragma: no cover
+class ConfirmUploadSchema(AutoSchema):  # pragma: no cover
     serializer_mapping = {
         'POST': (serializers.ConfirmUploadRequestSerializer, serializers.ConfirmUploadResponseSerializer),
     }
 
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'confirmUpload'
 
     def get_operation(self, path, method):
@@ -140,12 +140,12 @@ class ConfirmUploadView(CorsAllowOriginMixin, APIView):
         return Response({'uuid': uuid}, status.HTTP_201_CREATED)
 
 
-class DeclareFilesAsDeletedSchema(DetailedAutoSchema):  # pragma: no cover
+class DeclareFilesAsDeletedSchema(AutoSchema):  # pragma: no cover
     serializer_mapping = {
         'POST': serializers.DeclareFilesAsDeletedSerializer,
     }
 
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'declareFilesAsDeleted'
 
     def get_responses(self, path, method):

@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ from osis_document.tests.factories import (
     BadExtensionUploadFactory,
     TextDocumentUploadFactory,
 )
-from osis_document.utils import confirm_upload, generate_filename, get_metadata, is_uuid, save_raw_upload, post_process, \
+from osis_document.utils import confirm_upload, generate_filename, get_metadata, is_uuid, post_process, \
     stringify_uuid_and_check_uuid_validity
 from pypdf import PaperSize, PdfReader
 
@@ -67,21 +67,6 @@ class MetadataTestCase(TestCase):
         token = WriteTokenFactory(upload__metadata={'hash': 'badvalue'})
         with self.assertRaises(HashMismatch):
             get_metadata(token.token)
-
-
-@override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
-class RawUploadTestCase(TestCase):
-    def test_with_bytes(self):
-        token = save_raw_upload(
-            file=bytes('my file content', encoding='utf8'),
-            name='my_file_name.txt',
-            mimetype='text/plain',
-        )
-        metadata = get_metadata(token.token)
-        self.assertEqual(metadata['size'], 48)
-        self.assertEqual(metadata['mimetype'], 'text/plain')
-        self.assertEqual(metadata['hash'], '7e744d381e086dad1c2acb5596b89af8dad49f2c82fe3f390c3e0c142c6f665c')
-
 
 class IsUuidTestCase(TestCase):
     def test_is_uuid(self):

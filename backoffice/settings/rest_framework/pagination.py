@@ -1,4 +1,4 @@
-# ##############################################################################
+##############################################################################
 #
 #    OSIS stands for Open Student Information System. It's an application
 #    designed to manage the core business of higher education institutions,
@@ -22,20 +22,9 @@
 #    at the root of the source code of this program.  If not,
 #    see http://www.gnu.org/licenses/.
 #
-# ##############################################################################
-from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import List
-
-from osis_document.models import Upload
+##############################################################################
+from rest_framework.pagination import LimitOffsetPagination
 
 
-class Converter(ABC):
-    @abstractmethod
-    def convert(self, upload_input_object: Upload, output_filename: str) -> Path:
-        raise NotImplemented
-
-    @staticmethod
-    @abstractmethod
-    def get_supported_formats() -> List[str]:
-        raise NotImplemented
+class LimitOffsetPaginationWithUpperBound(LimitOffsetPagination):
+    max_limit = 100

@@ -23,32 +23,20 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from urllib.parse import urlparse
-
 from django.conf import settings
-from rest_framework.views import APIView
+from rest_framework.permissions import BasePermission
 
 
-class CorsAllowOriginMixin(APIView):
-    ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin"
-    ACCESS_CONTROL_ALLOW_METHODS = "Access-Control-Allow-Methods"
-    ACCESS_CONTROL_ALLOW_HEADERS = "Access-Control-Allow-Headers"
+class APIKeyPermission(BasePermission):
+    """Simple header based permission."""
 
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
+    @staticmethod
+    def check_secret_header(request):
+        auth = request.headers.get('X-Api-Key', '')
+        return auth == settings.OSIS_DOCUMENT_API_SHARED_SECRET
 
-        response[self.ACCESS_CONTROL_ALLOW_METHODS] = "GET, POST"
-        response[self.ACCESS_CONTROL_ALLOW_HEADERS] = "Content-Type"
+    def has_permission(self, request, view):
+        return self.check_secret_header(request)
 
-        origin = request.META.get("HTTP_ORIGIN")
-        if not origin:
-            return response
-
-        if self.origin_found_in_white_lists(urlparse(origin)):
-            response[self.ACCESS_CONTROL_ALLOW_ORIGIN] = origin
-
-        return response
-
-    def origin_found_in_white_lists(self, url):
-        origins = [urlparse(o) for o in settings.OSIS_DOCUMENT_DOMAIN_LIST]
-        return any(origin.scheme == url.scheme and origin.netloc == url.netloc for origin in origins)
+    def has_object_permission(self, request, view, obj):
+        return self.check_secret_header(request)

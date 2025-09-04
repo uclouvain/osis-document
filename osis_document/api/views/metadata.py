@@ -6,7 +6,7 @@
 #  The core business involves the administration of students, teachers,
 #  courses, programs and so on.
 #
-#  Copyright (C) 2015-2023 Université catholique de Louvain (http://www.uclouvain.be)
+#  Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -33,14 +33,14 @@ from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import APIView
 
 from osis_document.api import serializers
-from osis_document.api.schema import DetailedAutoSchema
+from drf_spectacular.openapi import AutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import DocumentError, FileStatus
 from osis_document.models import Token
 from osis_document.utils import get_metadata, get_upload_metadata
 
 
-class MetadataSchema(DetailedAutoSchema):  # pragma: no cover
+class MetadataSchema(AutoSchema):  # pragma: no cover
     serializer_mapping = {
         'GET': serializers.MetadataSerializer,
     }
@@ -76,7 +76,7 @@ class MetadataView(CorsAllowOriginMixin, APIView):
 
 
 class MetadataListSchema(AutoSchema):  # pragma: no cover
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'getSeveralMetadata'
 
     def get_request_body(self, path, method):
@@ -149,12 +149,12 @@ class MetadataListView(CorsAllowOriginMixin, APIView):
         return Response(metadata)
 
 
-class ChangeMetadataSchema(DetailedAutoSchema):  # pragma: no cover
+class ChangeMetadataSchema(AutoSchema):  # pragma: no cover
     serializer_mapping = {
         'POST': (serializers.ChangeMetadataSerializer, serializers.MetadataSerializer),
     }
 
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'changeMetadata'
 
     def get_request_body(self, path, method):

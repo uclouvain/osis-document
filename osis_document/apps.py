@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@
 # ##############################################################################
 from django.apps import AppConfig
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
-from rest_framework.serializers import ModelSerializer
 
 
 class OsisDocumentConfig(AppConfig):
@@ -34,8 +34,17 @@ class OsisDocumentConfig(AppConfig):
     verbose_name = _("Documents")
 
     def ready(self):
-        from osis_document.contrib import FileField, FileFieldSerializer
+        settings.OSIS_DOCUMENT_API_SHARED_SECRET = getattr(settings, 'OSIS_DOCUMENT_API_SHARED_SECRET', None)
+        if settings.OSIS_DOCUMENT_API_SHARED_SECRET is None:
+            raise ImproperlyConfigured("You sould set OSIS_DOCUMENT_API_SHARED_SECRET")
 
+        settings.OSIS_DOCUMENT_DOMAIN_LIST = getattr(settings, 'OSIS_DOCUMENT_DOMAIN_LIST', '').split()
+        settings.OSIS_DOCUMENT_ALLOWED_EXTENSIONS = getattr(
+            settings,
+            'OSIS_DOCUMENT_ALLOWED_EXTENSIONS',
+            'pdf txt docx doc odt png jpg'
+        ).split()
+        settings.OSIS_DOCUMENT_UPLOAD_LIMIT = getattr(settings, 'OSIS_DOCUMENT_UPLOAD_LIMIT', '10/minute')
         settings.OSIS_DOCUMENT_TOKEN_MAX_AGE = getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
         settings.OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE = getattr(settings, 'OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE', 60 * 15)
         settings.OSIS_DOCUMENT_EXPORT_EXPIRATION_POLICY_AGE = getattr(
@@ -48,5 +57,3 @@ class OsisDocumentConfig(AppConfig):
             'OSIS_DOCUMENT_DELETED_UPLOAD_MAX_AGE',
             60 * 60 * 24 * 15,
         )
-        # Add FileFieldSerializer the default_serializer_mapping
-        ModelSerializer.serializer_field_mapping[FileField] = FileFieldSerializer

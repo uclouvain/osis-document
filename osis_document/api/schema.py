@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,9 +23,9 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+from drf_spectacular.generators import SchemaGenerator
 
-from rest_framework.schemas.openapi import AutoSchema, SchemaGenerator
-from rest_framework.serializers import Serializer
+OSIS_DOCUMENT_SDK_VERSION = "1.0.6"
 
 
 class OsisDocumentSchemaGenerator(SchemaGenerator):
@@ -33,14 +33,30 @@ class OsisDocumentSchemaGenerator(SchemaGenerator):
         schema = super().get_schema(*args, **kwargs)
         schema["openapi"] = "3.0.0"
         schema["info"]["title"] = "OSIS Document Service"
-        schema["info"]["version"] = "1.0.6"
+        schema["info"]["version"] = OSIS_DOCUMENT_SDK_VERSION
         schema["info"]["description"] = "A set of API endpoints that allow you to get information about uploads"
+        schema["info"]["contact"] = {
+            "name": "UCLouvain - OSIS",
+            "url": "https://github.com/uclouvain/osis",
+        }
         schema["servers"] = [
             {
                 "url": "https://{environment}.osis.uclouvain.be/api/v1/osis_document/",
-                "variables": {"environment": {"default": "dev", "enum": ["dev", "qa", "test"]}},
+                "variables": {
+                    "environment": {
+                        "default": "dev",
+                        "enum": [
+                            "dev",
+                            "qa",
+                            "test",
+                        ]
+                    }
+                },
             },
-            {"url": "https://osis.uclouvain.be/api/v1/osis_document/", "description": "Production server"},
+            {
+                "url": "https://osis.uclouvain.be/api/v1/osis_document/",
+                "description": "Production server",
+            },
         ]
         schema['components']["securitySchemes"] = {
             "ApiKeyAuth": {
@@ -49,7 +65,7 @@ class OsisDocumentSchemaGenerator(SchemaGenerator):
                 "name": "X-API-KEY",
             }
         }
-        schema['components']['responses'] = {
+        schema['components'].setdefault('responses', {}).update({
             "Unauthorized": {
                 "description": "Unauthorized",
                 "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}},
@@ -62,7 +78,7 @@ class OsisDocumentSchemaGenerator(SchemaGenerator):
                 "description": "The specified resource was not found",
                 "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}},
             },
-        }
+        })
         schema['components']['schemas']['Error'] = {
             "type": "object",
             "properties": {
@@ -106,46 +122,3 @@ class OsisDocumentSchemaGenerator(SchemaGenerator):
                     }
                 )
         return schema
-
-
-class DetailedAutoSchema(AutoSchema):
-    serializer_mapping = {}
-
-    def get_request_body(self, path, method):
-        if method not in ('PUT', 'PATCH', 'POST'):
-            return {}
-
-        self.request_media_types = self.map_parsers(path, method)
-
-        serializer = self.get_serializer(path, method, for_response=False)
-
-        if not isinstance(serializer, Serializer):
-            item_schema = {}
-        else:
-            item_schema = self._get_reference(serializer)
-
-        return {'content': {ct: {'schema': item_schema} for ct in self.request_media_types}}
-
-    def get_components(self, path, method):
-        if method.lower() == 'delete':
-            return {}
-
-        components = {}
-        for with_response in [True, False]:
-            serializer = self.get_serializer(path, method, for_response=with_response)
-            if not isinstance(serializer, Serializer):
-                continue
-            component_name = self.get_component_name(serializer)
-            content = self.map_serializer(serializer)
-            components[component_name] = content
-
-        return components
-
-    def get_serializer(self, path, method, for_response=True):
-        serializer_class = self.serializer_mapping.get(method, None)
-        if serializer_class and isinstance(serializer_class, tuple):
-            if for_response:
-                serializer_class = serializer_class[1]
-            else:
-                serializer_class = serializer_class[0]
-        return serializer_class() if serializer_class else None

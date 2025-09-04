@@ -1,5 +1,5 @@
 from osis_document.api import serializers
-from osis_document.api.schema import DetailedAutoSchema
+from drf_spectacular.openapi import AutoSchema
 from osis_document.enums import PostProcessingStatus
 from osis_document.models import PostProcessAsync
 from osis_document.utils import post_process, create_post_process_async_object
@@ -9,12 +9,12 @@ from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import APIView
 
 
-class PostProcessingSchema(DetailedAutoSchema):
+class PostProcessingSchema(AutoSchema):
     serializer_mapping = {
         'POST': serializers.PostProcessingSerializer,
     }
 
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'request-post-processing'
 
     def get_operation(self, path, method):
@@ -61,7 +61,7 @@ class GetProgressAsyncPostProcessingSchema(AutoSchema):
         'GET': serializers.ProgressAsyncPostProcessingSerializer,
     }
 
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'get-progress-post-processing'
 
     def get_operation(self, path, method):
