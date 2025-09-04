@@ -1,0 +1,42 @@
+services:
+  server:
+    build:
+      context: .
+    command: bash -c /app/docker/server/django-server-entrypoint.sh
+    restart: on-failure
+    ports:
+      - '9503:9503'
+    networks:
+      - backend
+    volumes:
+      - .:/app
+      - osis_document_data:/app/osis_document/uploads
+  celery-worker:
+    build:
+      context: .
+    restart: on-failure
+    mem_reservation: "10m"
+    mem_limit: "1gb"
+    entrypoint: /app/docker/celery/celery-worker-entrypoint.sh
+    networks:
+      - backend
+    volumes:
+      - .:/app
+  celery-beat:
+    build:
+      context: .
+    mem_reservation: "10m"
+    mem_limit: "250m"
+    restart: on-failure
+    entrypoint: /app/docker/celery/celery-beat-entrypoint.sh
+    networks:
+      - backend
+    volumes:
+      - .:/app
+volumes:
+  osis_document_data:
+    driver: local
+networks:
+  backend:
+    name: osis_backend_network
+    driver: bridge

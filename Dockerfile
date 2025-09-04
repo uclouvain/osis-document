@@ -30,6 +30,8 @@ RUN pip install -r ./requirements.txt
 ADD . /app
 
 RUN chmod +x /app/docker/server/django-server-entrypoint.sh && \
+    chmod +x /app/docker/celery/celery-beat-entrypoint.sh && \
+    chmod +x /app/docker/celery/celery-worker-entrypoint.sh && \
     rm -rf ~/.cache/pip
 
 EXPOSE 9503
