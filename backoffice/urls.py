@@ -19,5 +19,4 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/osis-document/', include('osis_document.urls')),
-    path('debug/', include('debug.urls')),
 ]

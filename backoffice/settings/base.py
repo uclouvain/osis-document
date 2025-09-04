@@ -20,7 +20,6 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_celery_results',
     'osis_document',
-    'debug',
 ]
 
 MIDDLEWARE = [
@@ -145,17 +144,6 @@ STATIC_URL = '/static/'
 # Media
 MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
 
-# Osis document
-OSIS_DOCUMENT_API_SHARED_SECRET = 'osis-document-api-shared-secret'
-OSIS_DOCUMENT_DOMAIN_LIST = [
-    'localhost',
-    '127.0.0.1',
-]
-OSIS_DOCUMENT_UPLOAD_LIMIT = '10000/minute'
-OSIS_DOCUMENT_TOKEN_MAX_AGE = 60 * 60
-OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE = 60 * 15
-OSIS_DOCUMENT_ALLOWED_EXTENSIONS = ['pdf', 'txt', 'docx', 'doc', 'odt', 'png', 'jpg']
-
 # Celery configuration
 CELERY_BROKER_URL = "amqp://{user}:{password}@{host}:{port}".format(
     user=os.environ.get('RABBITMQ_USER', 'guest'),
@@ -179,5 +167,5 @@ CELERY_ENABLE_UTC = False
 # OTEL_EXPORTER_OTLP_ENDPOINT="http://jaeger:4317"
 # OTEL_EXPORTER_OTLP_INSECURE = True
 # OTEL_SERVICE_NAME = "OSIS-DOCUMENT"
-# OTEL_TRACER_MODULE_NAME = "OSIS"
-# OTEL_TRACER_LIBRARY_VERSION = "1.0.0"
+OTEL_TRACER_MODULE_NAME = os.environ.get("OTEL_TRACER_MODULE_NAME", "OSIS")
+OTEL_TRACER_LIBRARY_VERSION = os.environ.get("OTEL_TRACER_LIBRARY_VERSION", "1.0.0")

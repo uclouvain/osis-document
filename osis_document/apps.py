@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import os
 from django.apps import AppConfig
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -34,26 +35,23 @@ class OsisDocumentConfig(AppConfig):
     verbose_name = _("Documents")
 
     def ready(self):
-        settings.OSIS_DOCUMENT_API_SHARED_SECRET = getattr(settings, 'OSIS_DOCUMENT_API_SHARED_SECRET', None)
+        settings.OSIS_DOCUMENT_API_SHARED_SECRET = os.environ.get('OSIS_DOCUMENT_API_SHARED_SECRET')
         if settings.OSIS_DOCUMENT_API_SHARED_SECRET is None:
             raise ImproperlyConfigured("You sould set OSIS_DOCUMENT_API_SHARED_SECRET")
 
-        settings.OSIS_DOCUMENT_DOMAIN_LIST = getattr(settings, 'OSIS_DOCUMENT_DOMAIN_LIST', '').split()
-        settings.OSIS_DOCUMENT_ALLOWED_EXTENSIONS = getattr(
-            settings,
+        settings.OSIS_DOCUMENT_DOMAIN_LIST = os.environ.get('OSIS_DOCUMENT_DOMAIN_LIST', '').split()
+        settings.OSIS_DOCUMENT_ALLOWED_EXTENSIONS = os.environ.get(
             'OSIS_DOCUMENT_ALLOWED_EXTENSIONS',
-            'pdf txt docx doc odt png jpg'
+            'pdf txt docx doc odt png jpg',
         ).split()
-        settings.OSIS_DOCUMENT_UPLOAD_LIMIT = getattr(settings, 'OSIS_DOCUMENT_UPLOAD_LIMIT', '10/minute')
-        settings.OSIS_DOCUMENT_TOKEN_MAX_AGE = getattr(settings, 'OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
-        settings.OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE = getattr(settings, 'OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE', 60 * 15)
-        settings.OSIS_DOCUMENT_EXPORT_EXPIRATION_POLICY_AGE = getattr(
-            settings,
+        settings.OSIS_DOCUMENT_UPLOAD_LIMIT = os.environ.get('OSIS_DOCUMENT_UPLOAD_LIMIT', '10/minute')
+        settings.OSIS_DOCUMENT_TOKEN_MAX_AGE = os.environ.get('OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
+        settings.OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE = os.environ.get('OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE', 60 * 15)
+        settings.OSIS_DOCUMENT_EXPORT_EXPIRATION_POLICY_AGE = os.environ.get(
             'OSIS_DOCUMENT_EXPORT_EXPIRATION_POLICY_AGE',
             60 * 60 * 24 * 15,
         )
-        settings.OSIS_DOCUMENT_DELETED_UPLOAD_MAX_AGE = getattr(
-            settings,
+        settings.OSIS_DOCUMENT_DELETED_UPLOAD_MAX_AGE = os.environ.get(
             'OSIS_DOCUMENT_DELETED_UPLOAD_MAX_AGE',
             60 * 60 * 24 * 15,
         )
