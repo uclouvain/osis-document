@@ -59,3 +59,4 @@ class OsisDocumentConfig(AppConfig):
             'OSIS_DOCUMENT_DELETED_UPLOAD_MAX_AGE',
             60 * 60 * 24 * 15,
         )
+        settings.ENABLE_MIMETYPE_VALIDATION = os.environ.get('ENABLE_MIMETYPE_VALIDATION', False)

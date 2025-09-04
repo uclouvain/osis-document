@@ -75,7 +75,7 @@ class OsisDocumentMimeMatchValidator:
     }
 
     def __call__(self, data):
-        if getattr(settings, 'ENABLE_MIMETYPE_VALIDATION', False):
+        if settings.ENABLE_MIMETYPE_VALIDATION:
             extension = Path(data.name).suffix[1:].lower()
             content_type = magic.from_buffer(data.read(1024), mime=True)
             if content_type != self.ext_cnt_mapping[extension]:
