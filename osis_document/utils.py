@@ -28,7 +28,6 @@ import datetime
 import hashlib
 import os
 import posixpath
-import sys
 import uuid
 from typing import Union, List, Dict
 from uuid import UUID
@@ -36,12 +35,11 @@ from uuid import UUID
 from django.conf import settings
 from django.core import signing
 from django.core.exceptions import FieldError
-from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
-from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType, DocumentExpirationPolicy
-from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction, SaveRawContentRemotelyException
-from osis_document.models import Token, Upload, PostProcessAsync
 
+from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType, DocumentExpirationPolicy
+from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction
+from osis_document.models import Token, Upload, PostProcessAsync
 
 FILENAME_MAX_LENGTH = os.pathconf('/', 'PC_NAME_MAX')
 

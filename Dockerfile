@@ -12,7 +12,8 @@ RUN apt-get update && \
         libmagic1 \
         libwebp-dev \
         default-jre \
-        libreoffice  && \
+        libreoffice \
+        gettext && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONUNBUFFERED 1
