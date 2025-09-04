@@ -10,7 +10,9 @@ RUN apt-get update && \
         libtiff5-dev \
         build-essential \
         libmagic1 \
-        libwebp-dev && \
+        libwebp-dev \
+        default-jre \
+        libreoffice  && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONUNBUFFERED 1

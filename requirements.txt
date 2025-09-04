@@ -13,6 +13,9 @@ celery==5.2.7  # Issue with >= 5.3
 django-celery-beat==2.5.0
 django-celery-results==2.5.1
 
+# Testing & quality
+factory_boy==2.8.1
+
 # API
 djangorestframework==3.15.2
 pyyaml==6.0.2  # Useful for OpenAPI schema generation

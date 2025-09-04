@@ -39,6 +39,10 @@ class OsisDocumentConfig(AppConfig):
         if settings.OSIS_DOCUMENT_API_SHARED_SECRET is None:
             raise ImproperlyConfigured("You sould set OSIS_DOCUMENT_API_SHARED_SECRET")
 
+        settings.OSIS_DOCUMENT_BASE_URL = os.environ.get('OSIS_DOCUMENT_BASE_URL')
+        if settings.OSIS_DOCUMENT_BASE_URL is None:
+            raise ImproperlyConfigured("You sould set OSIS_DOCUMENT_BASE_URL")
+
         settings.OSIS_DOCUMENT_DOMAIN_LIST = os.environ.get('OSIS_DOCUMENT_DOMAIN_LIST', '').split()
         settings.OSIS_DOCUMENT_ALLOWED_EXTENSIONS = os.environ.get(
             'OSIS_DOCUMENT_ALLOWED_EXTENSIONS',
