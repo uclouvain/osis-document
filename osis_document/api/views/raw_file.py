@@ -29,16 +29,14 @@ from datetime import datetime
 
 from django.conf import settings
 from django.http import FileResponse
-from django.template.response import TemplateResponse
-from django.utils.translation import gettext_lazy as _
-from osis_document.api.utils import CorsAllowOriginMixin
-from osis_document.enums import FileStatus
-from osis_document.exceptions import FileInfectedException
-from osis_document.models import Upload, Token
-from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import APIView
+
+from osis_document.api.utils import CorsAllowOriginMixin
+from osis_document.enums import FileStatus
+from osis_document.exceptions import FileInfectedException, TokenNotFound, TokenExpired, FileReferenceNotFound, \
+    HashMismatch
+from osis_document.models import Upload, Token
 
 
 class RawFileSchema(AutoSchema):  # pragma: no cover
@@ -53,34 +51,50 @@ class RawFileSchema(AutoSchema):  # pragma: no cover
 
 class RawFileView(CorsAllowOriginMixin, APIView):
     """Get raw file from a token"""
-
     name = 'raw-file'
     authentication_classes = []
     permission_classes = []
     schema = RawFileSchema()
 
-    def get(self, *args, **kwargs):
-        token = Token.objects.filter(token=self.kwargs['token']).first()
+    def get(self, request, *args, **kwargs):
+        token = self._get_token(kwargs.get("token"))
         if not token:
-            return Response({'error': _("Resource not found")}, status.HTTP_404_NOT_FOUND)
-        if token.expires_at < datetime.now():
-            return TemplateResponse(request=self.request, template='expired_token.html', status=403)
-        upload = Upload.objects.from_token(self.kwargs['token'])
+            raise TokenNotFound()
+
+        if self._is_expired(token):
+            raise TokenExpired()
+
+        upload = Upload.objects.from_token(token.token)
         if not upload:
-            return Response({'error': _("Resource not found")}, status.HTTP_404_NOT_FOUND)
+            raise FileReferenceNotFound()
+
         if upload.status == FileStatus.INFECTED.name:
-            raise FileInfectedException
+            raise FileInfectedException()
+
+        if not self._is_valid_checksum(upload, token):
+            raise HashMismatch()
+
+        return self._serve_file(request, upload, token)
+
+    def _get_token(self, token_str):
+        return Token.objects.filter(token=token_str).first()
+
+    def _is_expired(self, token):
+        return token.expires_at < datetime.now()
+
+    def _is_valid_checksum(self, upload, token):
         with upload.get_file(modified=token.for_modified_upload).open() as file:
-            hash = hashlib.sha256(file.read()).hexdigest()
-        if upload.get_hash(modified=token.for_modified_upload) != hash:
-            return Response({'error': _("Hash checksum mismatch")}, status.HTTP_409_CONFLICT)
-        # TODO handle internal nginx redirect based on a setting
+            file_hash = hashlib.sha256(file.read()).hexdigest()
+        return upload.get_hash(modified=token.for_modified_upload) == file_hash
+
+    def _serve_file(self, request, upload, token):
         kwargs = {}
-        if self.request.GET.get('dl'):
-            kwargs = dict(as_attachment=True, filename=upload.metadata.get('name'))
-        response = FileResponse(upload.get_file(modified=token.for_modified_upload).open('rb'), **kwargs)
-        domain_list = getattr(settings, 'OSIS_DOCUMENT_DOMAIN_LIST', [])
+        if request.GET.get("dl"):
+            kwargs = dict(as_attachment=True, filename=upload.metadata.get("name"))
+
+        response = FileResponse(upload.get_file(modified=token.for_modified_upload).open("rb"), **kwargs)
+        domain_list = getattr(settings, "OSIS_DOCUMENT_DOMAIN_LIST", [])
         if domain_list:
-            response['Content-Security-Policy'] = "frame-ancestors {};".format(' '.join(domain_list))
-            response['X-Frame-Options'] = ";"
+            response["Content-Security-Policy"] = "frame-ancestors {};".format(" ".join(domain_list))
+            response["X-Frame-Options"] = ";"
         return response

@@ -29,6 +29,24 @@ from rest_framework import status
 from rest_framework.exceptions import APIException
 
 
+class TokenNotFound(APIException):
+    status_code = 404
+    default_detail = "Token not found."
+    default_code = "not_found"
+
+
+class FileReferenceNotFound(APIException):
+    status_code = 404
+    default_detail = "File reference not found."
+    default_code = "not_found"
+
+
+class TokenExpired(APIException):
+    status_code = 403
+    default_detail = "Token has expired."
+    default_code = "token_expired"
+
+
 class HashMismatch(APIException):
     status_code = status.HTTP_409_CONFLICT
     default_detail = DocumentError.HASH_MISMATCH.value
