@@ -29,6 +29,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.http import FileResponse
+from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import APIView
 
@@ -52,6 +53,7 @@ class RawFileSchema(AutoSchema):  # pragma: no cover
 class RawFileView(CorsAllowOriginMixin, APIView):
     """Get raw file from a token"""
     name = 'raw-file'
+    renderer_classes = [JSONRenderer, TemplateHTMLRenderer]
     authentication_classes = []
     permission_classes = []
     schema = RawFileSchema()
