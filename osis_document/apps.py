@@ -60,3 +60,14 @@ class OsisDocumentConfig(AppConfig):
             60 * 60 * 24 * 15,
         )
         settings.ENABLE_MIMETYPE_VALIDATION = os.environ.get('ENABLE_MIMETYPE_VALIDATION', False)
+        settings.RAW_FILE_VIEW = os.environ.get('RAW_FILE_VIEW', 'osis_document.api.views.raw_file.RawFileView')
+        settings.METADATA_VIEW = os.environ.get('METADATA_VIEW', 'osis_document.api.views.metadata.MetadataView')
+        settings.SEVERAL_METADATA_VIEW = os.environ.get(
+            'SEVERAL_METADATA_VIEW',
+            'osis_document.api.views.metadata.MetadataListView',
+        )
+        settings.CHANGE_METADATA_VIEW = os.environ.get(
+            'CHANGE_METADATA_VIEW',
+            'osis_document.api.views.metadata.ChangeMetadataView',
+        )
+        settings.TEMPLATES_RAW_FILE_DIR = os.environ.get('TEMPLATES_RAW_FILE_DIR', None)

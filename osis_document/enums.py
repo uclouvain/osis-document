@@ -119,3 +119,16 @@ class DocumentExpirationPolicy(ChoiceEnum):
             return datetime.date.today() + datetime.timedelta(
                 seconds=settings.OSIS_DOCUMENT_EXPORT_EXPIRATION_POLICY_AGE
             )
+
+
+class MimeTypeEnums(ChoiceEnum):
+    JPEG = 'image/jpeg'
+    JPG = 'image/jpeg'
+    PNG = 'image/png'
+    TXT = 'text/plain'
+    DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    DOC = 'application/msword'
+    ODT = 'application/vnd.oasis.opendocument.text'
+    PDF = 'application/pdf'
+    XLS = 'application/vnd.ms-excel'
+    XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

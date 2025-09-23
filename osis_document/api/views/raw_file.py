@@ -23,7 +23,6 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-
 import hashlib
 from datetime import datetime
 
@@ -94,9 +93,38 @@ class RawFileView(CorsAllowOriginMixin, APIView):
         if request.GET.get("dl"):
             kwargs = dict(as_attachment=True, filename=upload.metadata.get("name"))
 
-        response = FileResponse(upload.get_file(modified=token.for_modified_upload).open("rb"), **kwargs)
+        response = self._build_file_response(upload, token, **kwargs)
         domain_list = getattr(settings, "OSIS_DOCUMENT_DOMAIN_LIST", [])
         if domain_list:
             response["Content-Security-Policy"] = "frame-ancestors {};".format(" ".join(domain_list))
             response["X-Frame-Options"] = ";"
         return response
+
+    def _build_file_response(self, upload, token, **kwargs):
+        return FileResponse(
+            upload.get_file(modified=token.for_modified_upload).open("rb"),
+            **kwargs,
+        )
+
+
+class RawSampleFileView(RawFileView):
+    def _is_valid_checksum(self, upload, token):
+        if self.__is_file_exist_on_disk(upload, token):
+            return super()._is_valid_checksum(upload, token)
+        return True
+
+    def _build_file_response(self, upload, token, **kwargs):
+        if self.__is_file_exist_on_disk(upload, token):
+            return super()._build_file_response(upload, token, **kwargs)
+
+        from utils import get_sample_file_resolver
+        file_path = get_sample_file_resolver(upload.mimetype)
+        file_obj = open(file_path, 'rb')
+        return FileResponse(
+            file_obj,
+            **kwargs
+        )
+
+    def __is_file_exist_on_disk(self, upload, token) -> bool:
+        file_field = upload.get_file(modified=token.for_modified_upload)
+        return file_field.storage.exists(file_field.name)

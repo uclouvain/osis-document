@@ -37,8 +37,9 @@ from django.core import signing
 from django.core.exceptions import FieldError
 from django.utils.translation import gettext_lazy as _
 
-from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType, DocumentExpirationPolicy
-from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction
+from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType, DocumentExpirationPolicy, \
+    MimeTypeEnums
+from osis_document.exceptions import InvalidPostProcessorAction
 from osis_document.models import Token, Upload, PostProcessAsync
 
 FILENAME_MAX_LENGTH = os.pathconf('/', 'PC_NAME_MAX')
@@ -95,28 +96,16 @@ def generate_filename(instance, filename, upload_to):
     return filename
 
 
-def get_upload_metadata(token: str, upload: Upload):
+def get_upload_metadata(token: str, upload: Upload, filename: str):
     return {
         'size': upload.size,
         'mimetype': upload.mimetype,
-        'name': upload.file.name,
+        'name': filename,
         'url': get_file_url(token),
         'uploaded_at': upload.uploaded_at,
         'upload_uuid': upload.uuid,
         **upload.metadata,
     }
-
-
-def get_metadata(token: str):
-    upload = Upload.objects.from_token(token)
-    if not upload:
-        return None
-    with upload.file.open() as file:
-        hash = hashlib.sha256(file.read()).hexdigest()
-    if upload.metadata.get('hash') != hash:
-        raise HashMismatch()
-    return get_upload_metadata(token, upload)
-
 
 def get_token(uuid, **kwargs):
     return Token.objects.create(
@@ -220,3 +209,32 @@ def stringify_uuid_and_check_uuid_validity(uuid_input: Union[str, UUID]) -> Dict
     else:
         raise TypeError
     return results
+
+def get_sample_file_resolver(mimetype: str) -> str:
+    if settings.TEMPLATES_RAW_FILE_DIR is None:
+        raise RuntimeError('TEMPLATES_RAW_FILE_DIR is not configured to serve sample file')
+
+    if mimetype == MimeTypeEnums.JPEG.value:
+        filename = "sample.jpeg"
+    elif mimetype == MimeTypeEnums.JPG.value:
+        filename = "sample.jpg"
+    elif mimetype == MimeTypeEnums.PNG.value:
+        filename = "sample.png"
+    elif mimetype == MimeTypeEnums.TXT.value:
+        filename = "sample.txt"
+    elif mimetype == MimeTypeEnums.DOCX.value:
+        filename = "sample.docx"
+    elif mimetype == MimeTypeEnums.DOC.value:
+        filename = "sample.doc"
+    elif mimetype == MimeTypeEnums.ODT.value:
+        filename = "sample.odt"
+    elif mimetype == MimeTypeEnums.PDF.value:
+        filename = "sample.pdf"
+    elif mimetype == MimeTypeEnums.XLS.value:
+        filename = "sample.xls"
+    elif mimetype == MimeTypeEnums.XLSX.value:
+        filename = "sample.xlsx"
+    else:
+        raise RuntimeError(f"{mimetype} is unknown")
+
+    return os.path.join(settings.TEMPLATES_RAW_FILE_DIR, filename)

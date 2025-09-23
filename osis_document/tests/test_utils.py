@@ -43,30 +43,10 @@ from osis_document.tests.factories import (
     BadExtensionUploadFactory,
     TextDocumentUploadFactory,
 )
-from osis_document.utils import confirm_upload, generate_filename, get_metadata, is_uuid, post_process, \
+from osis_document.utils import confirm_upload, generate_filename, is_uuid, post_process, \
     stringify_uuid_and_check_uuid_validity
 from pypdf import PaperSize, PdfReader
 
-
-@override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
-class MetadataTestCase(TestCase):
-    def test_with_token(self):
-        token = WriteTokenFactory()
-        self.assertEqual(str(token), token.token)
-        metadata = get_metadata(token.token)
-        self.assertEqual(metadata['size'], 1024)
-        self.assertEqual(metadata['mimetype'], 'application/pdf')
-        self.assertEqual(metadata['hash'], 'b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9')
-        self.assertIn('url', metadata)
-
-        with mock.patch('django.utils.timezone.now', return_value=datetime(1990, 1, 1)):
-            old_token = WriteTokenFactory(upload=token.upload)
-            self.assertIsNone(get_metadata(old_token.token))
-
-    def test_bad_hash(self):
-        token = WriteTokenFactory(upload__metadata={'hash': 'badvalue'})
-        with self.assertRaises(HashMismatch):
-            get_metadata(token.token)
 
 class IsUuidTestCase(TestCase):
     def test_is_uuid(self):

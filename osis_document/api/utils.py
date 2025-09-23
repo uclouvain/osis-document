@@ -26,6 +26,7 @@
 from urllib.parse import urlparse
 
 from django.conf import settings
+from django.utils.module_loading import import_string
 from rest_framework.views import APIView
 
 
@@ -52,3 +53,16 @@ class CorsAllowOriginMixin(APIView):
     def origin_found_in_white_lists(self, url):
         origins = [urlparse(o) for o in settings.OSIS_DOCUMENT_DOMAIN_LIST]
         return any(origin.scheme == url.scheme and origin.netloc == url.netloc for origin in origins)
+
+
+def get_raw_file_view():
+    return import_string(settings.RAW_FILE_VIEW)
+
+def get_metadata_view():
+    return import_string(settings.METADATA_VIEW)
+
+def get_several_metadata_view():
+    return import_string(settings.SEVERAL_METADATA_VIEW)
+
+def get_change_metadata_view():
+    return import_string(settings.CHANGE_METADATA_VIEW)
