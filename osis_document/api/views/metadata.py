@@ -191,7 +191,7 @@ class MetadataListView(CorsAllowOriginMixin, APIView):
 
 class MetadataSampleFileListView(MetadataListView):
     def _build_metadata_response(self, token):
-        if self.__is_file_exist_on_disk(token):
+        if self.__is_file_exist_on_disk(token.upload):
             return super()._build_metadata_response(token)
 
         from osis_document.utils import get_sample_file_resolver
@@ -274,7 +274,7 @@ class ChangeMetadataView(CorsAllowOriginMixin, APIView):
 
 class ChangeMetadataSampleFileListView(ChangeMetadataView):
     def _build_metadata_response(self, upload, token):
-        if self.__is_file_exist_on_disk(token):
+        if self.__is_file_exist_on_disk(upload):
             return super()._build_metadata_response(upload, token)
 
         from osis_document.utils import get_sample_file_resolver

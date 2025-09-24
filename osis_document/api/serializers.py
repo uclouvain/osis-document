@@ -130,6 +130,18 @@ class ConfirmUploadRequestSerializer(serializers.Serializer):
         choices=DocumentExpirationPolicy.choices(),
         required=False,
     )
+    metadata = serializers.DictField(
+        help_text="Additional metadata dictionary",
+        required=False,
+        allow_empty=True,
+    )
+
+    def validate_metadata(self, value):
+        """Remove 'hash'/'name' (reserved) key from metadata if present"""
+        if value and isinstance(value, dict):
+            filtered_metadata = {k: v for k, v in value.items() if k not in ('hash', 'name')}
+            return filtered_metadata
+        return value
 
     def to_internal_value(self, data):
         internal_value = super().to_internal_value(data)

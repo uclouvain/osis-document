@@ -133,6 +133,7 @@ class ConfirmUploadView(CorsAllowOriginMixin, APIView):
                 token=self.kwargs.get('token'),
                 upload_to=validated_data.get('upload_to'),
                 document_expiration_policy=validated_data.get('document_expiration_policy'),
+                metadata=validated_data.get('metadata'),
                 model_instance=validated_data.get('related_model', {}).get('instance'),
             )
         except FieldError as e:

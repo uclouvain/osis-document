@@ -45,32 +45,47 @@ from osis_document.models import Token, Upload, PostProcessAsync
 FILENAME_MAX_LENGTH = os.pathconf('/', 'PC_NAME_MAX')
 
 
-def confirm_upload(token, upload_to, document_expiration_policy=None, model_instance=None) -> UUID:
-    """Verify local token existence and expiration"""
+def confirm_upload(
+    token,
+    upload_to,
+    document_expiration_policy=None,
+    metadata=None,
+    model_instance=None,
+) -> UUID:
+    # Verifier si le token n'est pas expiré et existant
     token = Token.objects.writing_not_expired().filter(token=token).select_related('upload').first()
     if not token:
         raise FieldError(_("Token non-existent or expired"))
-
-    # Delete token
     upload = token.upload
-    token.delete()
 
-    # Set upload as persisted, move the related file to a specified location and return the upload uuid
-    if upload.status != FileStatus.UPLOADED.name:
-        upload.status = FileStatus.UPLOADED.name
-        # Create a file with the new name at the specified location
-        previous_file_name = upload.file.name
-        new_file_name = generate_filename(
-            instance=model_instance,
-            filename=upload.metadata['name'],
-            upload_to=upload_to,
-        )
-        upload.file.open()
-        upload.file.save(name=new_file_name, content=upload.file.file, save=False)
-        # Remove the file at the previous location
+    # Supprimer le token en premier pour éviter les réutilisations
+    token.delete()
+    if upload.status == FileStatus.UPLOADED.name:
+        return upload.uuid
+
+    # Processus de confirmation
+    previous_file_name = upload.file.name
+    new_file_name = generate_filename(
+        instance=model_instance,
+        filename=upload.metadata['name'],
+        upload_to=upload_to,
+    )
+
+    # Déplacer le fichier de manière sécurisée
+    try:
+        with upload.file.open('rb') as source_file:
+            upload.file.save(name=new_file_name, content=source_file, save=False)
         upload.file.storage.delete(previous_file_name)
-        upload.expires_at = DocumentExpirationPolicy.compute_expiration_date(document_expiration_policy)
-        upload.save()
+    except Exception as e:
+        raise FieldError(_("Failed to move uploaded file"))
+
+    upload.status = FileStatus.UPLOADED.name
+    upload.expires_at = DocumentExpirationPolicy.compute_expiration_date(document_expiration_policy)
+    if metadata and isinstance(metadata, dict):
+        if not upload.metadata:
+            upload.metadata = {}
+        upload.metadata.update(metadata)
+    upload.save()
     return upload.uuid
 
 
