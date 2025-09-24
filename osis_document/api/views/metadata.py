@@ -33,7 +33,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from exceptions import FileReferenceNotFound, HashMismatch
+from osis_document.exceptions import FileReferenceNotFound, HashMismatch
 from osis_document.api import serializers
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import DocumentError, FileStatus

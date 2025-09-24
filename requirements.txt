@@ -7,6 +7,7 @@ Pillow==8.3.2
 # File manipulation/check
 pypdf==5.6.0
 filetype==1.2.0
+python-magic==0.4.27
 
 # Celery
 celery==5.2.7  # Issue with >= 5.3

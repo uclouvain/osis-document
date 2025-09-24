@@ -117,7 +117,7 @@ class RawSampleFileView(RawFileView):
         if self.__is_file_exist_on_disk(upload, token):
             return super()._build_file_response(upload, token, **kwargs)
 
-        from utils import get_sample_file_resolver
+        from osis_document.utils import get_sample_file_resolver
         file_path = get_sample_file_resolver(upload.mimetype)
         file_obj = open(file_path, 'rb')
         return FileResponse(
