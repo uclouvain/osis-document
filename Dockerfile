@@ -21,9 +21,6 @@ ENV PYTHONDONTWRITEBYTECODE 1
 
 WORKDIR /app
 
-RUN pip install --upgrade pip && \
-    pip install python-magic
-
 COPY ./requirements.txt ./requirements.txt
 RUN pip install -r ./requirements.txt
 
