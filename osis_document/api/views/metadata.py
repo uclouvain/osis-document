@@ -6,7 +6,7 @@
 #  The core business involves the administration of students, teachers,
 #  courses, programs and so on.
 #
-#  Copyright (C) 2015-2023 Université catholique de Louvain (http://www.uclouvain.be)
+#  Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -23,24 +23,25 @@
 #  see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import hashlib
+
 from django.db.models.functions import Now
-from django.http import Http404
+from drf_spectacular.openapi import AutoSchema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import APIView
 
+from osis_document.exceptions import FileReferenceNotFound, HashMismatch
 from osis_document.api import serializers
-from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import DocumentError, FileStatus
-from osis_document.models import Token
-from osis_document.utils import get_metadata, get_upload_metadata
+from osis_document.models import Token, Upload
+from osis_document.utils import get_upload_metadata
 
 
-class MetadataSchema(DetailedAutoSchema):  # pragma: no cover
+class MetadataSchema(AutoSchema):  # pragma: no cover
     serializer_mapping = {
         'GET': serializers.MetadataSerializer,
     }
@@ -69,14 +70,48 @@ class MetadataView(CorsAllowOriginMixin, APIView):
     schema = MetadataSchema()
 
     def get(self, *args, **kwargs):
-        metadata = get_metadata(self.kwargs['token'])
-        if not metadata:
-            raise Http404
+        token = self.kwargs['token']
+        upload = Upload.objects.from_token(token)
+        if not upload:
+            raise FileReferenceNotFound()
+
+        if not self._is_valid_checksum(upload):
+            raise HashMismatch()
+
+        metadata = self._build_metadata_response(upload, token)
         return Response(metadata)
+
+    def _is_valid_checksum(self, upload):
+        with upload.file.open() as file:
+            file_hash = hashlib.sha256(file.read()).hexdigest()
+        return upload.get_hash() == file_hash
+
+    def _build_metadata_response(self, upload, token):
+        return get_upload_metadata(token, upload, upload.file.name)
+
+
+class MetadataSampleFileView(MetadataView):
+    def _is_valid_checksum(self, upload):
+        if self.__is_file_exist_on_disk(upload):
+            return super()._is_valid_checksum(upload)
+        return True
+
+    def _build_metadata_response(self, upload, token):
+        if self.__is_file_exist_on_disk(upload):
+            return super()._build_metadata_response(upload, token)
+
+        from osis_document.utils import get_sample_file_resolver
+        file_path = get_sample_file_resolver(upload.mimetype)
+        filename = file_path.split('/')[-1]
+        return get_upload_metadata(token, upload, filename)
+
+    def __is_file_exist_on_disk(self, upload) -> bool:
+        file_field = upload.get_file()
+        return file_field.storage.exists(file_field.name)
 
 
 class MetadataListSchema(AutoSchema):  # pragma: no cover
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'getSeveralMetadata'
 
     def get_request_body(self, path, method):
@@ -144,17 +179,41 @@ class MetadataListView(CorsAllowOriginMixin, APIView):
         ).select_related('upload')
 
         for token in tokens:
-            metadata[token.token] = get_upload_metadata(token=token.token, upload=token.upload)
-
+            metadata[token.token] = self._build_metadata_response(token)
         return Response(metadata)
 
+    def _build_metadata_response(self, token):
+        return get_upload_metadata(
+            token=token.token,
+            upload=token.upload,
+            filename=token.upload.file.name,
+        )
 
-class ChangeMetadataSchema(DetailedAutoSchema):  # pragma: no cover
+class MetadataSampleFileListView(MetadataListView):
+    def _build_metadata_response(self, token):
+        if self.__is_file_exist_on_disk(token.upload):
+            return super()._build_metadata_response(token)
+
+        from osis_document.utils import get_sample_file_resolver
+        file_path = get_sample_file_resolver(token.upload.mimetype)
+        filename = file_path.split('/')[-1]
+        return get_upload_metadata(
+            token=token.token,
+            upload=token.upload,
+            filename=filename,
+        )
+
+    def __is_file_exist_on_disk(self, upload) -> bool:
+        file_field = upload.get_file()
+        return file_field.storage.exists(file_field.name)
+
+
+class ChangeMetadataSchema(AutoSchema):  # pragma: no cover
     serializer_mapping = {
         'POST': (serializers.ChangeMetadataSerializer, serializers.MetadataSerializer),
     }
 
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'changeMetadata'
 
     def get_request_body(self, path, method):
@@ -202,4 +261,31 @@ class ChangeMetadataView(CorsAllowOriginMixin, APIView):
         upload.metadata.update(self.request.data)
         upload.save()
 
-        return Response(get_upload_metadata(token=token.token, upload=upload), status=status.HTTP_200_OK)
+        metadata = self._build_metadata_response(upload, token)
+        return Response(metadata, status=status.HTTP_200_OK)
+
+    def _build_metadata_response(self, upload, token):
+        return get_upload_metadata(
+            token=token.token,
+            upload=upload,
+            filename=upload.file.name,
+        )
+
+
+class ChangeMetadataSampleFileListView(ChangeMetadataView):
+    def _build_metadata_response(self, upload, token):
+        if self.__is_file_exist_on_disk(upload):
+            return super()._build_metadata_response(upload, token)
+
+        from osis_document.utils import get_sample_file_resolver
+        file_path = get_sample_file_resolver(token.upload.mimetype)
+        filename = file_path.split('/')[-1]
+        return get_upload_metadata(
+            token=token.token,
+            upload=upload,
+            filename=filename,
+        )
+
+    def __is_file_exist_on_disk(self, upload) -> bool:
+        file_field = upload.get_file()
+        return file_field.storage.exists(file_field.name)

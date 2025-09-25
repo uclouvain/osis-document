@@ -102,6 +102,7 @@ celerybeat.pid
 
 # Environments
 docker/.env
+.env
 .venv
 env/
 venv/
@@ -131,3 +132,5 @@ dmypy.json
 /node_modules
 /frontend/node_modules
 /coverage
+
+.idea

@@ -10,28 +10,26 @@ RUN apt-get update && \
         libtiff5-dev \
         build-essential \
         libmagic1 \
-        libwebp-dev && \
+        libwebp-dev \
+        default-jre \
+        libreoffice \
+        gettext && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
-WORKDIR /osis-document
+WORKDIR /app
 
-RUN pip install --upgrade pip && \
-    pip install python-magic
-
-COPY ./docker/server/requirements.txt ./requirements.txt
+COPY ./requirements.txt ./requirements.txt
 RUN pip install -r ./requirements.txt
 
-COPY ./docker/server/django-server-entrypoint.sh ./django-server-entrypoint.sh
-COPY ./docker/server/manage.py ./manage.py
-COPY ./docker/server/document ./document
-COPY ./osis_document /osis-document/osis_document
-COPY ./debug /osis-document/debug
+ADD . /app
 
-RUN chmod +x ./django-server-entrypoint.sh && \
+RUN chmod +x /app/docker/server/django-server-entrypoint.sh && \
+    chmod +x /app/docker/celery/celery-beat-entrypoint.sh && \
+    chmod +x /app/docker/celery/celery-worker-entrypoint.sh && \
     rm -rf ~/.cache/pip
 
 EXPOSE 9503
-ENTRYPOINT ["./django-server-entrypoint.sh"]
+ENTRYPOINT ["/app/docker/server/django-server-entrypoint.sh"]

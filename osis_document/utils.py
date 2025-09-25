@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -28,7 +28,6 @@ import datetime
 import hashlib
 import os
 import posixpath
-import sys
 import uuid
 from typing import Union, List, Dict
 from uuid import UUID
@@ -36,42 +35,57 @@ from uuid import UUID
 from django.conf import settings
 from django.core import signing
 from django.core.exceptions import FieldError
-from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
-from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType, DocumentExpirationPolicy
-from osis_document.exceptions import HashMismatch, InvalidPostProcessorAction, SaveRawContentRemotelyException
-from osis_document.models import Token, Upload, PostProcessAsync
 
+from osis_document.enums import FileStatus, PostProcessingStatus, PostProcessingType, DocumentExpirationPolicy, \
+    MimeTypeEnums
+from osis_document.exceptions import InvalidPostProcessorAction
+from osis_document.models import Token, Upload, PostProcessAsync
 
 FILENAME_MAX_LENGTH = os.pathconf('/', 'PC_NAME_MAX')
 
 
-def confirm_upload(token, upload_to, document_expiration_policy=None, model_instance=None) -> UUID:
-    """Verify local token existence and expiration"""
+def confirm_upload(
+    token,
+    upload_to,
+    document_expiration_policy=None,
+    metadata=None,
+    model_instance=None,
+) -> UUID:
+    # Verifier si le token n'est pas expiré et existant
     token = Token.objects.writing_not_expired().filter(token=token).select_related('upload').first()
     if not token:
         raise FieldError(_("Token non-existent or expired"))
-
-    # Delete token
     upload = token.upload
-    token.delete()
 
-    # Set upload as persisted, move the related file to a specified location and return the upload uuid
-    if upload.status != FileStatus.UPLOADED.name:
-        upload.status = FileStatus.UPLOADED.name
-        # Create a file with the new name at the specified location
-        previous_file_name = upload.file.name
-        new_file_name = generate_filename(
-            instance=model_instance,
-            filename=upload.metadata['name'],
-            upload_to=upload_to,
-        )
-        upload.file.open()
-        upload.file.save(name=new_file_name, content=upload.file.file, save=False)
-        # Remove the file at the previous location
+    # Supprimer le token en premier pour éviter les réutilisations
+    token.delete()
+    if upload.status == FileStatus.UPLOADED.name:
+        return upload.uuid
+
+    # Processus de confirmation
+    previous_file_name = upload.file.name
+    new_file_name = generate_filename(
+        instance=model_instance,
+        filename=upload.metadata['name'],
+        upload_to=upload_to,
+    )
+
+    # Déplacer le fichier de manière sécurisée
+    try:
+        with upload.file.open('rb') as source_file:
+            upload.file.save(name=new_file_name, content=source_file, save=False)
         upload.file.storage.delete(previous_file_name)
-        upload.expires_at = DocumentExpirationPolicy.compute_expiration_date(document_expiration_policy)
-        upload.save()
+    except Exception as e:
+        raise FieldError(_("Failed to move uploaded file"))
+
+    upload.status = FileStatus.UPLOADED.name
+    upload.expires_at = DocumentExpirationPolicy.compute_expiration_date(document_expiration_policy)
+    if metadata and isinstance(metadata, dict):
+        if not upload.metadata:
+            upload.metadata = {}
+        upload.metadata.update(metadata)
+    upload.save()
     return upload.uuid
 
 
@@ -97,28 +111,16 @@ def generate_filename(instance, filename, upload_to):
     return filename
 
 
-def get_upload_metadata(token: str, upload: Upload):
+def get_upload_metadata(token: str, upload: Upload, filename: str):
     return {
         'size': upload.size,
         'mimetype': upload.mimetype,
-        'name': upload.file.name,
+        'name': filename,
         'url': get_file_url(token),
         'uploaded_at': upload.uploaded_at,
         'upload_uuid': upload.uuid,
         **upload.metadata,
     }
-
-
-def get_metadata(token: str):
-    upload = Upload.objects.from_token(token)
-    if not upload:
-        return None
-    with upload.file.open() as file:
-        hash = hashlib.sha256(file.read()).hexdigest()
-    if upload.metadata.get('hash') != hash:
-        raise HashMismatch()
-    return get_upload_metadata(token, upload)
-
 
 def get_token(uuid, **kwargs):
     return Token.objects.create(
@@ -145,42 +147,6 @@ def calculate_hash(file):
         for chunk in file.chunks():
             hash.update(chunk)
     return hash.hexdigest()
-
-
-def save_raw_upload(file, name, mimetype, **metadata):
-    """Save a file into a local Upload object with given parameters."""
-
-    hash = calculate_hash(file)
-    upload = Upload.objects.create(
-        mimetype=mimetype,
-        size=sys.getsizeof(file),
-        metadata={"hash": hash, 'name': name, **metadata},
-    )
-    upload.file.save(
-        content=ContentFile(file),
-        name=name,
-        save=True,
-    )
-    # create a related token
-    token = Token.objects.create(
-        upload_id=upload.uuid,
-        token=signing.dumps(str(upload.uuid)),
-    )
-    return token
-
-
-def save_raw_content_remotely(content: bytes, name: str, mimetype: str):
-    """Save a raw file by sending it over the network."""
-    import requests
-
-    url = "{}request-upload".format(settings.OSIS_DOCUMENT_BASE_URL)
-    data = {'file': (name, content, mimetype)}
-
-    # Create the request
-    response = requests.post(url, files=data)
-    if response.status_code != 201:
-        raise SaveRawContentRemotelyException(response)
-    return response.json().get('token')
 
 
 def post_process(
@@ -258,3 +224,32 @@ def stringify_uuid_and_check_uuid_validity(uuid_input: Union[str, UUID]) -> Dict
     else:
         raise TypeError
     return results
+
+def get_sample_file_resolver(mimetype: str) -> str:
+    if settings.TEMPLATES_RAW_FILE_DIR is None:
+        raise RuntimeError('TEMPLATES_RAW_FILE_DIR is not configured to serve sample file')
+
+    if mimetype == MimeTypeEnums.JPEG.value:
+        filename = "sample.jpeg"
+    elif mimetype == MimeTypeEnums.JPG.value:
+        filename = "sample.jpg"
+    elif mimetype == MimeTypeEnums.PNG.value:
+        filename = "sample.png"
+    elif mimetype == MimeTypeEnums.TXT.value:
+        filename = "sample.txt"
+    elif mimetype == MimeTypeEnums.DOCX.value:
+        filename = "sample.docx"
+    elif mimetype == MimeTypeEnums.DOC.value:
+        filename = "sample.doc"
+    elif mimetype == MimeTypeEnums.ODT.value:
+        filename = "sample.odt"
+    elif mimetype == MimeTypeEnums.PDF.value:
+        filename = "sample.pdf"
+    elif mimetype == MimeTypeEnums.XLS.value:
+        filename = "sample.xls"
+    elif mimetype == MimeTypeEnums.XLSX.value:
+        filename = "sample.xlsx"
+    else:
+        raise RuntimeError(f"{mimetype} is unknown")
+
+    return os.path.join(settings.TEMPLATES_RAW_FILE_DIR, filename)

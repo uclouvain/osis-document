@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2023 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -27,6 +27,24 @@ from django.utils.translation import gettext_lazy as _
 from osis_document.enums import DocumentError
 from rest_framework import status
 from rest_framework.exceptions import APIException
+
+
+class TokenNotFound(APIException):
+    status_code = 404
+    default_detail = "Token not found."
+    default_code = "not_found"
+
+
+class FileReferenceNotFound(APIException):
+    status_code = 404
+    default_detail = "File reference not found."
+    default_code = "not_found"
+
+
+class TokenExpired(APIException):
+    status_code = 403
+    default_detail = "Token has expired."
+    default_code = "token_expired"
 
 
 class HashMismatch(APIException):

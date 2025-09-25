@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 # ##############################################################################
 from django.urls import path
 
-from .api import views
+from .api import views, utils
 from .enums import TokenAccess
 
 app_name = 'osis_document'
@@ -37,14 +37,21 @@ urlpatterns = [
     path('read-token/<uuid:pk>', views.GetTokenView.as_view(token_access=TokenAccess.READ.name), name='read-token'),
     path('write-token/<uuid:pk>', views.GetTokenView.as_view(token_access=TokenAccess.WRITE.name), name='write-token'),
     path('read-tokens', views.GetTokenListView.as_view(token_access=TokenAccess.READ.name), name='read-tokens'),
-    path('metadata/<path:token>', views.MetadataView.as_view(), name=views.MetadataView.name),
-    path('metadata', views.MetadataListView.as_view(), name=views.MetadataListView.name),
-    path('change-metadata/<path:token>', views.ChangeMetadataView.as_view(), name=views.ChangeMetadataView.name),
+    path('metadata/<path:token>', utils.get_metadata_view().as_view(), name=utils.get_metadata_view().name),
+    path('metadata', utils.get_several_metadata_view().as_view(), name=utils.get_several_metadata_view().name),
+    path(
+        'change-metadata/<path:token>',
+        utils.get_change_metadata_view().as_view(),
+        name=utils.get_change_metadata_view().name,
+    ),
     path('rotate-image/<path:token>', views.RotateImageView.as_view(), name=views.RotateImageView.name),
     path('save-editor/<path:token>', views.SaveEditorView.as_view(), name=views.SaveEditorView.name),
-    path('file/<path:token>', views.RawFileView.as_view(), name=views.RawFileView.name),
+    path('file/<path:token>', utils.get_raw_file_view().as_view(), name=utils.get_raw_file_view().name),
     path('post-processing', views.PostProcessingView.as_view(), name=views.PostProcessingView.name),
     path('duplicate', views.UploadDuplicationView.as_view(), name=views.UploadDuplicationView.name),
-    path('get-progress-async-post-processing/<uuid:pk>', views.GetProgressAsyncPostProcessingView.as_view(),
-         name=views.GetProgressAsyncPostProcessingView.name),
+    path(
+        'get-progress-async-post-processing/<uuid:pk>',
+        views.GetProgressAsyncPostProcessingView.as_view(),
+        name=views.GetProgressAsyncPostProcessingView.name,
+    ),
 ]

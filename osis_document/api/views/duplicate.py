@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2024 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -31,19 +31,19 @@ from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 
 from osis_document.api import serializers
-from osis_document.api.permissions import APIKeyPermission
-from osis_document.api.schema import DetailedAutoSchema
+from backoffice.settings.rest_framework.permissions import APIKeyPermission
+from drf_spectacular.openapi import AutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import DocumentError
 from osis_document.models import Upload, ModifiedUpload
 
 
-class UploadDuplicationSchema(DetailedAutoSchema):
+class UploadDuplicationSchema(AutoSchema):
     serializer_mapping = {
         'POST': serializers.UploadDuplicationSerializer,
     }
 
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'duplicateUpload'
 
     def get_responses(self, path, method):

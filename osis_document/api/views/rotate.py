@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ from PIL import Image
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
 from osis_document.api import serializers
-from osis_document.api.schema import DetailedAutoSchema
+from drf_spectacular.openapi import AutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import TokenAccess
 from osis_document.models import Token
@@ -42,12 +42,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-class RotateImageSchema(DetailedAutoSchema):  # pragma: no cover
+class RotateImageSchema(AutoSchema):  # pragma: no cover
     serializer_mapping = {
         'POST': (serializers.RotateImageSerializer, serializers.RotateImageResponseSerializer),
     }
 
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'rotateImage'
 
     def get_responses(self, path, method):

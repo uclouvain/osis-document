@@ -6,7 +6,7 @@
 #  The core business involves the administration of students, teachers,
 #  courses, programs and so on.
 #
-#  Copyright (C) 2015-2023 Université catholique de Louvain (http://www.uclouvain.be)
+#  Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ from io import BytesIO
 import filetype
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.utils.translation import gettext_lazy as _
+from drf_spectacular.openapi import AutoSchema
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import MultiPartParser
@@ -36,7 +37,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from osis_document.api import serializers
-from osis_document.api.schema import DetailedAutoSchema
 from osis_document.api.utils import CorsAllowOriginMixin
 from osis_document.enums import TokenAccess
 from osis_document.exceptions import MimeMismatch
@@ -44,12 +44,12 @@ from osis_document.models import Token, Upload, ModifiedUpload
 from osis_document.utils import calculate_hash, get_token
 
 
-class SaveEditorSchema(DetailedAutoSchema):  # pragma: no cover
+class SaveEditorSchema(AutoSchema):  # pragma: no cover
     serializer_mapping = {
         'POST': (serializers.SaveEditorSerializer, serializers.SaveEditorResponseSerializer),
     }
 
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'saveEditor'
 
     def get_responses(self, path, method):

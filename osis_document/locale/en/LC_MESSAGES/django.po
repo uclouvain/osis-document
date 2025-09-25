@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-17 15:06+0200\n"
+"POT-Creation-Date: 2025-09-04 15:43+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,9 +27,6 @@ msgid "A5"
 msgstr ""
 
 msgid "Access type"
-msgstr ""
-
-msgid "Bad file upload mimetype"
 msgstr ""
 
 msgid "Convert"
@@ -80,12 +77,6 @@ msgstr ""
 msgid "File is not an image"
 msgstr ""
 
-msgid "File upload is either non-existent or has expired"
-msgstr ""
-
-msgid "File upload is too large"
-msgstr ""
-
 msgid "For modified upload"
 msgstr ""
 
@@ -110,14 +101,7 @@ msgstr ""
 msgid "Invalid post_processing action"
 msgstr ""
 
-msgid "Invalid token"
-msgstr ""
-
 msgid "Invalid upload UUID"
-msgstr ""
-
-#, python-format
-msgid "Item %(nth)s in the array did not validate:"
 msgstr ""
 
 msgid "MIME Type"
@@ -130,9 +114,6 @@ msgid "Merge"
 msgstr ""
 
 msgid "Metadata"
-msgstr ""
-
-msgid "Missing OSIS_DOCUMENT_BASE_URL setting"
 msgstr ""
 
 msgid "Modified at"
@@ -175,12 +156,6 @@ msgid "Token non-existent or expired"
 msgstr ""
 
 msgid "Token not found"
-msgstr ""
-
-msgid "Too few files uploaded"
-msgstr ""
-
-msgid "Too many files uploaded"
 msgstr ""
 
 msgid "UUID"

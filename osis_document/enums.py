@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -119,3 +119,16 @@ class DocumentExpirationPolicy(ChoiceEnum):
             return datetime.date.today() + datetime.timedelta(
                 seconds=settings.OSIS_DOCUMENT_EXPORT_EXPIRATION_POLICY_AGE
             )
+
+
+class MimeTypeEnums(ChoiceEnum):
+    JPEG = 'image/jpeg'
+    JPG = 'image/jpeg'
+    PNG = 'image/png'
+    TXT = 'text/plain'
+    DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    DOC = 'application/msword'
+    ODT = 'application/vnd.oasis.opendocument.text'
+    PDF = 'application/pdf'
+    XLS = 'application/vnd.ms-excel'
+    XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

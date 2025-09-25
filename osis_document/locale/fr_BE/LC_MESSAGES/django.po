@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-17 15:06+0200\n"
+"POT-Creation-Date: 2025-09-04 15:43+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,9 +28,6 @@ msgstr "A5"
 
 msgid "Access type"
 msgstr "Type d'accès"
-
-msgid "Bad file upload mimetype"
-msgstr "Type MIME du fichier uploadé incorrect"
 
 msgid "Convert"
 msgstr "Convertir"
@@ -80,12 +77,6 @@ msgstr "Le fichier n'est pas un PDF"
 msgid "File is not an image"
 msgstr "Le fichier n'est pas une image"
 
-msgid "File upload is either non-existent or has expired"
-msgstr "Le fichier n'existe pas ou a expiré"
-
-msgid "File upload is too large"
-msgstr "Le fichier transféré est trop lourd"
-
 msgid "For modified upload"
 msgstr "Pour téléchargement modifié"
 
@@ -110,15 +101,8 @@ msgstr "Format de fichier invalide"
 msgid "Invalid post_processing action"
 msgstr "Action post_processing invalide"
 
-msgid "Invalid token"
-msgstr "Jeton invalide"
-
 msgid "Invalid upload UUID"
 msgstr "UUID de téléchargement non valide"
-
-#, python-format
-msgid "Item %(nth)s in the array did not validate:"
-msgstr "L'élément n°%(nth)s du tableau n’est pas valide :"
 
 msgid "MIME Type"
 msgstr "Type MIME"
@@ -131,9 +115,6 @@ msgstr "Fusion"
 
 msgid "Metadata"
 msgstr "Métadonnées"
-
-msgid "Missing OSIS_DOCUMENT_BASE_URL setting"
-msgstr "Paramètre OSIS_DOCUMENT_BASE_URL non renseigné"
 
 msgid "Modified at"
 msgstr "Modifié le"
@@ -176,12 +157,6 @@ msgstr "Token non-existant ou expiré"
 
 msgid "Token not found"
 msgstr "Jeton non trouvé"
-
-msgid "Too few files uploaded"
-msgstr "Trop peu de fichiers transférés"
-
-msgid "Too many files uploaded"
-msgstr "Trop de fichiers transférés"
 
 msgid "UUID"
 msgstr "UUID"

@@ -24,20 +24,20 @@
 #
 # ##############################################################################
 from osis_document.api import serializers
-from osis_document.api.permissions import APIKeyPermission
-from osis_document.api.schema import DetailedAutoSchema
+from backoffice.settings.rest_framework.permissions import APIKeyPermission
+from drf_spectacular.openapi import AutoSchema
 from osis_document.enums import FileStatus
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-class DeclareFileAsInfectedSchema(DetailedAutoSchema):  # pragma: no cover
+class DeclareFileAsInfectedSchema(AutoSchema):  # pragma: no cover
     serializer_mapping = {
         'POST': (serializers.DeclareFileAsInfectedSerializer, serializers.ConfirmUploadResponseSerializer),
     }
 
-    def get_operation_id(self, path, method):
+    def get_operation_id(self):
         return 'declareFileAsInfected'
 
     def get_operation(self, path, method):

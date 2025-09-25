@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -43,44 +43,9 @@ from osis_document.tests.factories import (
     BadExtensionUploadFactory,
     TextDocumentUploadFactory,
 )
-from osis_document.utils import confirm_upload, generate_filename, get_metadata, is_uuid, save_raw_upload, post_process, \
+from osis_document.utils import confirm_upload, generate_filename, is_uuid, post_process, \
     stringify_uuid_and_check_uuid_validity
 from pypdf import PaperSize, PdfReader
-
-
-@override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
-class MetadataTestCase(TestCase):
-    def test_with_token(self):
-        token = WriteTokenFactory()
-        self.assertEqual(str(token), token.token)
-        metadata = get_metadata(token.token)
-        self.assertEqual(metadata['size'], 1024)
-        self.assertEqual(metadata['mimetype'], 'application/pdf')
-        self.assertEqual(metadata['hash'], 'b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9')
-        self.assertIn('url', metadata)
-
-        with mock.patch('django.utils.timezone.now', return_value=datetime(1990, 1, 1)):
-            old_token = WriteTokenFactory(upload=token.upload)
-            self.assertIsNone(get_metadata(old_token.token))
-
-    def test_bad_hash(self):
-        token = WriteTokenFactory(upload__metadata={'hash': 'badvalue'})
-        with self.assertRaises(HashMismatch):
-            get_metadata(token.token)
-
-
-@override_settings(OSIS_DOCUMENT_BASE_URL='http://dummyurl.com/document/')
-class RawUploadTestCase(TestCase):
-    def test_with_bytes(self):
-        token = save_raw_upload(
-            file=bytes('my file content', encoding='utf8'),
-            name='my_file_name.txt',
-            mimetype='text/plain',
-        )
-        metadata = get_metadata(token.token)
-        self.assertEqual(metadata['size'], 48)
-        self.assertEqual(metadata['mimetype'], 'text/plain')
-        self.assertEqual(metadata['hash'], '7e744d381e086dad1c2acb5596b89af8dad49f2c82fe3f390c3e0c142c6f665c')
 
 
 class IsUuidTestCase(TestCase):
