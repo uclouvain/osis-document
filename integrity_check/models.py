@@ -2,21 +2,25 @@ from django.db import models
 
 
 class ReclaimSpaceCheckRun(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'En attente'),
-        ('running', 'En cours'),
-        ('completed', 'Terminé'),
-        ('failed', 'Échoué'),
-    ]
+    class TaskState(models.TextChoices):
+        PENDING = 'PENDING', 'En attente'
+        PROCESSING = 'PROCESSING', 'En cours'
+        DONE = 'DONE', 'Terminé'
+        ERROR = 'ERROR', 'En erreur'
 
     task_id = models.CharField(max_length=255, unique=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=TaskState.choices, default=TaskState.PENDING.name)
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 
     # Paramètres d'exécution
     upload_dir = models.CharField(max_length=500)
     safety_margin_minutes = models.IntegerField(default=60)
+
+    # Progression
+    current_step = models.CharField(max_length=100, blank=True)
+    progress_percentage = models.IntegerField(default=0)
+    progress_info = models.JSONField(default=dict)
 
     # Résultats
     total_db_files = models.IntegerField(null=True, blank=True)

@@ -16,7 +16,7 @@ class OrphanFilesFinder:
         upload_dir: str,
         db_config: Dict,
         safety_margin_minutes: int = 60,
-        progress_callback: Optional[Callable] = None
+        progress_callback: Optional[Callable[[int, Dict], None]] = None
     ):
         self.upload_dir = Path(upload_dir)
         self.db_config = db_config
@@ -24,19 +24,22 @@ class OrphanFilesFinder:
         self.analysis_start_time = datetime.now()
         self.progress_callback = progress_callback
 
-    def _update_progress(self, current: int, total: int, description: str = ""):
+    def _update_progress(self, percentage: int, info: dict, ):
         """Met à jour la barre de progression si un callback est fourni"""
         if self.progress_callback:
-            self.progress_callback.set_progress(current, total, description=description)
+            self.progress_callback(percentage=percentage, info=info)
 
     def get_database_files(self) -> Set[str]:
         """Récupère la liste des fichiers depuis les tables de la base de données"""
         logger.info("Récupération des fichiers depuis la base de données...")
-        self._update_progress(15, 100, "Récupération des fichiers depuis osis_document_upload...")
+        self._update_progress(
+            15,
+            {
+                "description": "Récupération des fichiers depuis la table osis_document_upload...",
+            }
+        )
 
         cursor = connection.cursor()
-
-        # Récupération depuis la table principale
         query_upload = """
             SELECT DISTINCT file
             FROM osis_document_upload
@@ -46,9 +49,12 @@ class OrphanFilesFinder:
         files_upload = {row[0] for row in cursor.fetchall()}
         logger.info(f"Trouvé {len(files_upload)} fichiers dans osis_document_upload")
 
-        self._update_progress(25, 100, "Récupération des fichiers depuis osis_document_modifiedupload...")
-
-        # Récupération depuis la table de modifications
+        self._update_progress(
+            25,
+            {
+                "description": "Récupération des fichiers depuis la table osis_document_modifiedupload...",
+            }
+        )
         query_modified = """
             SELECT DISTINCT file
             FROM osis_document_modifiedupload
@@ -78,9 +84,12 @@ class OrphanFilesFinder:
 
     def get_disk_files(self) -> Set[str]:
         """Récupère la liste des fichiers présents sur le disque avec threading"""
-        logger.info("Scan des fichiers sur le disque...")
-        self._update_progress(35, 100, "Scan des fichiers sur le disque...")
-
+        self._update_progress(
+            35,
+            {
+                "description": "Scan des fichiers sur le disque...",
+            }
+        )
         if not self.upload_dir.exists():
             raise FileNotFoundError(f"Le dossier {self.upload_dir} n'existe pas")
 
@@ -106,17 +115,25 @@ class OrphanFilesFinder:
             for i, future in enumerate(futures):
                 batch_files = future.result()
                 disk_files.update(batch_files)
-                progress = 35 + (i + 1) * 30 / len(futures)  # 35% à 65%
-                self._update_progress(int(progress), 100, f"Traitement des fichiers... {i + 1}/{len(futures)} lots")
-
+                progress = 35 + (i + 1) * 30 / len(futures) # 35% à 65%
+                self._update_progress(
+                    int(progress),
+                    {
+                        "description": f"Traitement des fichiers... {i + 1}/{len(futures)} lots",
+                    }
+                )
         logger.info(f"Trouvé {len(disk_files)} fichiers éligibles sur le disque")
         return disk_files
 
     def find_and_verify_orphan_files(self, disk_files: Set[str], db_files: Set[str]) -> Dict:
         """Trouve et vérifie les fichiers orphelins"""
         logger.info("Recherche des fichiers orphelins...")
-        self._update_progress(70, 100, "Recherche des fichiers orphelins...")
-
+        self._update_progress(
+            70,
+            {
+                "description": "Recherche des fichiers orphelins...",
+            }
+        )
         orphan_files = disk_files - db_files
         logger.info(f"Trouvé {len(orphan_files)} fichiers orphelins potentiels")
 
@@ -126,8 +143,12 @@ class OrphanFilesFinder:
                 'total_size': 0,
                 'detailed_orphans': []
             }
-
-        self._update_progress(80, 100, "Vérification finale et calcul des tailles...")
+        self._update_progress(
+            80,
+            {
+                "description": "Vérification finale et calcul des tailles...",
+            }
+        )
 
         # Vérification finale et calcul des tailles
         cursor = connection.cursor()
@@ -145,14 +166,14 @@ class OrphanFilesFinder:
             # Vérification en base de données
             placeholders = ','.join(['%s'] * len(batch))
             query = f"""
-            SELECT file FROM (
-                SELECT DISTINCT file FROM osis_document_upload
-                WHERE file IS NOT NULL AND file != ''
-                UNION
-                SELECT DISTINCT file FROM osis_document_modifiedupload
-                WHERE file IS NOT NULL AND file != ''
-            ) AS all_files
-            WHERE file IN ({placeholders})
+                SELECT file FROM (
+                    SELECT DISTINCT file FROM osis_document_upload
+                    WHERE file IS NOT NULL AND file != ''
+                    UNION
+                    SELECT DISTINCT file FROM osis_document_modifiedupload
+                    WHERE file IS NOT NULL AND file != ''
+                ) AS all_files
+                WHERE file IN ({placeholders})
             """
             cursor.execute(query, batch)
             found_files = {row[0] for row in cursor.fetchall()}
@@ -173,8 +194,12 @@ class OrphanFilesFinder:
                     })
 
             progress = 80 + (i + len(batch)) * 10 / len(orphan_list)  # 80% à 90%
-            self._update_progress(int(progress), 100, f"Vérification... {i + len(batch)}/{len(orphan_list)} fichiers")
-
+            self._update_progress(
+                int(progress),
+                {
+                    "description": f"Vérification... {i + len(batch)}/{len(orphan_list)} fichiers",
+                }
+            )
         cursor.close()
 
         return {
@@ -196,8 +221,12 @@ class OrphanFilesFinder:
 
             # 3. Identification et vérification des orphelins (70-90%)
             orphan_results = self.find_and_verify_orphan_files(disk_files, db_files)
-
-            self._update_progress(90, 100, "Génération du rapport final...")
+            self._update_progress(
+                90,
+                {
+                    "description": "Génération du rapport final...",
+                }
+            )
 
             # Génération du rapport final
             detailed_report = {
