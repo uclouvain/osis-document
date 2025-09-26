@@ -24,6 +24,7 @@
 #
 # ##############################################################################
 import os
+
 from django.apps import AppConfig
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -49,16 +50,16 @@ class OsisDocumentConfig(AppConfig):
             'pdf txt docx doc odt png jpg',
         ).split()
         settings.OSIS_DOCUMENT_UPLOAD_LIMIT = os.environ.get('OSIS_DOCUMENT_UPLOAD_LIMIT', '10/minute')
-        settings.OSIS_DOCUMENT_TOKEN_MAX_AGE = os.environ.get('OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15)
-        settings.OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE = os.environ.get('OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE', 60 * 15)
-        settings.OSIS_DOCUMENT_EXPORT_EXPIRATION_POLICY_AGE = os.environ.get(
+        settings.OSIS_DOCUMENT_TOKEN_MAX_AGE = int(os.environ.get('OSIS_DOCUMENT_TOKEN_MAX_AGE', 60 * 15))
+        settings.OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE = int(os.environ.get('OSIS_DOCUMENT_TEMP_UPLOAD_MAX_AGE', 60 * 15))
+        settings.OSIS_DOCUMENT_EXPORT_EXPIRATION_POLICY_AGE = int(os.environ.get(
             'OSIS_DOCUMENT_EXPORT_EXPIRATION_POLICY_AGE',
             60 * 60 * 24 * 15,
-        )
-        settings.OSIS_DOCUMENT_DELETED_UPLOAD_MAX_AGE = os.environ.get(
+        ))
+        settings.OSIS_DOCUMENT_DELETED_UPLOAD_MAX_AGE = int(os.environ.get(
             'OSIS_DOCUMENT_DELETED_UPLOAD_MAX_AGE',
             60 * 60 * 24 * 15,
-        )
+        ))
         settings.ENABLE_MIMETYPE_VALIDATION = os.environ.get('ENABLE_MIMETYPE_VALIDATION', False)
         settings.RAW_FILE_VIEW = os.environ.get('RAW_FILE_VIEW', 'osis_document.api.views.raw_file.RawFileView')
         settings.METADATA_VIEW = os.environ.get('METADATA_VIEW', 'osis_document.api.views.metadata.MetadataView')
