@@ -6,7 +6,7 @@ from celery import Task
 from django.db import models
 from django.utils import timezone
 
-from integrity_check.models import ReclaimSpaceCheckRun, ChecksumValidatorRun
+from maintenance_check.models import ReclaimSpaceCheckRun, ChecksumValidatorRun
 
 
 class MaintenanceTask(Task, ABC):
@@ -67,15 +67,6 @@ class MaintenanceTask(Task, ABC):
 
         task_obj.save(update_fields=update_fields)
 
-    def mark_as_processing(self, task_id: str, step: str = None):
-        """Marque une tâche comme en cours de traitement"""
-        task_obj = self.get_task_object(task_id)
-        task_obj.status = task_obj.TaskState.PROCESSING.name
-        update_fields = ['status']
-        if step:
-            task_obj.current_step = step
-            update_fields.append('current_step')
-        task_obj.save(update_fields=update_fields)
 
 
 class ReclaimSpaceCheckTask(MaintenanceTask):
@@ -87,31 +78,6 @@ class ReclaimSpaceCheckTask(MaintenanceTask):
     def model_class(self) -> Type[ReclaimSpaceCheckRun]:
         return ReclaimSpaceCheckRun
 
-    def update_space_info(self, task_id: str, db_files: int = None, disk_files: int = None,
-                          orphan_files: int = None, orphan_size: int = None):
-        """
-        Met à jour les informations spécifiques à la récupération d'espace
-        """
-        with contextlib.suppress(self.model_class.DoesNotExist):
-            task_obj = self.get_task_object(task_id)
-            if task_obj:
-                update_fields = []
-                if db_files is not None:
-                    task_obj.total_db_files = db_files
-                    update_fields.append('total_db_files')
-                if disk_files is not None:
-                    task_obj.total_disk_files = disk_files
-                    update_fields.append('total_disk_files')
-                if orphan_files is not None:
-                    task_obj.total_orphan_files = orphan_files
-                    update_fields.append('total_orphan_files')
-                if orphan_size is not None:
-                    task_obj.total_orphan_size_bytes = orphan_size
-                    update_fields.append('total_orphan_size_bytes')
-
-                if update_fields:
-                    task_obj.save(update_fields=update_fields)
-
 
 class ChecksumValidatorCheckTask(MaintenanceTask):
     """
@@ -121,25 +87,3 @@ class ChecksumValidatorCheckTask(MaintenanceTask):
     @property
     def model_class(self) -> Type[ChecksumValidatorRun]:
         return ChecksumValidatorRun
-
-    def update_validation_info(self, task_id: str, db_files: int = None,
-                               not_found_files: int = None, hash_mismatch_files: int = None):
-        """
-        Met à jour les informations spécifiques à la validation des checksums
-        """
-        with contextlib.suppress(self.model_class.DoesNotExist):
-            task_obj = self.get_task_object(task_id)
-            if task_obj:
-                update_fields = []
-                if db_files is not None:
-                    task_obj.total_db_files = db_files
-                    update_fields.append('total_db_files')
-                if not_found_files is not None:
-                    task_obj.total_not_found_files = not_found_files
-                    update_fields.append('total_not_found_files')
-                if hash_mismatch_files is not None:
-                    task_obj.total_hash_mismatch_files = hash_mismatch_files
-                    update_fields.append('total_hash_mismatch_files')
-
-                if update_fields:
-                    task_obj.save(update_fields=update_fields)

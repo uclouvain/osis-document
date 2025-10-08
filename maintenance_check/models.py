@@ -15,13 +15,13 @@ class MaintenanceRun(models.Model):
     status = models.CharField(
         max_length=20,
         choices=TaskState.choices,
-        default=TaskState.PENDING.name
+        default=TaskState.PENDING.name,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 
     # Progression
-    current_step = models.CharField(max_length=100, blank=True)
+    current_step = models.CharField(max_length=100, default='', blank=True)
     progress_percentage = models.IntegerField(default=0)
     progress_info = models.JSONField(default=dict)
 

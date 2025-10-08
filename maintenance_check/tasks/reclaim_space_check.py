@@ -6,9 +6,9 @@ from functools import partialmethod
 from celery import shared_task
 from django.utils import timezone
 
-from integrity_check.models import ReclaimSpaceCheckRun
-from integrity_check.scripts.orphan_finder import OrphanFilesFinder
-from integrity_check.tasks.utils import ReclaimSpaceCheckTask
+from maintenance_check.models import ReclaimSpaceCheckRun
+from maintenance_check.scripts.orphan_finder import OrphanFilesFinder
+from maintenance_check.tasks.utils import ReclaimSpaceCheckTask
 
 logger = logging.getLogger('maintenance')
 

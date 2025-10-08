@@ -6,9 +6,9 @@ from functools import partialmethod
 from celery import shared_task
 from django.utils import timezone
 
-from integrity_check.models import ChecksumValidatorRun
-from integrity_check.scripts.checksum_validator import ChecksumValidator
-from integrity_check.tasks.utils import ChecksumValidatorCheckTask
+from maintenance_check.models import ChecksumValidatorRun
+from maintenance_check.scripts.checksum_validator import ChecksumValidator
+from maintenance_check.tasks.utils import ChecksumValidatorCheckTask
 
 logger = logging.getLogger('maintenance')
 
