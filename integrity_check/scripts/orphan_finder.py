@@ -230,7 +230,8 @@ class OrphanFilesFinder:
 
             # Génération du rapport final
             detailed_report = {
-                'analysis_timestamp': self.analysis_start_time.isoformat(),
+                'analysis_start_time_timestamp': self.analysis_start_time.isoformat(),
+                'analysis_end_time_timestamp': datetime.now().isoformat(),
                 'db_files_count': len(db_files),
                 'disk_files_count': len(disk_files),
                 'orphan_files_count': len(orphan_results['verified_orphans']),

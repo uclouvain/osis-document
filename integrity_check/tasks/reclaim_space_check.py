@@ -70,7 +70,7 @@ def run_reclaim_space_check(self, check_run_id: int):
         )
 
         # Mise à jour des résultats
-        check_run.status = 'completed'
+        check_run.status = ReclaimSpaceCheckRun.TaskState.DONE.name
         check_run.completed_at = timezone.now()
         check_run.total_db_files = results['db_files_count']
         check_run.total_disk_files = results['disk_files_count']
