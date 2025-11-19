@@ -1,0 +1,125 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+scale max 1024 width
+skinparam dpi 300
+start
+:get_remote_token(
+    uuid,
+    write_token,
+    type_post_processing
+);
+
+
+
+partition get_remote_token
+start
+:construction de l'url sur base de l'uuid
+      et du type d'accès demandé;
+:Exécution de la requête API;
+
+    partition GetTokenView.create
+    start
+
+
+
+        if (Quel est la valeur de l'args write_token ?) then(True)
+           :Ajout de l'uuid reçu en args et du type
+             d'acces au dictionnaire results.data;
+        else (False)
+            if (Le status de l'upload est il égual a INFECTED) then(True)
+                :Retourne une exeption de type 'FileInfectedException';
+                stop
+            else (False)
+                :exécution de la fonction 'check_post_processing';
+            endif
+
+
+
+            partition check_post_processing {
+                if (l'upload possède un post-processing ?) then(False)
+                :Initialise un dictionnaire vide nomé Results;
+                else (True)
+                    if (Le post-processing est il de type asynchrone?) then(False)
+                        if (l'args wanted_post_process existe-il ?) then(True)
+                        :Ajout du fichier d'output du post-process spécifé par
+                        l'args wanted_post_process au dictionnaire results;
+                        else (False)
+                        :Ajout du fichier d'output du dernier post-process
+                                    trouvé au dictionnaire results;
+                        endif
+
+                    else (True)
+                        if (Le status du post-processing ou du post-process spécifé par
+           l'args wanted_post_process est-il égual à DONE ?) then(True)
+                        :Récupération de l'uuid du fichier résultant du post-processing
+                        ou du post-process spécifé par l'args wanted_post_process
+                        + ajout du status DONE et de de l'uuid dans le dictionnaire results;
+                        else (False)
+                            :Ajout du status du post-processing au dictionnaire results;
+                            while (Boucle For basé sur les action définie dans le post-processing)
+                            if (Quel est le status du post-processing ?) then(PENDING)
+
+                            else (FAILED)
+                                :Ajout de l'erreur au dictionnaire results avec comme clé 'error';
+                            endif
+                            :Ajout du status de l'action sous forme de dictionnaire dans
+                            le dictionnaire results avec comme clé la valeur de l'action;
+                            endwhile
+                        endif
+                    endif
+                endif
+                :Retourne le dictionnaire Results;
+            }
+
+
+           if (Le statut du post-processing est égual a PENDING ?) then(True)
+                :Retourne une Réponse 206 ayant comme data le dictionnaire
+                        de retour de la fonction 'check_post_processing';
+                stop
+           elseif (Le statut du post-processing est égual a FAILED ?) then(True)
+                :Retourne une Réponse 206 ayant comme data le dictionnaire
+                        de retour de la fonction 'check_post_processing'
+                       + un code d'erreur (ASYNC_POST_PROCESS_FAILED);
+
+                stop
+           else (Flase)
+                :Ajout de l'uuid provenant du dictionnaire de retour de check_post_processing si il existe
+                            ou l'uuid reçu en args et du type d'acces au dictionnaire results.data;
+           endif
+
+        endif
+        :Appel de la method 'super().create(request, *args, **kwargs)';
+        stop
+    }
+
+
+    if (except HTTPError ?) then(True)
+        :Retourne la valeur 'None';
+        stop
+    else (False)
+        if (Le status de la réponse est il égual a 404 ?) then(True)
+            :Retourne l'exception 'UploadInvalidException';
+            stop
+        else (False)
+             if(Le status de la réponse est il égual a 404 ?
+                                __et__
+Le dictionnaire de retour de l'appel API contient-il
+l'exception FileInfectedException pour la clé 'detail'?) then(True)
+            :Retourn l'exception 'FileInfectedException';
+            stop
+            else (False)
+                if (La clé 'token existe-elle dans le dictionnaire de retour d'appel API) then(True)
+                :Returne le token présent dans le dictionnaire de retour d'appel API;
+                stop
+                else (False)
+                :Returne le dictionnaire de retour d'appel API au format JSON;
+                stop
+                endif
+            endif
+        endif
+    endif
+}
+
+
+
+@enduml

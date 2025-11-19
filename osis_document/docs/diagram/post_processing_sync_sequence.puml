@@ -1,0 +1,52 @@
+@startuml post_processing_sync_sequence
+'https://plantuml.com/sequence-diagram
+actor user as user
+participant osis as osis
+participant osis_document_API
+participant osis_document_API_utils
+participant osis_document_utils
+participant file_system
+'autonumber'
+note across : Repeat as many times as the user adds files
+user -> osis : Add file to form
+'Request Upload'
+osis -> osis_document_API : API-request : request_upload(file)
+osis_document_API -> osis_document_API : Create Upload(state='REQUESTED')
+osis_document_API -> file_system : Save file to disk
+osis_document_API -> osis_document_API_utils : get_token(Upload.uuid)
+osis_document_API_utils -> osis_document_API_utils : Create Token(WRITE)
+osis_document_API_utils -> osis_document_API : return Token
+osis_document_API -> osis : API-response : HTTP_201_CREATED, Token
+note across : Stop repeat
+'Confirm Upload'
+user -> osis : Send submission form
+note across : Repeated as many times as there are files uploaded
+osis -> osis_document_API : API-request confirm-upload(Token)
+osis_document_API -> osis_document_API_utils : confirm_upload(token)
+osis_document_API_utils -> osis_document_API_utils : Delete Token
+'osis_document_utils -> osis_document_utils : generate new_filename if necessary'
+'osis_document_utils -> osis_document_utils : Change storage_location of Upload.file if necessary'
+osis_document_API_utils -> osis_document_API_utils : Update Upload(status='UPLOADED')
+osis_document_API_utils -> osis_document_API : return Upload.uuid
+osis_document_API -> osis : API-response : HTTP_201_CREATED, Upload.uuid
+note across : Stop repeat
+note across #RoyalBlue
+If post_processing in Form.FileField
+end note
+osis -> osis_document_API : API-request : 'launch_post_processing(\n [uuids],\n [post_process_types],\n {post_process_params} \n)'
+osis_document_API -> osis_document_utils : post_process(\n [uuids],\n [post_process_types],\n {post_process_params} \n)
+note across : Repeat as many times as there are post_process_actions
+osis_document_utils -> osis_document_utils : Make post_process_actions
+osis_document_utils -> file_system : Save the file resulting from the post processing
+note across : Stop repeat
+osis_document_utils -> osis_document_API : return post_processing_return={'action_type1' : {input : [uuids], output: [uuids]}, \n 'action_type2' : {input : [uuids], output: [uuids]},\n ...}
+osis_document_API -> osis : API-response : HTTP_201_CREATED, post_processing_return
+note across #RoyalBlue
+End if
+end note
+osis <- osis : Update Models.file with correct uuid
+osis <- osis : Form save end
+osis -> user : Redirect to success_url
+
+
+@enduml

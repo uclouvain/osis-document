@@ -1,0 +1,19 @@
+[run]
+branch = True
+source = osis_document/osis_document
+omit =
+    */migrations/*
+    */tests/*
+    */management/*
+    */admin.py
+    */schema.py
+
+[report]
+skip_covered = True
+show_missing = True
+sort = Miss
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if settings.DEBUG
+    raise NotImplementedError
