@@ -1,0 +1,143 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+scale max 1024 width
+skinparam dpi 300
+start
+:get_remote_tokens(
+    [uuids],
+    type_post_processing
+);
+
+
+
+partition get_remote_tokens
+start
+:Initialisation du dictionnaire 'data' ayant la liste des uuid comme valeur pour la clé uuids;
+if (L'args type_post_processing existe-il ?)then (True)
+    :Ajouter la valeur de type_post_processing dans le dictionnaire 'data'
+                avec comme clé 'type_post_processing';
+else (False)
+endif
+:Exécution de la requête API;
+
+
+
+    partition GetTokenListView.create
+        start
+        :Initialisation du dictionnaire results pour lequel chaque entrée est un dictionnaire
+                        ayant comme clé un des uuid contenu dans request.data
+                                 et contant l'erreur UPLOAD_NOT_FOUND;
+        :           initialisation de la variable 'uploads' qui contient
+        un queryset des uploads ayant leur uuid dans les data de la requête;
+        while (Boucle For basé sur la variable 'uploads')
+
+            :appel de la fonction check_post_processing;
+
+
+
+            partition check_post_processing {
+                if (l'upload possède un post-processing ?) then(False)
+                :Initialise un dictionnaire vide nomé Results;
+                else (True)
+                    if (Le post-processing est il de type asynchrone?) then(False)
+                        if (l'args wanted_post_process existe-il ?) then(True)
+                        :Ajout du fichier d'output du post-process spécifé par
+                        l'args wanted_post_process au dictionnaire results;
+                        else (False)
+                        :Ajout du fichier d'output du dernier post-process
+                                    trouvé au dictionnaire results;
+                        endif
+
+                    else (True)
+                        if (Le status du post-processing ou du post-process spécifé par
+           l'args wanted_post_process est-il égual à DONE ?) then(True)
+                        :Récupération de l'uuid du fichier résultant du post-processing
+                        ou du post-process spécifé par l'args wanted_post_process
+                        + ajout du status DONE et de de l'uuid dans le dictionnaire results;
+                        else (False)
+                            :Ajout du status du post-processing au dictionnaire results;
+                            while (Boucle For basé sur les action définie dans le post-processing)
+                            if (Quel est le status du post-processing ?) then(PENDING)
+
+                            else (FAILED)
+                                :Ajout de l'erreur au dictionnaire results avec comme clé 'error';
+                            endif
+                            :Ajout du status de l'action sous forme de dictionnaire dans
+                            le dictionnaire results avec comme clé la valeur de l'action;
+                            endwhile
+                        endif
+                    endif
+                endif
+                :Retourne le dictionnaire Results;
+            }
+
+
+
+        if(Le statut du post-processing est égual a PENDING ?) then (True)
+            :Retourne une Response 206 contenant comme data
+            le retour de la fonction check_post_processing;
+            stop
+        elseif(Le statut du post-processing est égual a FAILED ?) then (True)
+            :Retourne une Response 422 contenant comme data
+            le retour de la fonction check_post_processing et un code d'erreur;
+            stop
+        else
+            if (Status du fichier est égual à INFECTED ?) then (True)
+                :Ajout d'un dictionnaire contenant l'erreur INFECTED au dictionnaire results
+                                        pour la clé équivalante a upload.uuid;
+            elseif (La variable 'data' est-elle une clé du dictionnaire
+  de retour de la fonction check_post_processing ?) then(True)
+                :Suppression de l'upload actuel du dictionnaire 'data';
+                    if (Le dictionnaire de retour de la fonction check_post_processing
+                        contient-il la clé 'data') then (True)
+                        :Ajout au dictionnaire data la valeur ayant comme clé 'data'
+                        du dictionnaire de retour de la fonction check_post_processing ;
+                    else (False)
+                    endif
+            else(False)
+                :Ajout au dictionnaire 'data' d'un dictionnaire
+                contenant l'uuid de l'upload actuel
+                et du type d'accès demandé pour le token;
+
+            endif
+
+
+        endif
+        endwhile (Fin de la boucle For)
+        if (validation des données contenues dans le dictionnaire 'data' via le serializer) then(valid)
+        :Construction du dictionnaire "Results" sur base des donnée validée par le sérializer,
+        pour lequel chaque clé est un uuid d'upload et la valeur est un token associé a cet upload;
+        :Retourne une Response 201 ayant comme data le dictionnaire "Results";
+        stop
+        else (invalid)
+            :Return exception ;
+            stop
+        endif
+    }
+
+
+
+    if (except HTTPError ?) then (False)
+        if (Status_code de la réponse est égual a 201 ?) then(True)
+            :Retourne un dictionnaire construit sur base du dictionnaire de retour
+                    de la fonction create de GetTokenListView tout en excluant
+                                les valeur contenant la variable error;
+            stop
+        else (False)
+             if( Status_code de la réponse est égula a 206 ou 500 ?) then(True)
+            : Retourne la réponse de GetTokenListView au fomat json;
+            stop
+            else (False)
+                :Retourne un dictionnaire vide;
+                stop
+            endif
+        endif
+    else (True)
+        :Retourne un dictionnaire vide;
+        stop
+    endif
+}
+
+
+
+@enduml

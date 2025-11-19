@@ -1,0 +1,861 @@
+openapi: 3.0.0
+info:
+  title: OSIS Document Service
+  version: 1.0.6
+  description: A set of API endpoints that allow you to get information about uploads
+paths:
+  /metadata/{token}:
+    get:
+      operationId: retrieveMetadata
+      description: Get metadata for an upload given a token
+      parameters:
+      - name: token
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Metadata'
+          description: ''
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - metadata
+  /file/{token}:
+    get:
+      operationId: retrieveRawFile
+      description: Get raw file from a token
+      parameters:
+      - name: token
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The raw binary file
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - file
+  /get-progress-async-post-processing/{id}:
+    get:
+      operationId: retrieveGetProgressAsyncPostProcessing
+      description: ''
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - get-progress-async-post-processing
+  /request-upload:
+    post:
+      operationId: requestUpload
+      description: Receive a file (from VueJS) and create a temporary upload object
+      parameters: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestUploadResponse'
+          description: ''
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - request-upload
+  /confirm-upload/{token}:
+    post:
+      operationId: confirmUpload
+      description: Given a writing token and server-to-server request, persist the
+        matching upload
+      parameters:
+      - name: token
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmUploadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ConfirmUploadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConfirmUploadRequest'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmUploadResponse'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - confirm-upload
+      security:
+      - ApiKeyAuth: []
+  /declare-file-as-infected:
+    post:
+      operationId: declareFileAsInfected
+      description: Given a server-to-server request, declare the file as infected
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclareFileAsInfected'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeclareFileAsInfected'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DeclareFileAsInfected'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmUploadResponse'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - declare-file-as-infected
+      security:
+      - ApiKeyAuth: []
+  /declare-files-as-deleted:
+    post:
+      operationId: declareFilesAsDeleted
+      description: ''
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclareFilesAsDeleted'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeclareFilesAsDeleted'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DeclareFilesAsDeleted'
+      responses:
+        '204':
+          description: No content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - declare-files-as-deleted
+      security:
+      - ApiKeyAuth: []
+  /read-token/{uuid}:
+    post:
+      operationId: getReadToken
+      description: Get a token for an upload
+      parameters:
+      - name: uuid
+        in: path
+        required: true
+        description: A UUID string identifying this Transfert.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Token'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Token'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Token'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - read-token
+      security:
+      - ApiKeyAuth: []
+  /write-token/{uuid}:
+    post:
+      operationId: getWriteToken
+      description: Get a token for an upload
+      parameters:
+      - name: uuid
+        in: path
+        required: true
+        description: A UUID string identifying this Transfert.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Token'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Token'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Token'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - write-token
+      security:
+      - ApiKeyAuth: []
+  /read-tokens:
+    post:
+      operationId: getReadTokenList
+      description: Get tokens for several uploads
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                format: uuid
+                description: The uuid of the persisted file upload
+          application/x-www-form-urlencoded:
+            schema:
+              type: array
+              items:
+                type: string
+                format: uuid
+                description: The uuid of the persisted file upload
+          multipart/form-data:
+            schema:
+              type: array
+              items:
+                type: string
+                format: uuid
+                description: The uuid of the persisted file upload
+      responses:
+        '201':
+          description: The tokens of several uploads
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  oneOf:
+                  - $ref: '#/components/schemas/Token'
+                  - $ref: '#/components/schemas/ErrorWithStatus'
+        '206':
+          description: Data for unfinished asynchronous post processing
+          content:
+            application/json:
+              type: object
+              properties:
+                type: string
+              additionalProperties:
+                oneOf:
+                - $ref: '#/components/schemas/Token'
+                - $ref: '#/components/schemas/ErrorWithStatus'
+        '422':
+          description: Data for failed asynchronous post processing
+          content:
+            application/json:
+              type: object
+              properties:
+                type: string
+              additionalProperties:
+                oneOf:
+                - $ref: '#/components/schemas/Token'
+                - $ref: '#/components/schemas/ErrorWithStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - read-tokens
+      security:
+      - ApiKeyAuth: []
+  /metadata:
+    post:
+      operationId: getSeveralMetadata
+      description: Get metadata of uploads whose tokens are specified
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                description: The file token
+          application/x-www-form-urlencoded:
+            schema:
+              type: array
+              items:
+                type: string
+                description: The file token
+          multipart/form-data:
+            schema:
+              type: array
+              items:
+                type: string
+                description: The file token
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: {}
+          description: ''
+        '200':
+          description: The metadata of several uploads
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  oneOf:
+                  - $ref: '#/components/schemas/Metadata'
+                  - $ref: '#/components/schemas/ErrorWithStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - metadata
+      security:
+      - ApiKeyAuth: []
+  /change-metadata/{token}:
+    post:
+      operationId: changeMetadata
+      description: Change metadata from a writing token
+      parameters:
+      - name: token
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: true
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Metadata'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - change-metadata
+  /rotate-image/{token}:
+    post:
+      operationId: rotateImage
+      description: Rotate an image from a writing token
+      parameters:
+      - name: token
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RotateImage'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RotateImage'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RotateImage'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RotateImageResponse'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - rotate-image
+  /save-editor/{token}:
+    post:
+      operationId: saveEditor
+      description: Receive a file (from VueJS), rotate its pages if needed and replace
+        corresponding upload
+      parameters:
+      - name: token
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaveEditor'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveEditorResponse'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - save-editor
+  /post-processing:
+    post:
+      operationId: request-post-processing
+      description: ''
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostProcessing'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PostProcessing'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostProcessing'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostProcessing'
+          description: ''
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - post-processing
+      security:
+      - ApiKeyAuth: []
+  /duplicate:
+    post:
+      operationId: duplicateUpload
+      description: View to duplicate several uploads.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadDuplication'
+      responses:
+        '201':
+          description: Association between the uuids of the original uploads and the uuids of the copies
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  oneOf:
+                  - $ref: '#/components/schemas/Upload'
+                  - $ref: '#/components/schemas/ErrorWithStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - duplicate
+      security:
+      - ApiKeyAuth: []
+components:
+  schemas:
+    Metadata:
+      type: object
+      properties:
+        size:
+          type: integer
+          description: The size, in bytes, of the file
+        mimetype:
+          type: string
+          description: The file's mimetype
+        name:
+          type: string
+          description: The file's name
+        uploaded_at:
+          type: string
+          format: date-time
+          description: The file's upload date
+        url:
+          type: string
+          description: An url for direct access to the raw file
+      required:
+      - size
+      - mimetype
+      - name
+      - uploaded_at
+      - url
+    RequestUploadResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: A writing token for the uploaded file
+      required:
+      - token
+    RequestUpload:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+      - file
+    ConfirmUploadResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          description: The uuid of the persisted file upload
+      required:
+      - uuid
+    ConfirmUploadRequest:
+      type: object
+      properties:
+        related_model:
+          type: object
+          properties:
+            app:
+              type: string
+              description: The name of the application containing the desired model
+            model:
+              type: string
+              description: The name of the desired model
+            field:
+              type: string
+              description: The name of the file field in the desired model
+            instance_filters:
+              type: object
+              description: Lookup arguments allowing to filter the model instances
+                to return one single object that will be used to compute the upload
+                directory path (via the 'upload_to' property)
+          required:
+          - app
+          - model
+          - field
+          description: The related model having the file field
+        upload_to:
+          type: string
+          description: This attribute provides a way of setting the upload directory
+        document_expiration_policy:
+          enum:
+          - NO_EXPIRATION
+          - EXPORT_EXPIRATION_POLICY
+          type: string
+          description: This attribute provides a way of setting the expiration policy
+            of the file
+    DeclareFileAsInfected:
+      type: object
+      properties:
+        path:
+          type: string
+          description: The path to the file to declare as infected
+      required:
+      - path
+    DeclareFilesAsDeleted:
+      type: object
+      properties:
+        files:
+          type: array
+          items: {}
+          description: A list of files UUID
+      required:
+      - files
+    Token:
+      type: object
+      properties:
+        token:
+          type: string
+          readOnly: true
+        upload_id:
+          type: string
+          format: uuid
+        access:
+          enum:
+          - READ
+          - WRITE
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        for_modified_upload:
+          type: boolean
+      required:
+      - upload_id
+    ChangeMetadata:
+      type: object
+      properties: {}
+    RotateImageResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: A fresh writing token for the rotated file
+      required:
+      - token
+    RotateImage:
+      type: object
+      properties:
+        rotate:
+          type: integer
+          description: The rotation requested, in degrees, usually 90, 180 or 270
+      required:
+      - rotate
+    SaveEditorResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: A fresh writing token for the modified file
+      required:
+      - token
+    SaveEditor:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        rotations:
+          type: object
+          description: The rotations requested, a mapping of 0-indexed page number
+            and degrees
+      required:
+      - file
+      - rotations
+    PostProcessing:
+      type: object
+      properties:
+        async_post_processing:
+          type: boolean
+          description: 'Boolean that define if post processing is asynchronous '
+        files_uuid:
+          type: array
+          items: {}
+          description: A list of files UUID
+        post_process_types:
+          type: array
+          items: {}
+          description: A list of actions to perform on the files
+        post_process_params:
+          type: object
+          description: A dict of params for post processing
+      required:
+      - async_post_processing
+      - files_uuid
+      - post_process_types
+    UploadDuplication:
+      type: object
+      properties:
+        uuids:
+          type: array
+          items: {}
+          description: The list of the uuids of the documents to duplicate.
+        with_modified_upload:
+          type: boolean
+          default: false
+          description: Boolean that defines if the duplication is also necessary for
+            the modified version of the files. Note that the uuids of the modified
+            uploads don't must be passed and the duplicated ones are not returned.
+        upload_path_by_uuid:
+          type: object
+          description: A dictionary associating for each uuid, where the duplicated
+            file should be saved. If the path is not specified for one file, the duplicated
+            file will be saved in the same location as the original file.
+      required:
+      - uuids
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+    ErrorWithStatus:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+    Upload:
+      type: object
+      properties:
+        upload_id:
+          type: string
+          format: uuid
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+servers:
+- url: https://{environment}.osis.uclouvain.be/api/v1/osis_document/
+  variables:
+    environment:
+      default: dev
+      enum:
+      - dev
+      - qa
+      - test
+- url: https://osis.uclouvain.be/api/v1/osis_document/
+  description: Production server

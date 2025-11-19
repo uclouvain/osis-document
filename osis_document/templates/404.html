@@ -1,0 +1,71 @@
+{% load i18n %}
+
+{% comment "License" %}
+* OSIS stands for Open Student Information System. It's an application
+* designed to manage the core business of higher education institutions,
+* such as universities, faculties, institutes and professional schools.
+* The core business involves the administration of students, teachers,
+* courses, programs and so on.
+*
+* Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* A copy of this license - GNU General Public License - is available
+* at the root of the source code of this program.  If not,
+* see http://www.gnu.org/licenses/.
+{% endcomment %}
+
+<style>
+    #main {
+        font-family: 'Armata', sans-serif;
+        height: 80vh;
+    }
+    .center-container {
+        display: flex;
+        justify-content: center;
+        height: 100%;
+    }
+    .center-align {
+        align-content: center;
+    }
+    .content-box {
+        display: block;
+        box-sizing: border-box;
+        text-align: center;
+    }
+    .expired-img {
+        width: 200px;
+        height: 200px;
+    }
+    .expired-title {
+        box-sizing: border-box;
+        font-size: 18px;
+        font-weight: 500;
+        line-height: 19.8px;
+        margin-bottom: 10px;
+        margin-top: 10px;
+    }
+</style>
+
+<div id="main">
+    <div class="center-container">
+        <div class="center-align">
+            <div class="content-box">
+                <img class="expired-img"
+                     src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NDAgNjQwIj48IS0tIUZvbnQgQXdlc29tZSBGcmVlIDcuMC4xIGJ5IEBmb250YXdlc29tZSAtIGh0dHBzOi8vZm9udGF3ZXNvbWUuY29tIExpY2Vuc2UgLSBodHRwczovL2ZvbnRhd2Vzb21lLmNvbS9saWNlbnNlL2ZyZWUgQ29weXJpZ2h0IDIwMjUgRm9udGljb25zLCBJbmMuLS0+PHBhdGggZD0iTTczIDM5LjFDNjMuNiAyOS43IDQ4LjQgMjkuNyAzOS4xIDM5LjFDMjkuOCA0OC41IDI5LjcgNjMuNyAzOSA3My4xTDU2NyA2MDEuMUM1NzYuNCA2MTAuNSA1OTEuNiA2MTAuNSA2MDAuOSA2MDEuMUM2MTAuMiA1OTEuNyA2MTAuMyA1NzYuNSA2MDAuOSA1NjcuMkw0NzguOSA0NDUuMkM0ODMuMSA0NDEuOCA0ODcuMiA0MzguMSA0OTEgNDM0LjNMNTYyLjEgMzYzLjJDNTkxLjQgMzMzLjkgNjA3LjkgMjk0LjEgNjA3LjkgMjUyLjZDNjA3LjkgMTY2LjIgNTM3LjkgOTYuMSA0NTEuNCA5Ni4xQzQxNC4xIDk2LjEgMzc4LjMgMTA5LjQgMzUwLjEgMTMzLjNDMzcwLjQgMTQzLjQgMzg4LjggMTU2LjggNDA0LjYgMTcyLjhDNDE4LjcgMTY0LjUgNDM0LjggMTYwLjEgNDUxLjQgMTYwLjFDNTAyLjUgMTYwLjEgNTQzLjkgMjAxLjUgNTQzLjkgMjUyLjZDNTQzLjkgMjc3LjEgNTM0LjIgMzAwLjYgNTE2LjggMzE4TDQ0NS43IDM4OS4xQzQ0MS44IDM5MyA0MzcuNiAzOTYuNSA0MzMuMSAzOTkuNkwzODUuNiAzNTIuMUM0MDIuMSAzNTEuMiA0MTUuMyAzMzcuNyA0MTUuOCAzMjFDNDE1LjggMzE5LjcgNDE1LjggMzE4LjQgNDE1LjggMzE3LjFDNDE1LjggMjMwLjggMzQ1LjkgMTYwLjIgMjU5LjMgMTYwLjJDMjQwLjEgMTYwLjIgMjIxLjQgMTYzLjcgMjAzLjggMTcwLjRMNzMgMzkuMXpNMjU3LjkgMjI0QzI1OC41IDIyNCAyNTkgMjI0IDI1OS42IDIyNEMyNzQuNyAyMjQgMjg5LjEgMjI3LjcgMzAxLjcgMjM0LjJDMzAzLjUgMjM1LjQgMzA1LjMgMjM2LjUgMzA3LjIgMjM3LjNDMzM0IDI1My42IDM1MiAyODMuMiAzNTIgMzE2LjlDMzUyIDMxNy4zIDM1MiAzMTcuNyAzNTIgMzE4LjFMMjU3LjkgMjI0ek0zNzguMiA0ODBMMjI0IDMyNS44QzIyNS4yIDQxMC40IDI5My42IDQ3OC43IDM3OC4xIDQ3OS45ek0xNzEuNyAyNzMuNUwxMjYuNCAyMjguMkw3Ny44IDI3Ni44QzQ4LjUgMzA2LjEgMzIgMzQ1LjkgMzIgMzg3LjRDMzIgNDczLjggMTAyIDU0My45IDE4OC41IDU0My45QzIyNS43IDU0My45IDI2MS42IDUzMC42IDI4OS44IDUwNi43QzI2OS41IDQ5Ni42IDI1MSA0ODMuMiAyMzUuMiA0NjcuMkMyMjEuMiA0NzUuNCAyMDUuMSA0NzkuOCAxODguNSA0NzkuOEMxMzcuNCA0NzkuOCA5NiA0MzguNCA5NiAzODcuM0M5NiAzNjIuOCAxMDUuNyAzMzkuMyAxMjMuMSAzMjEuOUwxNzEuNyAyNzMuM3oiLz48L3N2Zz4=">
+                <h4 class="expired-title">
+                    {% trans "The link you followed does not exist or has expired." %}
+                </h4>
+            </div>
+        </div>
+    </div>
+</div>
