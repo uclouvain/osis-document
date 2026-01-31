@@ -59,7 +59,11 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
 
     name = 'get-token'
     serializer_class = serializers.TokenSerializer
-    queryset = Upload.objects.all().exclude(status=FileStatus.DELETED.name)
+    queryset = Upload.objects.all().prefetch_related(
+        Prefetch(
+            'post_processing_input_files',
+        )
+    ).exclude(status=FileStatus.DELETED.name)
     authentication_classes = []
     permission_classes = [APIKeyPermission]
     token_access = None
@@ -76,8 +80,7 @@ class GetTokenView(CorsAllowOriginMixin, generics.CreateAPIView):
             post_processing_check = self.check_post_processing(
                 request=request,
                 upload=upload,
-                wanted_post_process=request.data.get(
-                    "wanted_post_process")
+                wanted_post_process=request.data.get("wanted_post_process")
             )
             status_post_processing = post_processing_check.get('status')
             if status_post_processing == PostProcessingStatus.PENDING.name:
