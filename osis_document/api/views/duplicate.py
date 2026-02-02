@@ -33,7 +33,7 @@ from rest_framework.response import Response
 from osis_document.api import serializers
 from backoffice.settings.rest_framework.permissions import APIKeyPermission
 from drf_spectacular.openapi import AutoSchema
-from osis_document.api.utils import CorsAllowOriginMixin
+from backoffice.settings.rest_framework.utils import CorsAllowOriginMixin
 from osis_document.enums import DocumentError
 from osis_document.models import Upload, ModifiedUpload
 

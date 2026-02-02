@@ -37,7 +37,7 @@ from rest_framework.views import APIView
 from osis_document.api import serializers
 from backoffice.settings.rest_framework.permissions import APIKeyPermission
 from drf_spectacular.openapi import AutoSchema
-from osis_document.api.utils import CorsAllowOriginMixin
+from backoffice.settings.rest_framework.utils import CorsAllowOriginMixin
 from osis_document.enums import FileStatus
 from osis_document.models import Upload
 from osis_document.utils import calculate_hash, confirm_upload, get_token

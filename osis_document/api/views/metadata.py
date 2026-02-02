@@ -35,7 +35,7 @@ from rest_framework.views import APIView
 
 from osis_document.exceptions import FileReferenceNotFound, HashMismatch
 from osis_document.api import serializers
-from osis_document.api.utils import CorsAllowOriginMixin
+from backoffice.settings.rest_framework.utils import CorsAllowOriginMixin
 from osis_document.enums import DocumentError, FileStatus
 from osis_document.models import Token, Upload
 from osis_document.utils import get_upload_metadata

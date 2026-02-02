@@ -32,7 +32,7 @@ from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import APIView
 
-from osis_document.api.utils import CorsAllowOriginMixin
+from backoffice.settings.rest_framework.utils import CorsAllowOriginMixin
 from osis_document.enums import FileStatus
 from osis_document.exceptions import FileInfectedException, TokenNotFound, TokenExpired, FileReferenceNotFound, \
     HashMismatch

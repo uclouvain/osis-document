@@ -37,7 +37,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from osis_document.api import serializers
-from osis_document.api.utils import CorsAllowOriginMixin
+from backoffice.settings.rest_framework.utils import CorsAllowOriginMixin
 from osis_document.enums import TokenAccess
 from osis_document.exceptions import MimeMismatch
 from osis_document.models import Token, Upload, ModifiedUpload
