@@ -47,7 +47,7 @@ class GetStudentFiles(APIView):
             response = requests.get(
                 url,
                 headers={'Authorization': settings.EPC_API_AUTHORIZATION_HEADER},
-                timeout=30
+                timeout=settings.EPC_API_CALL_TIMEOUT
             )
             response.raise_for_status()
             response_data = response.json()

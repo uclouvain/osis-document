@@ -79,7 +79,8 @@ class GetStudentFilesTestCase(TestCase):
 
     @override_settings(
         EPC_API_URL="https://mock-epc.com/",
-        EPC_API_AUTHORIZATION_HEADER="Basic 123654789878789"
+        EPC_API_AUTHORIZATION_HEADER="Basic 123654789878789",
+        EPC_API_CALL_TIMEOUT=10,
     )
     @patch('external_storage.api.epc.views.requests.get')
     def test_get_student_files_success(self, mock_get):
@@ -96,7 +97,7 @@ class GetStudentFilesTestCase(TestCase):
         mock_get.assert_called_once_with(
             "https://mock-epc.com/resources/document/12345678",
             headers={'Authorization': 'Basic 123654789878789'},
-            timeout=30
+            timeout=10
         )
 
         # Check token created for access to file
