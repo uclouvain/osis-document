@@ -23,7 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from external_storage.api.epc.views import RawFileView
+from external_storage.api.raw_file import RawFileView
 
 
 def get_raw_file_view():

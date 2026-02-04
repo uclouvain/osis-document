@@ -23,8 +23,10 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import os
 
 from django.apps import AppConfig
+from django.conf import settings
 
 
 class ExternalStorageConfig(AppConfig):
@@ -33,4 +35,5 @@ class ExternalStorageConfig(AppConfig):
     verbose_name = "External storage"
 
     def ready(self):
-       pass
+       settings.EPC_API_URL = os.environ.get('EPC_API_URL')
+       settings.EPC_API_AUTHORIZATION_HEADER = os.environ.get('EPC_API_AUTHORIZATION_HEADER')

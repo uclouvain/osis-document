@@ -28,6 +28,9 @@ from rest_framework import serializers
 
 class StudentFilesSerializer(serializers.Serializer):
     token = serializers.UUIDField()
-    type = serializers.CharField()
-    description = serializers.CharField()
-    annee = serializers.IntegerField()
+    nom = serializers.CharField()
+    type_contenu = serializers.CharField(allow_blank=True)
+    description = serializers.CharField(allow_blank=True)
+    description_detaillee = serializers.CharField(allow_blank=True)
+    annee = serializers.IntegerField(required=False)
+

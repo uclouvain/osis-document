@@ -33,6 +33,6 @@ app_name = 'external_storage'
 urlpatterns = [
     path('file/<path:token>', utils.get_raw_file_view().as_view(), name=utils.get_raw_file_view().name),
     path(f'{EPC_EXTERNAL_STORAGE_NAME}/', include([
-        path("student_files/<str:noma>/", GetStudentFiles.as_view(), name="student_files"),
+        path("student_files/<str:noma>/", GetStudentFiles.as_view(), name="epc_student_files"),
     ]))
 ]
