@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2026 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,18 +23,31 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.conf import settings
-from django.utils.module_loading import import_string
+from rest_framework import status
+from rest_framework.exceptions import APIException
 
 
-def get_raw_file_view():
-    return import_string(settings.RAW_FILE_VIEW)
+class ExternalStorageAPICallException(APIException):
+    status_code = status.HTTP_502_BAD_GATEWAY
 
-def get_metadata_view():
-    return import_string(settings.METADATA_VIEW)
 
-def get_several_metadata_view():
-    return import_string(settings.SEVERAL_METADATA_VIEW)
+class ExternalStorageAPICallTimeout(ExternalStorageAPICallException):
+    default_detail = "External storage API call timed out."
+    default_code = "external_storage_api_timeout"
 
-def get_change_metadata_view():
-    return import_string(settings.CHANGE_METADATA_VIEW)
+
+class FileReferenceNotFound(APIException):
+    status_code = 404
+    default_detail = "File reference not found."
+    default_code = "not_found"
+
+class TokenNotFound(APIException):
+    status_code = 404
+    default_detail = "Token not found."
+    default_code = "not_found"
+
+
+class TokenExpired(APIException):
+    status_code = 403
+    default_detail = "Token has expired."
+    default_code = "token_expired"

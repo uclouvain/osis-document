@@ -32,7 +32,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 from osis_document.api import serializers
 from backoffice.settings.rest_framework.permissions import APIKeyPermission
-from osis_document.api.utils import CorsAllowOriginMixin
+from backoffice.settings.rest_framework.utils import CorsAllowOriginMixin
 from osis_document.contrib.error_code import ASYNC_POST_PROCESS_FAILED
 from osis_document.enums import FileStatus, DocumentError, PostProcessingStatus, PostProcessingWanted
 from osis_document.exceptions import FileInfectedException

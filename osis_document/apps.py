@@ -32,6 +32,7 @@ from django.utils.translation import gettext_lazy as _
 
 
 class OsisDocumentConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
     name = 'osis_document'
     verbose_name = _("Documents")
 

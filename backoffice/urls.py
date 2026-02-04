@@ -19,4 +19,5 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('osis_document.urls')),
+    path('external_storage/', include('external_storage.urls')),
 ]

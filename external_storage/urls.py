@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2026 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,18 +23,17 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
-from django.conf import settings
-from django.utils.module_loading import import_string
+from django.urls import path, include
 
+from external_storage.api.epc import utils
+from external_storage.api.epc.views import GetStudentFiles, GetStudentFilesCount
+from external_storage.constants import EPC_EXTERNAL_STORAGE_NAME
 
-def get_raw_file_view():
-    return import_string(settings.RAW_FILE_VIEW)
-
-def get_metadata_view():
-    return import_string(settings.METADATA_VIEW)
-
-def get_several_metadata_view():
-    return import_string(settings.SEVERAL_METADATA_VIEW)
-
-def get_change_metadata_view():
-    return import_string(settings.CHANGE_METADATA_VIEW)
+app_name = 'external_storage'
+urlpatterns = [
+    path('file/<path:token>', utils.get_raw_file_view().as_view(), name=utils.get_raw_file_view().name),
+    path(f'{EPC_EXTERNAL_STORAGE_NAME}/', include([
+        path("student_files/<str:noma>/", GetStudentFiles.as_view(), name="epc_student_files"),
+        path("student_files/<str:noma>/count", GetStudentFilesCount.as_view(), name="epc_student_files_count"),
+    ]))
+]
