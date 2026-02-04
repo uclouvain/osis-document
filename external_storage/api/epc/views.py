@@ -37,10 +37,11 @@ from external_storage.exceptions import ExternalStorageAPICallTimeout, ExternalS
 from external_storage.models import Token
 
 
-class GetStudentFiles(APIView):
-    def get(self, request, noma):
+class EPCStudentFilesMixin:
+    @staticmethod
+    def _call_epc_api(noma: str) -> Dict:
         if settings.EPC_API_URL is None:
-            raise ImproperlyConfigured("You sould set EPC_API_URL to get information about files")
+            raise ImproperlyConfigured("You should set EPC_API_URL")
 
         url = f"{settings.EPC_API_URL}resources/document/{noma}"
         try:
@@ -50,19 +51,31 @@ class GetStudentFiles(APIView):
                 timeout=settings.EPC_API_CALL_TIMEOUT
             )
             response.raise_for_status()
-            response_data = response.json()
-            files_list = self._process_external_storage_response(response_data)
-            serializer = StudentFilesSerializer(data=files_list, many=True)
-            serializer.is_valid(raise_exception=True)
-            return Response(serializer.data)
+            return response.json()
         except requests.exceptions.Timeout:
             raise ExternalStorageAPICallTimeout()
         except requests.exceptions.RequestException:
             raise ExternalStorageAPICallException()
 
+
+class GetStudentFilesCount(EPCStudentFilesMixin, APIView):
+    def get(self, request, noma: str):
+        response_data = self._call_epc_api(noma)
+        count = len(response_data.get('fichierDocumentDescription', []))
+        return Response({'count': count})
+
+
+class GetStudentFiles(EPCStudentFilesMixin, APIView):
+    def get(self, request, noma: str):
+        response_data = self._call_epc_api(noma)
+        files_list = self._process_external_storage_response(response_data)
+        serializer = StudentFilesSerializer(data=files_list, many=True)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
+
     def _process_external_storage_response(self, response_data: Dict) -> List[Dict]:
         files_list = []
-        for file in response_data['fichierDocumentDescription']:
+        for file in response_data.get('fichierDocumentDescription') or []:
             token = Token.objects.create(
                 external_storage_name=EPC_EXTERNAL_STORAGE_NAME,
                 metadata={
