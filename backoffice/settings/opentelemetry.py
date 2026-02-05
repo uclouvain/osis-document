@@ -28,6 +28,7 @@ from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from opentelemetry.instrumentation.django import DjangoInstrumentor
+from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.instrumentation.urllib3 import URLLib3Instrumentor
@@ -62,6 +63,10 @@ def initialize_instrumentation():
     URLLib3Instrumentor().instrument(tracer_provider=trace.get_tracer_provider(), skip_dep_check=True)
     RequestsInstrumentor().instrument(tracer_provider=trace.get_tracer_provider())
     CeleryInstrumentor().instrument(trace_provider=trace.get_tracer_provider())
+    LoggingInstrumentor().instrument(
+        tracer_provider=trace.get_tracer_provider(),
+        set_logging_format=False,
+    )
 
 
 def get_tracer() -> Tracer:

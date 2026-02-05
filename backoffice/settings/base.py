@@ -53,16 +53,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = os.environ.get('WSGI_APPLICATION', 'backoffice.wsgi.application')
 
+
+if os.environ.get("OTEL_ENABLED", False):
+    SIMPLE_LOGGING_FORMATTER = '%(asctime)s %(levelname)s [trace_id=%(otelTraceID)s span_id=%(otelSpanID)s resource.service.name=%(otelServiceName)s trace_sampled=%(otelTraceSampled)s] %(message)s'
+    VERBOSE_LOGGING_FORMATTER = '%(asctime)s %(levelname)s [trace_id=%(otelTraceID)s span_id=%(otelSpanID)s resource.service.name=%(otelServiceName)s trace_sampled=%(otelTraceSampled)s] %(module)s %(process)d %(thread)d %(message)s'
+else:
+    SIMPLE_LOGGING_FORMATTER = '%(asctime)s %(levelname)s %(message)s'
+    VERBOSE_LOGGING_FORMATTER = '%(asctime)s %(levelname)s %(module)s %(process)d %(thread)d %(message)s'
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
     'formatters': {
         'verbose': {
-            'format': '%(asctime)s %(levelname)s %(module)s %(process)d %(thread)d %(message)s',
+            'format': VERBOSE_LOGGING_FORMATTER,
             'datefmt': '%d-%m-%Y %H:%M:%S'
         },
         'simple': {
-            'format': '%(asctime)s %(levelname)s %(message)s',
+            'format': SIMPLE_LOGGING_FORMATTER,
             'datefmt': '%d-%m-%Y %H:%M:%S'
         },
     },
