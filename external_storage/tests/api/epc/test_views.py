@@ -88,9 +88,9 @@ class GetStudentFilesCountTestCase(TestCase):
         self.client.credentials(HTTP_X_API_KEY="test-secret-key")
 
     @override_settings(
-        EPC_API_URL="https://mock-epc.com/",
-        EPC_API_AUTHORIZATION_HEADER="Basic 123654789878789",
-        EPC_API_CALL_TIMEOUT=10,
+        STUDENT_FILES_API_URL="https://mock-epc.com/{noma}",
+        STUDENT_FILES_API_AUTHORIZATION_HEADER="Basic 123654789878789",
+        STUDENT_FILES_API_CALL_TIMEOUT=10,
     )
     @patch('external_storage.api.epc.views.requests.get')
     def test_get_student_files_success(self, mock_get):
@@ -149,9 +149,9 @@ class GetStudentFilesTestCase(TestCase):
         self.client.credentials(HTTP_X_API_KEY="test-secret-key")
 
     @override_settings(
-        EPC_API_URL="https://mock-epc.com/",
-        EPC_API_AUTHORIZATION_HEADER="Basic 123654789878789",
-        EPC_API_CALL_TIMEOUT=10,
+        STUDENT_FILES_API_URL="https://mock-epc.com/{noma}",
+        STUDENT_FILES_API_AUTHORIZATION_HEADER="Basic 123654789878789",
+        STUDENT_FILES_API_CALL_TIMEOUT=10,
     )
     @patch('external_storage.api.epc.views.requests.get')
     def test_get_student_files_success(self, mock_get):
@@ -166,7 +166,7 @@ class GetStudentFilesTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         mock_get.assert_called_once_with(
-            "https://mock-epc.com/resources/document/12345678",
+            "https://mock-epc.com/12345678",
             headers={'Authorization': 'Basic 123654789878789'},
             timeout=10
         )
@@ -182,15 +182,15 @@ class GetStudentFilesTestCase(TestCase):
         self.assertIn("token", response.data[0])
         self.assertIn("token", response.data[1])
 
-    @override_settings(EPC_API_URL=None)
-    def test_epc_api_url_not_configured(self):
+    @override_settings(STUDENT_FILES_API_URL=None)
+    def test_student_files_api_url_not_configured(self):
         url = reverse(self.url_pattern, kwargs={"noma": self.noma})
         with self.assertRaises(ImproperlyConfigured):
             self.client.get(url)
 
     @override_settings(
-        EPC_API_URL="https://mock-epc.com/",
-        EPC_API_AUTHORIZATION_HEADER="Bearer mock-token"
+        STUDENT_FILES_API_URL="https://mock-epc.com/{noma}",
+        STUDENT_FILES_API_AUTHORIZATION_HEADER="Basic 123654789878789",
     )
     @patch('external_storage.api.epc.views.requests.get')
     def test_api_timeout(self, mock_get):
@@ -204,8 +204,8 @@ class GetStudentFilesTestCase(TestCase):
         self.assertEqual(Token.objects.count(), 0)
 
     @override_settings(
-        EPC_API_URL="https://mock-epc.com/",
-        EPC_API_AUTHORIZATION_HEADER="Bearer mock-token"
+        STUDENT_FILES_API_URL="https://mock-epc.com/{noma}",
+        STUDENT_FILES_API_AUTHORIZATION_HEADER="Basic 123654789878789",
     )
     @patch('external_storage.api.epc.views.requests.get')
     def test_api_http_error(self, mock_get):
@@ -219,8 +219,8 @@ class GetStudentFilesTestCase(TestCase):
         self.assertEqual(Token.objects.count(), 0)
 
     @override_settings(
-        EPC_API_URL="https://mock-epc.com/",
-        EPC_API_AUTHORIZATION_HEADER="Bearer mock-token"
+        STUDENT_FILES_API_URL="https://mock-epc.com/{noma}",
+        STUDENT_FILES_API_AUTHORIZATION_HEADER="Basic 123654789878789",
     )
     @patch('external_storage.api.epc.views.requests.get')
     def test_empty_response(self, mock_get):
@@ -237,8 +237,8 @@ class GetStudentFilesTestCase(TestCase):
         self.assertEqual(Token.objects.count(), 0)
 
     @override_settings(
-        EPC_API_URL="https://mock-epc.com/",
-        EPC_API_AUTHORIZATION_HEADER="Bearer mock-token"
+        STUDENT_FILES_API_URL="https://mock-epc.com/{noma}",
+        STUDENT_FILES_API_AUTHORIZATION_HEADER="Basic 123654789878789",
     )
     @patch('external_storage.api.epc.views.requests.get')
     def test_null_response(self, mock_get):

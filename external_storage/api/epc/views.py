@@ -39,16 +39,16 @@ from external_storage.models import Token
 
 class EPCStudentFilesMixin:
     @staticmethod
-    def _call_epc_api(noma: str) -> Dict:
-        if settings.EPC_API_URL is None:
-            raise ImproperlyConfigured("You should set EPC_API_URL")
+    def _call_student_files_api(noma: str) -> Dict:
+        if settings.STUDENT_FILES_API_URL is None:
+            raise ImproperlyConfigured("You should set STUDENT_FILES_API_URL")
 
-        url = f"{settings.EPC_API_URL}resources/document/{noma}"
+        url = settings.STUDENT_FILES_API_URL.format(noma=noma)
         try:
             response = requests.get(
                 url,
-                headers={'Authorization': settings.EPC_API_AUTHORIZATION_HEADER},
-                timeout=settings.EPC_API_CALL_TIMEOUT
+                headers={'Authorization': settings.STUDENT_FILES_API_AUTHORIZATION_HEADER},
+                timeout=settings.STUDENT_FILES_API_CALL_TIMEOUT
             )
             response.raise_for_status()
             return response.json()
@@ -60,14 +60,14 @@ class EPCStudentFilesMixin:
 
 class GetStudentFilesCount(EPCStudentFilesMixin, APIView):
     def get(self, request, noma: str):
-        response_data = self._call_epc_api(noma)
+        response_data = self._call_student_files_api(noma)
         count = len(response_data.get('fichierDocumentDescription', []))
         return Response({'count': count})
 
 
 class GetStudentFiles(EPCStudentFilesMixin, APIView):
     def get(self, request, noma: str):
-        response_data = self._call_epc_api(noma)
+        response_data = self._call_student_files_api(noma)
         files_list = self._process_external_storage_response(response_data)
         serializer = StudentFilesSerializer(data=files_list, many=True)
         serializer.is_valid(raise_exception=True)

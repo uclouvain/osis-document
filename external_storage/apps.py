@@ -35,6 +35,6 @@ class ExternalStorageConfig(AppConfig):
     verbose_name = "External storage"
 
     def ready(self):
-       settings.EPC_API_URL = os.environ.get('EPC_API_URL')
-       settings.EPC_API_AUTHORIZATION_HEADER = os.environ.get('EPC_API_AUTHORIZATION_HEADER')
-       settings.EPC_API_CALL_TIMEOUT = int(os.environ.get('EPC_API_CALL_TIMEOUT', 5))
+       settings.STUDENT_FILES_API_URL = os.environ.get('STUDENT_FILES_API_URL')
+       settings.STUDENT_FILES_API_AUTHORIZATION_HEADER = os.environ.get('STUDENT_FILES_API_AUTHORIZATION_HEADER')
+       settings.STUDENT_FILES_API_CALL_TIMEOUT = int(os.environ.get('STUDENT_FILES_API_CALL_TIMEOUT', 5))
