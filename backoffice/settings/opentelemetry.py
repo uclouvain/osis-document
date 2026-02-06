@@ -23,6 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import os
+
 from django.conf import settings
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
@@ -44,8 +46,8 @@ def initialize():
     })
     provider = TracerProvider(resource=resource)
     otlp_exporter = OTLPSpanExporter(
-        endpoint=getattr(settings, 'OTEL_EXPORTER_OTLP_ENDPOINT', 'http://localhost:4317'),
-        insecure=bool(getattr(settings, 'OTEL_EXPORTER_OTLP_INSECURE', False)),
+        endpoint=os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"),
+        insecure=bool(os.environ.get("OTEL_EXPORTER_OTLP_INSECURE", False)),
     )
     processor = BatchSpanProcessor(otlp_exporter)  # ConsoleSpanExporter()
     provider.add_span_processor(processor)
