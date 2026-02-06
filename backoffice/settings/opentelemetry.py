@@ -42,7 +42,7 @@ from opentelemetry.trace import Tracer
 
 def initialize():
     resource = Resource(attributes={
-        "service.name": getattr(settings, 'OTEL_SERVICE_NAME', 'OSIS-DOCUMENT')
+        "service.name": os.environ.get("OTEL_SERVICE_NAME", "OSIS-DOCUMENT")
     })
     provider = TracerProvider(resource=resource)
     otlp_exporter = OTLPSpanExporter(
