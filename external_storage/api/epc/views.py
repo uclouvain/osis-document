@@ -51,7 +51,7 @@ class EPCStudentFilesMixin:
                 timeout=settings.STUDENT_FILES_API_CALL_TIMEOUT
             )
             response.raise_for_status()
-            return response.json() or []   # EPC API return null when no documents
+            return response.json() or object()   # EPC API return null when no documents
         except requests.exceptions.Timeout:
             raise ExternalStorageAPICallTimeout()
         except requests.exceptions.RequestException:
