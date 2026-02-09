@@ -1,0 +1,211 @@
+openapi: 3.0.3
+info:
+  title: External Storage API
+  description: API pour la gestion des fichiers externes
+  version: 1.0.0
+servers:
+  - url: https://{environment}.osis.uclouvain.be/api/v1/osis_document/external_storage/
+    variables:
+      environment:
+        default: dev
+        enum:
+          - dev
+          - qa
+          - test
+  - url: https://osis.uclouvain.be/api/v1/osis_document/external_storage/
+    description: Production server
+paths:
+  /file/{token}:
+    get:
+      tags:
+        - Fichiers
+      summary: Télécharger un fichier via un token
+      description: Permet de télécharger un fichier brut en utilisant un token d'accès généré précédemment. Le token doit être valide et non expiré.
+      operationId: getRawFile
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Token UUID d'accès au fichier
+        - name: dl
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Si présent, force le téléchargement du fichier en pièce jointe
+      responses:
+        '200':
+          description: Fichier retourné avec succès
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: Token expiré
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Token non trouvé ou fichier non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /EPC/student_files/{noma}/:
+    get:
+      tags:
+        - EPC
+      summary: Lister les fichiers d'un étudiant EPC
+      description: Récupère la liste des fichiers d'un étudiant depuis le système EPC en utilisant son numéro de matricule (noma). Chaque fichier obtient un token d'accès temporaire.
+      operationId: getStudentFiles
+      parameters:
+        - name: noma
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+          description: Numéro de matricule de l'étudiant
+      responses:
+        '200':
+          description: Liste des fichiers récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudentFile'
+        '400':
+          description: Requête invalide
+        '401':
+          description: Non authentifié
+        '502':
+          description: Erreur de communication avec l'API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '504':
+          description: Timeout de l'API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /EPC/student_files/{noma}/count:
+    get:
+      tags:
+        - EPC
+      summary: Compter les fichiers d'un étudiant EPC
+      description: Retourne le nombre de fichiers disponibles pour un étudiant dans le système EPC.
+      operationId: getStudentFilesCount
+      parameters:
+        - name: noma
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+          description: Numéro de matricule de l'étudiant
+      responses:
+        '200':
+          description: Nombre de fichiers récupéré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileCount'
+        '400':
+          description: Requête invalide
+        '401':
+          description: Non authentifié
+        '502':
+          description: Erreur de communication avec l'API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '504':
+          description: Timeout de l'API EPC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    StudentFile:
+      type: object
+      required:
+        - token
+        - nom
+      properties:
+        token:
+          type: string
+          format: uuid
+          description: Token d'accès temporaire au fichier
+        nom:
+          type: string
+          description: Nom du fichier
+        type_contenu:
+          type: string
+          description: Type de contenu du fichier
+          nullable: true
+        description:
+          type: string
+          description: Description courte du fichier
+          nullable: true
+        description_detaillee:
+          type: string
+          description: Description détaillée du fichier
+          nullable: true
+        annee:
+          type: integer
+          description: Année académique associée au fichier
+          nullable: true
+      example:
+        token: 550e8400-e29b-41d4-a716-446655440000
+        nom: diplome.pdf
+        type_contenu: application/pdf
+        description: Diplôme de fin d'études
+        description_detaillee: Diplôme officiel de l'Université catholique de Louvain
+        annee: 2024
+    FileCount:
+      type: object
+      required:
+        - count
+      properties:
+        count:
+          type: integer
+          description: Nombre de fichiers disponibles
+      example:
+        count: 5
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Message d'erreur
+        error_code:
+          type: string
+          description: Code d'erreur interne
+      example:
+        error: Token has expired.
+        error_code: token_expired
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+      description: Clé API requise pour l'accès aux endpoints EPC
+security:
+  - ApiKeyAuth: []
+tags:
+  - name: Fichiers
+    description: Endpoints pour la manipulation des fichiers
+  - name: EPC
+    description: Endpoints spécifiques à l'intégration EPC pour les fichiers étudiants
